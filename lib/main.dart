@@ -1,5 +1,8 @@
+// ignore_for_file: unintended_html_in_doc_comment
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -24,33 +27,6 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {}
-
-// class MyAppState extends ChangeNotifier {
-//   var feeling = ['Terrefic', 'Happy', 'Chill', 'Bored', 'Sad', 'Anger'];
-//   var currentFeeling = 'Chill';
-//   void toggleFeelingNow(String newFeeling) {
-//     if (feeling.contains(newFeeling)) {
-//       currentFeeling = newFeeling;
-//       notifyListeners();
-//     }
-//   }
-
-//   double moodPoint = 3.0;
-//   void updateMoodPoint(double newMoodPoint) {
-//     if (newMoodPoint >= 1.0 && newMoodPoint <= 5.0) {
-//       moodPoint = newMoodPoint;
-//       notifyListeners();
-//     }
-//   }
-
-//   String? note;
-//   void toggleTakeNote(String? newNote) {
-//     if (newNote != null) {
-//       note = newNote;
-//       notifyListeners();
-//     }
-//   }
-// }
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -90,6 +66,8 @@ class _EmologFormState extends State<EmologForm> {
     super.dispose();
   }
 
+  /** other way to try with each change
+  
   // // some funct to react w/ addListener
   // void _printLastestValue() {
   //   final text = _textController.text;
@@ -102,6 +80,38 @@ class _EmologFormState extends State<EmologForm> {
   //   super.initState();
   //   _textController.addListener(_printLastestValue);
   // }
+   */
+
+  /** using shared_perferences
+  List<String> _formLog = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFormLog();
+  }
+
+  // load initial value from persistent storage on start
+  // or fallback to null if it doesn't exist.
+  Future<void> _loadFormLog() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _formLog = prefs.getStringList('formlog') ?? [];
+    });
+  }
+
+  // After click the button, save the new form log
+  // and async save it to persistent storage;
+  Future<void> _addFormLog(String newFormLog) async {
+    final prefs = await SharedPreferences.getInstance();
+    var formLog = (prefs.getStringList('formlog') ?? []);
+    formLog.add(newFormLog);
+    await prefs.setStringList('formlog', _formLog);
+    setState(() {
+      _formLog = formLog;
+    });
+  }
+   */
 
   @override
   Widget build(BuildContext context) {
@@ -147,16 +157,20 @@ class _EmologFormState extends State<EmologForm> {
             onPressed: () {
               if (_formkey.currentState!.validate()) {
                 final text = _textController.text;
+                // _addFormLog(text);
                 // form is valid
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('$text has been recorded')),
                 );
+
+                // showDialog way
                 // showDialog(
                 //   context: context,
                 //   builder: (context) {
                 //     return AlertDialog(content: Text(text));
                 //   },
                 // );
+
                 _textController.clear();
               }
             },
@@ -167,6 +181,8 @@ class _EmologFormState extends State<EmologForm> {
     );
   }
 }
+
+/** Non cookbook version
 
 // class _MyHomePageState extends State<MyHomePage> {
 //   final TextEditingController _noteController = TextEditingController();
@@ -323,3 +339,31 @@ class _EmologFormState extends State<EmologForm> {
 //   }
 
 // }
+
+// class MyAppState extends ChangeNotifier {
+//   var feeling = ['Terrefic', 'Happy', 'Chill', 'Bored', 'Sad', 'Anger'];
+//   var currentFeeling = 'Chill';
+//   void toggleFeelingNow(String newFeeling) {
+//     if (feeling.contains(newFeeling)) {
+//       currentFeeling = newFeeling;
+//       notifyListeners();
+//     }
+//   }
+
+//   double moodPoint = 3.0;
+//   void updateMoodPoint(double newMoodPoint) {
+//     if (newMoodPoint >= 1.0 && newMoodPoint <= 5.0) {
+//       moodPoint = newMoodPoint;
+//       notifyListeners();
+//     }
+//   }
+
+//   String? note;
+//   void toggleTakeNote(String? newNote) {
+//     if (newNote != null) {
+//       note = newNote;
+//       notifyListeners();
+//     }
+//   }
+// }
+ */
