@@ -40,7 +40,7 @@
 ##### 💾 Persistence
 
 - [ ] `Store key-value data on disk` – dùng `SharedPreferences` để lưu cảm xúc
-- [ ] `Read and write files` – dùng `File` để ghi nhật ký vào file (nếu không dùng SQLite)
+- [x] `Read and write files` – dùng `File` để ghi nhật ký vào file (nếu không dùng SQLite)
 - [ ] `Persist data with SQLite` – (nâng cao hơn) dùng database để lưu nhiều log
 
 ##### 📃 Lists
