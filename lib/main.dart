@@ -1,8 +1,10 @@
-// ignore_for_file: unintended_html_in_doc_comment
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:convert'; // json
 
 void main() {
   runApp(MyApp());
@@ -39,14 +41,63 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Center(child: EmologForm()),
+        child: Center(child: EmologForm(storage: FormLogStorage())),
       ),
     );
   }
 }
 
+class FormLogStorage {
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    print("📁 Saving to path: $path/formlog.txt"); // DEBUG: print to console
+    return File('$path/formlog.txt');
+  }
+
+  Future<File> writeFormLog(List<String> formLogList) async {
+    final file = await _localFile;
+
+    // convert List<String> to each json line
+    final jsonLines = formLogList.map((log) => json.encode(log)).join('\n');
+
+    // Write the file
+    return file.writeAsString(jsonLines, flush: true);
+  }
+
+  Future<File> appendFormLog(String newFormLog) async {
+    final file = await _localFile;
+    final encoded = json.encode(newFormLog);
+    return file.writeAsString('$encoded\n', mode: FileMode.append, flush: true);
+  }
+
+  Future<List<String>> readFormLog() async {
+    try {
+      final file = await _localFile;
+
+      // Read the file
+      final contents = await file.readAsString();
+      final decode = contents
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => json.decode(line) as String);
+
+      return decode.toList();
+    } catch (e) {
+      // If encountering an error, return 0
+      return [];
+    }
+  }
+}
+
 class EmologForm extends StatefulWidget {
-  const EmologForm({super.key});
+  const EmologForm({super.key, required this.storage});
+
+  final FormLogStorage storage;
 
   @override
   State<EmologForm> createState() => _EmologFormState();
@@ -113,6 +164,26 @@ class _EmologFormState extends State<EmologForm> {
   }
    */
 
+  List<String> _formLogList = [];
+  @override
+  void initState() {
+    super.initState();
+    widget.storage.readFormLog().then((value) {
+      setState(() {
+        _formLogList = value;
+      });
+    });
+  }
+
+  Future<File> _addFormLog(String newFormLog) {
+    setState(() {
+      _formLogList.add(newFormLog);
+    });
+
+    // Write variable as string to the file
+    return widget.storage.appendFormLog(newFormLog);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -157,7 +228,9 @@ class _EmologFormState extends State<EmologForm> {
             onPressed: () {
               if (_formkey.currentState!.validate()) {
                 final text = _textController.text;
-                // _addFormLog(text);
+                _addFormLog(text);
+                print(_formLogList.length);
+
                 // form is valid
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('$text has been recorded')),
