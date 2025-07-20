@@ -7,7 +7,8 @@
 - Have different ways according to what kind of data you want to store:
   - **shared_preferences** plugin/package: small collection (KB), format often is key-value.
   - **path_provider** plugin w/ **dart:io**: bigger (MB), store in file(s), and all logic have to do manually.
-  - SQLite (**sqflite** plugin/package): sql data and query, often use when data is big.
+  - SQLite (**sqflite** plugin/package): sql data and query, often use when data is big. (made a try but not good & can't work it out, maybe that's too old)
+  - noSQL with **objectbox**, **Hive** (will try in future)
 
 #### shared_perferences
 
@@ -146,3 +147,90 @@ Future<String> get _localPath async {
 #### SQLite with sqflite
 
 - **sqflite** only work with macOS, iOS, Android
+- add dependency: `flutter pub add sqflite path`
+- import: `import 'package:sqflite/sqflite.dart';`, `import 'package:path/path.dart';`
+- workflow: define a data model -> open db -> create that table -> retrieve data -> insert data in db -> update data in db -> delete data in db
+
+> model:
+
+```
+class NoteLog {
+  final int? id;
+  final String note;
+  final String date;
+
+  NoteLog({this.id, required this.note, required this.date});
+
+  // Convert data into a Map, each key must correspond to name of col in db
+  Map<String, Object?> toMap() => {
+    if (id != null) 'id': id,
+    'note': note,
+    'date': date,
+  };
+
+  // implement toString to make it look better w/ print
+  @override
+  String toString() => 'Note log {id: $id, note: $note, date: $date}';
+}
+```
+
+> connect w/ db:
+
+```
+class NoteLogDB {
+  Future<Database> get database async {
+    return openDatabase(
+      // Set the path to the database. Note: Using the `join` function from the
+      // `path` package is best practice to ensure the path is correctly
+      // constructed for each platform.
+      join(await getDatabasesPath(), 'notelog_database.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE notelogs(id INTEGER PRIMARY KEY AUTOINCREMENT, note TEXT, date TEXT)',
+        );
+      },
+      version: 1,
+    );
+  }
+
+  Future<void> insertNote(NoteLog newNote) async {
+    final db = await database;
+    await db.insert(
+      'notelogs',
+      newNote.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<NoteLog>> notelogs() async {
+    final db = await database;
+    final List<Map<String, Object?>> notelogMaps = await db.query('notelogs');
+    return [
+      for (final {
+            'id': id as int,
+            'note': note as String,
+            'date': date as String,
+          }
+          in notelogMaps)
+        NoteLog(id: id, note: note, date: date),
+    ];
+  }
+
+  Future<void> updateNote(NoteLog notelog) async {
+    final db = await database;
+    await db.update(
+      'notelogs',
+      notelog.toMap(),
+      // Ensure that the note has a matching id.
+      where: 'id = ?',
+      // Pass the note's id as a whereArg to prevent SQL injection.
+      whereArgs: [notelog.id],
+    );
+  }
+
+  Future<void> deleteNote(int id) async {
+    final db = await database;
+    await db.delete('notelogs', where: 'id = ?', whereArgs: [id]);
+  }
+}
+```

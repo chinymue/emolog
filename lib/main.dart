@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // json
+// import 'package:sqflite/sqflite.dart';
+// import 'package:path/path.dart';
 
 void main() {
   runApp(MyApp());
@@ -41,11 +43,13 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Center(child: EmologForm(storage: FormLogStorage())),
+        child: Center(child: EmologForm(storage: FormLogStorage())), //
       ),
     );
   }
 }
+
+// read & write data in file as storage
 
 class FormLogStorage {
   Future<String> get _localPath async {
@@ -94,8 +98,87 @@ class FormLogStorage {
   }
 }
 
+// sqflite
+/**
+class NoteLog {
+  final int? id;
+  final String note;
+  final String date;
+
+  NoteLog({this.id, required this.note, required this.date});
+
+  // Convert data into a Map, each key must correspond to name of col in db
+  Map<String, Object?> toMap() => {
+    if (id != null) 'id': id,
+    'note': note,
+    'date': date,
+  };
+
+  // implement toString to make it look better w/ print
+  @override
+  String toString() => 'Note log {id: $id, note: $note, date: $date}';
+}
+
+class NoteLogDB {
+  Future<Database> get database async {
+    return openDatabase(
+      // Set the path to the database. Note: Using the `join` function from the
+      // `path` package is best practice to ensure the path is correctly
+      // constructed for each platform.
+      join(await getDatabasesPath(), 'notelog_database.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE notelogs(id INTEGER PRIMARY KEY AUTOINCREMENT, note TEXT, date TEXT)',
+        );
+      },
+      version: 1,
+    );
+  }
+
+  Future<void> insertNote(NoteLog newNote) async {
+    final db = await database;
+    await db.insert(
+      'notelogs',
+      newNote.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<NoteLog>> notelogs() async {
+    final db = await database;
+    final List<Map<String, Object?>> notelogMaps = await db.query('notelogs');
+    return [
+      for (final {
+            'id': id as int,
+            'note': note as String,
+            'date': date as String,
+          }
+          in notelogMaps)
+        NoteLog(id: id, note: note, date: date),
+    ];
+  }
+
+  Future<void> updateNote(NoteLog notelog) async {
+    final db = await database;
+    await db.update(
+      'notelogs',
+      notelog.toMap(),
+      // Ensure that the note has a matching id.
+      where: 'id = ?',
+      // Pass the note's id as a whereArg to prevent SQL injection.
+      whereArgs: [notelog.id],
+    );
+  }
+
+  Future<void> deleteNote(int id) async {
+    final db = await database;
+    await db.delete('notelogs', where: 'id = ?', whereArgs: [id]);
+  }
+}
+ */
+
 class EmologForm extends StatefulWidget {
-  const EmologForm({super.key, required this.storage});
+  const EmologForm({super.key, required this.storage}); //
 
   final FormLogStorage storage;
 
@@ -164,6 +247,7 @@ class _EmologFormState extends State<EmologForm> {
   }
    */
 
+  // read & write into file
   List<String> _formLogList = [];
   @override
   void initState() {
@@ -183,6 +267,14 @@ class _EmologFormState extends State<EmologForm> {
     // Write variable as string to the file
     return widget.storage.appendFormLog(newFormLog);
   }
+
+  /** sqflite
+  final NoteLogDB _db = NoteLogDB();
+  Future<void> _saveNote(String note) async {
+    final newNote = NoteLog(note: note, date: DateTime.now().toIso8601String());
+    await _db.insertNote(newNote);
+  }
+   */
 
   @override
   Widget build(BuildContext context) {
@@ -229,8 +321,8 @@ class _EmologFormState extends State<EmologForm> {
               if (_formkey.currentState!.validate()) {
                 final text = _textController.text;
                 _addFormLog(text);
-                print(_formLogList.length);
-
+                // print(_formLogList.length);
+                // _saveNote(text);
                 // form is valid
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('$text has been recorded')),
