@@ -1,5 +1,6 @@
 > Stuff in {{}} indicate that you can name that part whatever you want.
 > Data type related stuff in [[]] indicate that you can change into what you need.
+Data type related stuff in [[]] indicate that you can change into what you need.
 
 ### Persistance
 
@@ -40,6 +41,26 @@
 ```
 
 > read data: should wrap by a `Future<void>` function
+> load perference: inside the widget you need
+
+```
+  @override
+  void initState() {
+    super.initState();
+    _{{loadFormLog}}();
+  }
+
+  // load initial value from persistent storage on start
+  // or fallback to null if it doesn't exist.
+  Future<void> _{{loadFormLog}}() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _{{formLog}} = prefs.[[getStringList]]('{{formlog}}') ?? [];
+    });
+  }
+```
+
+> read data: should wrap by a `Future<void>` function
 
 ```
 final {{prefs}} = await SharedPreferences.getInstance();
@@ -47,8 +68,10 @@ final {{prefs}} = await SharedPreferences.getInstance();
 // Try reading the counter value from persistent storage.
 // If not present, null is returned, so default to 0.
 final {{counter}} = {{prefs}}.[[getInt]]('{{counter}}') ?? 0;
+final {{counter}} = {{prefs}}.[[getInt]]('{{counter}}') ?? 0;
 ```
 
+> save data: should wrap by a `Future<void>` function
 > save data: should wrap by a `Future<void>` function
 
 ```
@@ -63,8 +86,20 @@ final {{counter}} = {{prefs}}.[[getInt]]('{{counter}}') ?? 0;
       _{{formLog}} = {{formLog}};
     });
   }
+  // After click the button, save the new form log
+  // and async save it to persistent storage;
+  Future<void> _{{addFormLog}}([[String]] {{newFormLog}}) async {
+    final {{prefs}} = await SharedPreferences.getInstance();
+    var {{formLog}} = ({{prefs}}.[[getStringList]]('{{formlog}}') ?? []);
+    {{formLog}}.add({{newFormLog}});
+    await {{prefs}}.[[setStringList]]('{{formlog}}', _formLog);
+    setState(() {
+      _{{formLog}} = {{formLog}};
+    });
+  }
 ```
 
+> remove data: should wrap by a `Future<void>` function
 > remove data: should wrap by a `Future<void>` function
 
 ```
