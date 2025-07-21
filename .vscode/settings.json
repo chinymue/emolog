@@ -1,3 +1,4 @@
 {
-    "accessibility.signalOptions.debouncePositionChanges": false
+    "accessibility.signalOptions.debouncePositionChanges": false,
+    "cmake.ignoreCMakeListsMissing": true
 }

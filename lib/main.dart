@@ -12,6 +12,13 @@ void main() {
   runApp(MyApp());
 }
 
+const Color darkPink = Color.fromARGB(255, 58, 5, 25);
+const Color midPink = Color.fromARGB(255, 103, 13, 47);
+const Color hotWinePink = Color.fromARGB(255, 165, 56, 96);
+const Color emoWinePink = Color.fromARGB(255, 141, 74, 90);
+const Color lightPink = Color.fromARGB(255, 239, 136, 173);
+const Color rosePink = Color.fromARGB(255, 246, 227, 229);
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -200,6 +207,8 @@ class _EmologFormState extends State<EmologForm> {
     super.dispose();
   }
 
+  String _selectedMood = 'chill';
+
   /** other way to try with each change
   
   // // some funct to react w/ addListener
@@ -283,43 +292,23 @@ class _EmologFormState extends State<EmologForm> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          const Text(
-            'Hi sweetie, how is your day?',
-            style: TextStyle(
-              color: Color.fromRGBO(
-                165,
-                56,
-                96,
-                1.0,
-              ), //rgb(58, 5, 25), rgb(103, 13, 47), rgb(165, 56, 96), rgb(239, 136, 173)
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              fontStyle: FontStyle.italic,
-            ),
+          HelloLog(),
+          const SizedBox(height: 10),
+          NoteLog(textController: _textController),
+          const SizedBox(height: 20),
+          MoodPicker(
+            onMoodSelected: (selectedMood) {
+              setState(() {
+                _selectedMood = selectedMood;
+              });
+            },
           ),
-          SizedBox(height: 10),
-          SizedBox(
-            width: 500,
-            child: TextFormField(
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Tell me your feelings',
-              ),
-              // validator receives text that user entered
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter some text';
-                }
-                return null;
-              },
-              controller: _textController,
-            ),
-          ),
-          SizedBox(height: 15),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
               if (_formkey.currentState!.validate()) {
-                final text = _textController.text;
+                final text =
+                    'Note: ${_textController.text}\nMood: $_selectedMood\nDate: ${DateTime.now().toIso8601String()}';
                 _addFormLog(text);
                 // print(_formLogList.length);
                 // _saveNote(text);
@@ -342,6 +331,121 @@ class _EmologFormState extends State<EmologForm> {
             child: const Text('Submit', style: TextStyle(fontSize: 16)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class NoteLog extends StatelessWidget {
+  const NoteLog({super.key, required TextEditingController textController})
+    : _textController = textController;
+
+  final TextEditingController _textController;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 500,
+      child: TextFormField(
+        maxLines: 5,
+        decoration: const InputDecoration(hintText: 'Tell me your feelings'),
+        // validator receives text that user entered
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter some text';
+          }
+          return null;
+        },
+        controller: _textController,
+      ),
+    );
+  }
+}
+
+class MoodPicker extends StatefulWidget {
+  final void Function(String selectedMood) onMoodSelected;
+
+  MoodPicker({super.key, required this.onMoodSelected});
+
+  @override
+  State<MoodPicker> createState() => _MoodPickerState();
+}
+
+class _MoodPickerState extends State<MoodPicker> {
+  String _selectedMood = 'none';
+
+  final List<Map<String, IconData>> moodList = [
+    {'awesome': Icons.sentiment_very_satisfied},
+    {'good': Icons.sentiment_satisfied},
+    {'chill': Icons.sentiment_neutral},
+    {'not good': Icons.sentiment_dissatisfied},
+    {'terrible': Icons.sentiment_very_dissatisfied},
+    // {'1': Icons.abc},
+    // {'2': Icons.abc_outlined},
+    // {'3': Icons.abc_rounded},
+    // {'4': Icons.abc_sharp},
+    // {'5': Icons.ac_unit},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 150,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var mood in moodList)
+              for (var entry in mood.entries)
+                Padding(
+                  padding: EdgeInsetsGeometry.all(10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedMood = entry.key;
+                            widget.onMoodSelected(entry.key);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedMood == entry.key
+                              ? emoWinePink
+                              : rosePink,
+                        ),
+                        child: Icon(
+                          entry.value,
+                          size: 25,
+                          color: _selectedMood == entry.key
+                              ? rosePink
+                              : emoWinePink,
+                        ),
+                      ),
+                      Text(entry.key, style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HelloLog extends StatelessWidget {
+  const HelloLog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Hi sweetie, how is your day?',
+      style: TextStyle(
+        color: hotWinePink,
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        fontStyle: FontStyle.italic,
       ),
     );
   }

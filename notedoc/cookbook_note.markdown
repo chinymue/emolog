@@ -45,9 +45,9 @@
 
 ##### 📃 Lists
 
-- [ ] `Use lists` – hiển thị danh sách log cảm xúc
-- [ ] `Create a list with spaced items` – tạo card có khoảng cách đẹp
-- [ ] `Work with long lists` – xử lý scroll mượt
+- [x] `Use lists` – hiển thị danh sách log cảm xúc
+- [x] `Create a list with spaced items` – tạo card có khoảng cách đẹp
+- [x] `Work with long lists` – xử lý scroll mượt
 
 ##### 🧭 Navigation
 
