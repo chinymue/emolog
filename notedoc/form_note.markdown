@@ -287,7 +287,7 @@ ElevatedButton(
         return AlertDialog(content: Text(_{{textController}}.text));
       },
     );
-    _textController.clear();
+    _{{textController}}.clear();
   },
   child: const Text('Submit'),
 ),
@@ -301,7 +301,7 @@ ElevatedButton(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${_{{textController}}.text} has been recorded')),
     );
-    _textController.clear();
+    _{{textController}}.clear();
   },
   child: const Text('Submit'),
 ),
