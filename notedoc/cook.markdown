@@ -51,10 +51,10 @@
 
 ##### 🧭 Navigation
 
-- [ ] `Navigate to a new screen and back` – từ màn nhập đến màn lịch sử
-- [ ] `Send data to a new screen` – chuyển dữ liệu log đến màn chi tiết
-- [ ] `Return data from a screen` – trả dữ liệu (nếu sửa log)
-- [ ] `Navigate with named routes` – cấu trúc điều hướng rõ ràng hơn
+- [x] `Navigate to a new screen and back` – từ màn nhập đến màn lịch sử
+- [x] `Send data to a new screen` – chuyển dữ liệu log đến màn chi tiết
+- [x] `Return data from a screen` – trả dữ liệu (nếu sửa log)
+- [x] `Navigate with named routes` – cấu trúc điều hướng rõ ràng hơn
 
 ##### 🎨 Design
 

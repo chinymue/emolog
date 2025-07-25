@@ -28,7 +28,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
       ),
-      home: MyHomePage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => MyHomePage(),
+        '/logs': (context) => HistoryLogPage(),
+      },
     );
   }
 }
@@ -48,17 +52,7 @@ class MyHomePage extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              EmologForm(storage: FormLogStorage()),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HistoryLog()),
-                ),
-                child: const Text('History', style: TextStyle(fontSize: 16)),
-              ),
-            ],
+            children: [EmologForm(storage: FormLogStorage())],
           ),
         ), //
       ),
@@ -140,9 +134,9 @@ class _EmologFormState extends State<EmologForm> {
       await widget.storage.appendFormLog(log);
       if (!mounted) return;
       setState(() => _formLogList.add(log));
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$log has been recorded')));
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
+        ..showSnackBar(SnackBar(content: Text('$log has been recorded')));
       _controller.clear();
     }
   }
@@ -165,6 +159,12 @@ class _EmologFormState extends State<EmologForm> {
           ElevatedButton(
             onPressed: _submitForm,
             child: const Text('Submit', style: TextStyle(fontSize: 16)),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pushNamed(context, '/logs', arguments: _formLogList),
+            child: const Text('History', style: TextStyle(fontSize: 16)),
           ),
         ],
       ),
@@ -208,11 +208,11 @@ class _MoodPickerState extends State<MoodPicker> {
   String _selectedMood = 'none';
 
   final Map<String, IconData> moods = {
-    'awesome': Icons.sentiment_very_satisfied,
-    'good': Icons.sentiment_satisfied,
-    'chill': Icons.sentiment_neutral,
-    'not good': Icons.sentiment_dissatisfied,
     'terrible': Icons.sentiment_very_dissatisfied,
+    'not good': Icons.sentiment_dissatisfied,
+    'chill': Icons.sentiment_neutral,
+    'good': Icons.sentiment_satisfied,
+    'awesome': Icons.sentiment_very_satisfied,
   };
 
   @override
@@ -271,22 +271,46 @@ class HelloLog extends StatelessWidget {
   }
 }
 
-class HistoryLog extends StatelessWidget {
+class HistoryLog {
+  final String note;
+  final String mood;
+  final String date;
+  const HistoryLog(this.note, this.mood, this.date);
+}
+
+class HistoryLogPage extends StatelessWidget {
+  const HistoryLogPage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final List<String> history =
+        ModalRoute.of(context)!.settings.arguments as List<String>;
     return Scaffold(
-      appBar: AppBar(title: const Text('Tesst Route')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('That\'s work', style: TextStyle(fontSize: 50)),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Open route'),
+      appBar: AppBar(title: const Text('History')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: SizedBox(
+              height: 500,
+              child: ListView(
+                scrollDirection: Axis.vertical,
+                children: [
+                  for (var i in history)
+                    ListTile(
+                      leading: Icon(Icons.monitor_heart),
+                      title: Text(i),
+                    ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Go back', style: TextStyle(fontSize: 16)),
+          ),
+        ],
       ),
     );
   }
