@@ -10,13 +10,111 @@ import 'dart:convert'; // json
 
 void main() => runApp(const MyApp());
 
-// Color Constants
-const Color darkPink = Color(0xFF3A0519);
-const Color midPink = Color(0xFF670D2F);
-const Color hotWinePink = Color(0xFFA53860);
-const Color emoWinePink = Color(0xFF8D4A5A);
-const Color lightPink = Color(0xFFEf88AD);
-const Color rosePink = Color(0xFFF6E3E5);
+/// Một số màu tiện dùng
+const Color follyRed = Color(0xFFFF0A54);
+const Color tickleMePink = Color(0xFFFF85A1);
+const Color brightPink = Color(0xFFFF5C8A);
+const Color salmonPink = Color(0xFFFF99AC);
+const Color cherryBlossom = Color(0xFFFBB1BD);
+const Color mistyRose = Color(0xFFFAE0E4);
+const Color lavenderBlush = Color(0xFFFFF0F3);
+const Color chocolateCosmos = Color(0xFF590D22);
+const Color claret = Color(0xFF800F2F);
+const Color roseRed = Color(0xFFC9184A);
+const Color amaranthPurple = Color(0xFFA4133C);
+
+/// Định nghĩa lại một số màu chính
+const Color kFollyRed = Color(0xFFFF0A54);
+const Color kTickleMePink = Color(0xFFFF85A1);
+const Color kSalmonPink = Color(0xFFFF99AC);
+const Color kCherryBlossom = Color(0xFFFBB1BD);
+const Color kMistyRose = Color(0xFFFAE0E4);
+const Color kLavenderBlush = Color(0xFFFFF0F3);
+const Color kClaret = Color(0xFF800F2F);
+const Color kChocolateCosmos = Color(0xFF590D22);
+const Color kRoseRed = Color(0xFFC9184A);
+
+/// Light Mode: Giảm bớt độ chói, nhấn vào hai tông pastel trung tính + một accent ấm
+final lightColorScheme = ColorScheme(
+  brightness: Brightness.light,
+
+  // Primary: Nút, link chính
+  primary: kTickleMePink,
+  onPrimary: Colors.white,
+
+  // Secondary: Accent phụ cho badge, hover
+  secondary: kCherryBlossom,
+  onSecondary: kChocolateCosmos,
+
+  // Tertiary: Nhẹ nhàng cho các icon thứ cấp
+  tertiary: kSalmonPink,
+  onTertiary: kChocolateCosmos,
+
+  // Error
+  error: kFollyRed,
+  onError: Colors.white,
+
+  // Surface: Nền cơ bản (ô card, form)
+  surface: kMistyRose,
+  onSurface: kChocolateCosmos,
+
+  // Các mức container để phân lớp background/card
+  surfaceContainerLowest: kLavenderBlush,
+  surfaceContainer: kMistyRose,
+  surfaceContainerHighest: kCherryBlossom,
+
+  // Outline & shadows
+  outline: kCherryBlossom,
+  shadow: Color(0x33000000),
+  scrim: Color(0x4D000000),
+
+  // Inverse (nếu cần context sáng-trên-tối)
+  inverseSurface: kChocolateCosmos,
+  onInverseSurface: kLavenderBlush,
+  inversePrimary: kSalmonPink,
+  surfaceTint: kTickleMePink,
+);
+
+/// Dark Mode: Loại bỏ quá tối/đen, dùng nền tối ấm, accent vừa phải để giữ cảm xúc
+final darkColorScheme = ColorScheme(
+  brightness: Brightness.dark,
+
+  // Primary: Nút chính
+  primary: kRoseRed,
+  onPrimary: Colors.white,
+
+  // Secondary: Accent phụ
+  secondary: kClaret,
+  onSecondary: Colors.white,
+
+  // Tertiary: Nhẹ nhàng cho icon phụ
+  tertiary: kSalmonPink,
+  onTertiary: Colors.white,
+
+  // Error
+  error: kFollyRed,
+  onError: Colors.black,
+
+  // Surface: Nền cơ bản
+  surface: kChocolateCosmos,
+  onSurface: kLavenderBlush,
+
+  // Các mức container
+  surfaceContainerLowest: Color(0xFF3D0E1F),
+  surfaceContainer: Color(0xFF4B1124),
+  surfaceContainerHighest: kClaret,
+
+  // Outline & shadows
+  outline: kSalmonPink,
+  shadow: Color(0x66000000),
+  scrim: Color(0x66000000),
+
+  // Inverse
+  inverseSurface: kLavenderBlush,
+  onInverseSurface: kChocolateCosmos,
+  inversePrimary: kTickleMePink,
+  surfaceTint: kRoseRed,
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -26,7 +124,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Emolog',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
+        fontFamily: 'Inter',
+        colorScheme: ColorScheme.fromSeed(seedColor: follyRed),
       ),
       initialRoute: '/',
       routes: {
@@ -41,12 +140,7 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Logging',
-          style: TextStyle(color: hotWinePink, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Logging')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -172,6 +266,23 @@ class _EmologFormState extends State<EmologForm> {
   }
 }
 
+class HelloLog extends StatelessWidget {
+  const HelloLog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Hi sweetie, how is your day?',
+      style: TextStyle(
+        fontFamily: 'MerriweatherSans',
+        fontSize: 30,
+        // fontWeight: FontWeight.bold,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+  }
+}
+
 class NoteLog extends StatelessWidget {
   const NoteLog({super.key, required this.controller});
   final TextEditingController controller;
@@ -190,6 +301,7 @@ class NoteLog extends StatelessWidget {
         //   }
         //   return null;
         // },
+        style: TextStyle(letterSpacing: 0.75),
         controller: controller,
       ),
     );
@@ -205,7 +317,7 @@ class MoodPicker extends StatefulWidget {
 }
 
 class _MoodPickerState extends State<MoodPicker> {
-  String _selectedMood = 'none';
+  // String _selectedMood = 'chill';
 
   final Map<String, IconData> moods = {
     'terrible': Icons.sentiment_very_dissatisfied,
@@ -226,46 +338,23 @@ class _MoodPickerState extends State<MoodPicker> {
           spacing: 20,
           runSpacing: 15,
           children: moods.entries.map((entry) {
-            final selected = _selectedMood == entry.key;
+            // final selected = _selectedMood == entry.key;
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    setState(() => _selectedMood = entry.key);
+                    // setState(() => _selectedMood = entry.key);
                     widget.onMoodSelected(entry.key);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: selected ? emoWinePink : rosePink,
-                  ),
-                  child: Icon(
-                    entry.value,
-                    size: 25,
-                    color: selected ? rosePink : emoWinePink,
-                  ),
+                  style: ElevatedButton.styleFrom(),
+                  child: Icon(entry.value, size: 25),
                 ),
                 Text(entry.key, style: TextStyle(fontSize: 16)),
               ],
             );
           }).toList(),
         ),
-      ),
-    );
-  }
-}
-
-class HelloLog extends StatelessWidget {
-  const HelloLog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Hi sweetie, how is your day?',
-      style: TextStyle(
-        color: hotWinePink,
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        fontStyle: FontStyle.italic,
       ),
     );
   }

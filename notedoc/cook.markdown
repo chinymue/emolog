@@ -58,8 +58,8 @@
 
 ##### 🎨 Design
 
-- [ ] `Use a custom font` – font nhẹ nhàng, phù hợp nhật ký
-- [ ] `Use themes to share colors and font styles` – set màu theo mood
+- [x] `Use a custom font` – font nhẹ nhàng, phù hợp nhật ký
+- [x] `Use themes to share colors and font styles` – set màu theo mood
 - [ ] `Display a snackbar` – hiển thị thông báo khi lưu log thành công
 
 ##### 🎞️ Animation & Effects
