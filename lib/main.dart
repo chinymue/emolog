@@ -34,6 +34,12 @@ const Color kClaret = Color(0xFF800F2F);
 const Color kChocolateCosmos = Color(0xFF590D22);
 const Color kRoseRed = Color(0xFFC9184A);
 
+Color adjustLightness(Color color, double amount, {double maxLightness = 0.9}) {
+  final hsl = HSLColor.fromColor(color);
+  final newLightness = (hsl.lightness + amount).clamp(0.0, maxLightness);
+  return hsl.withLightness(newLightness).toColor();
+}
+
 /// Light Mode: Giảm bớt độ chói, nhấn vào hai tông pastel trung tính + một accent ấm
 final lightColorScheme = ColorScheme(
   brightness: Brightness.light,
@@ -126,6 +132,26 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(seedColor: follyRed),
+        textTheme: TextTheme(
+          displayLarge: const TextStyle(
+            fontFamily: 'Merriweather',
+            fontWeight: FontWeight.w600,
+          ),
+          displayMedium: const TextStyle(
+            fontFamily: 'Merriweather',
+            fontWeight: FontWeight.w600,
+          ),
+          headlineLarge: const TextStyle(fontWeight: FontWeight.w600),
+          labelLarge: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
       initialRoute: '/',
       routes: {
@@ -140,7 +166,14 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Logging')),
+      appBar: AppBar(
+        title: Text(
+          'Logging',
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -230,7 +263,7 @@ class _EmologFormState extends State<EmologForm> {
       setState(() => _formLogList.add(log));
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
-        ..showSnackBar(SnackBar(content: Text('$log has been recorded')));
+        ..showSnackBar(SnackBar(content: Text('log has been recorded')));
       _controller.clear();
     }
   }
@@ -250,15 +283,12 @@ class _EmologFormState extends State<EmologForm> {
             onMoodSelected: (mood) => setState(() => _selectedMood = mood),
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _submitForm,
-            child: const Text('Submit', style: TextStyle(fontSize: 16)),
-          ),
+          ElevatedButton(onPressed: _submitForm, child: const Text('Submit')),
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: () =>
                 Navigator.pushNamed(context, '/logs', arguments: _formLogList),
-            child: const Text('History', style: TextStyle(fontSize: 16)),
+            child: const Text('History'),
           ),
         ],
       ),
@@ -273,10 +303,8 @@ class HelloLog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       'Hi sweetie, how is your day?',
-      style: TextStyle(
-        fontFamily: 'MerriweatherSans',
-        fontSize: 30,
-        // fontWeight: FontWeight.bold,
+      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+        color: Theme.of(context).colorScheme.primary,
         fontStyle: FontStyle.italic,
       ),
     );
@@ -317,7 +345,7 @@ class MoodPicker extends StatefulWidget {
 }
 
 class _MoodPickerState extends State<MoodPicker> {
-  // String _selectedMood = 'chill';
+  String _selectedMood = 'chill';
 
   final Map<String, IconData> moods = {
     'terrible': Icons.sentiment_very_dissatisfied,
@@ -330,7 +358,7 @@ class _MoodPickerState extends State<MoodPicker> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 150,
+      height: 200,
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Wrap(
@@ -338,19 +366,38 @@ class _MoodPickerState extends State<MoodPicker> {
           spacing: 20,
           runSpacing: 15,
           children: moods.entries.map((entry) {
-            // final selected = _selectedMood == entry.key;
+            final selected = _selectedMood == entry.key;
+            final bgButtonColor = Theme.of(
+              context,
+            ).colorScheme.primaryContainer;
+            final primaryColor = Theme.of(context).colorScheme.primary;
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    // setState(() => _selectedMood = entry.key);
+                    setState(() => _selectedMood = entry.key);
                     widget.onMoodSelected(entry.key);
                   },
-                  style: ElevatedButton.styleFrom(),
-                  child: Icon(entry.value, size: 25),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: selected
+                        ? adjustLightness(bgButtonColor, -0.15)
+                        : bgButtonColor,
+                    foregroundColor: selected
+                        ? adjustLightness(primaryColor, -0.1)
+                        : primaryColor,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Icon(entry.value, size: 35),
+                  ),
                 ),
-                Text(entry.key, style: TextStyle(fontSize: 16)),
+                Text(
+                  entry.key,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: primaryColor),
+                ),
               ],
             );
           }).toList(),
@@ -381,7 +428,7 @@ class HistoryLogPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(10),
             child: SizedBox(
-              height: 500,
+              height: 600,
               child: ListView(
                 scrollDirection: Axis.vertical,
                 children: [
