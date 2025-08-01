@@ -8,8 +8,8 @@ Data type related stuff in [[]] indicate that you can change into what you need.
 - Have different ways according to what kind of data you want to store:
   - **shared_preferences** plugin/package: small collection (KB), format often is key-value.
   - **path_provider** plugin w/ **dart:io**: bigger (MB), store in file(s), and all logic have to do manually.
-  - SQLite (**sqflite** plugin/package): sql data and query, often use when data is big. (made a try but not good & can't work it out, maybe that's too old)
-  - noSQL with **objectbox**, **Hive** (will try in future)
+  - SQLite (**sqflite** plugin/package): sql data and query, often use when data is big. (made a try but not good & can't work it out, maybe that doc too old)
+  - noSQL with **objectbox**, **Hive**, **Isar**
 
 #### shared_perferences
 
@@ -268,4 +268,145 @@ class NoteLogDB {
     await db.delete('notelogs', where: 'id = ?', whereArgs: [id]);
   }
 }
+```
+
+#### NoSQL with Isar
+
+1. add dependencies
+
+`flutter pub add isar isar_flutter_libs path_provider`
+`flutter pub add -d isar_generator build_runner`
+
+2. Annotate classes w `@collection`
+
+```
+import 'package:isar/isar.dart';
+
+part 'user.g.dart';
+
+@collection
+class User {
+  Id id = Isar.autoIncrement; // you can also use id = null to auto increment
+
+  String? name;
+
+  int? age;
+}
+```
+
+3. Gọi collection trên trong `main.dart` (Open Isar instance)
+
+```
+import 'package:isar/isar.dart';
+import 'notelog.dart'; // file chứa @collection
+import 'package:path_provider/path_provider.dart'; // nếu lưu trên mobile, desktop
+```
+
+```
+void main() async {
+  final dir = await getApplicationDocumentsDirectory(); // desktop/mobile
+  final isar = await Isar.open(
+    schema: [NoteLogSchema], // gọi list Schema đúng với tên collection đã đặt
+    directory: dir.path,
+  );
+
+  runApp(const MyApp());
+}
+```
+
+4. Run code generator
+
+`dart run build_runner build` (at root to find pubspec), add `--delete-conflicting-outputs` if needed.
+
+> w flutter (but deprecated): `flutter pub run build_runner build`
+
+> sau khi chạy xong lần đầu có thể xóa các chỗ sửa ở phần 3 đi để viết theo service
+
+5. Tạo `isar_service.dart`
+
+> khởi tạo `instance`:
+
+- bắt buộc phải có `directory` nhưng bản web không thể lấy được nên để `''`, kiểm tra bằng `kIsWeb` cung cấp bởi `foundation.dart`.
+
+```
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import './model/notelog.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+class IsarService {
+  late Future<Isar> db;
+
+  IsarService() {
+    db = _openDB();
+  }
+
+  // PRIVATE: khởi tạo DB
+  Future<Isar> _openDB() async {
+    if (Isar.instanceNames.isEmpty) {
+      if (kIsWeb) {
+        return await Isar.open(
+          [NoteLogSchema],
+          directory: '',
+          name: 'default',
+          inspector: true,
+        );
+      } else {
+        final dir = await getApplicationDocumentsDirectory();
+        return await Isar.open(
+          [NoteLogSchema],
+          directory: dir.path,
+          inspector: true,
+        );
+      }
+    }
+    return Future.value(Isar.getInstance());
+  }
+}
+```
+
+> create & update
+
+```
+  // CREATE or UPDATE
+  Future<void> saveNote(NoteLog note) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.noteLogs.put(note); // tự động tạo mới hoặc cập nhật nếu có id
+    });
+  }
+```
+
+> read:
+
+```
+  // READ - lấy tất cả ghi chú
+  Future<List<NoteLog>> getAllNotes() async {
+    final isar = await db;
+    return await isar.noteLogs.where().findAll();
+  }
+
+  // READ - theo id
+  Future<NoteLog?> getNoteById(int id) async {
+    final isar = await db;
+    return await isar.noteLogs.get(id);
+  }
+```
+
+> delete:
+
+```
+  // DELETE - theo id
+  Future<void> deleteNoteById(int id) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.noteLogs.delete(id);
+    });
+  }
+
+  // DELETE - tất cả dữ liệu
+  Future<void> cleanDB() async {
+    final isar = await db;
+    await isar.writeTxn(() => isar.clear());
+  }
 ```

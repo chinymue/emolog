@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'dart:convert'; // json
+// import 'dart:io';
+// import 'package:path_provider/path_provider.dart';
+// import 'dart:convert'; // json
 // import 'package:sqflite/sqflite.dart';
 // import 'package:path/path.dart';
+// import 'package:isar/isar.dart';
+import './isar/model/notelog.dart';
+import './isar/isar_service.dart';
 
-void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
 
 /// Một số màu tiện dùng
 const Color follyRed = Color(0xFFFF0A54);
@@ -23,104 +29,11 @@ const Color claret = Color(0xFF800F2F);
 const Color roseRed = Color(0xFFC9184A);
 const Color amaranthPurple = Color(0xFFA4133C);
 
-/// Định nghĩa lại một số màu chính
-const Color kFollyRed = Color(0xFFFF0A54);
-const Color kTickleMePink = Color(0xFFFF85A1);
-const Color kSalmonPink = Color(0xFFFF99AC);
-const Color kCherryBlossom = Color(0xFFFBB1BD);
-const Color kMistyRose = Color(0xFFFAE0E4);
-const Color kLavenderBlush = Color(0xFFFFF0F3);
-const Color kClaret = Color(0xFF800F2F);
-const Color kChocolateCosmos = Color(0xFF590D22);
-const Color kRoseRed = Color(0xFFC9184A);
-
 Color adjustLightness(Color color, double amount, {double maxLightness = 0.9}) {
   final hsl = HSLColor.fromColor(color);
   final newLightness = (hsl.lightness + amount).clamp(0.0, maxLightness);
   return hsl.withLightness(newLightness).toColor();
 }
-
-/// Light Mode: Giảm bớt độ chói, nhấn vào hai tông pastel trung tính + một accent ấm
-final lightColorScheme = ColorScheme(
-  brightness: Brightness.light,
-
-  // Primary: Nút, link chính
-  primary: kTickleMePink,
-  onPrimary: Colors.white,
-
-  // Secondary: Accent phụ cho badge, hover
-  secondary: kCherryBlossom,
-  onSecondary: kChocolateCosmos,
-
-  // Tertiary: Nhẹ nhàng cho các icon thứ cấp
-  tertiary: kSalmonPink,
-  onTertiary: kChocolateCosmos,
-
-  // Error
-  error: kFollyRed,
-  onError: Colors.white,
-
-  // Surface: Nền cơ bản (ô card, form)
-  surface: kMistyRose,
-  onSurface: kChocolateCosmos,
-
-  // Các mức container để phân lớp background/card
-  surfaceContainerLowest: kLavenderBlush,
-  surfaceContainer: kMistyRose,
-  surfaceContainerHighest: kCherryBlossom,
-
-  // Outline & shadows
-  outline: kCherryBlossom,
-  shadow: Color(0x33000000),
-  scrim: Color(0x4D000000),
-
-  // Inverse (nếu cần context sáng-trên-tối)
-  inverseSurface: kChocolateCosmos,
-  onInverseSurface: kLavenderBlush,
-  inversePrimary: kSalmonPink,
-  surfaceTint: kTickleMePink,
-);
-
-/// Dark Mode: Loại bỏ quá tối/đen, dùng nền tối ấm, accent vừa phải để giữ cảm xúc
-final darkColorScheme = ColorScheme(
-  brightness: Brightness.dark,
-
-  // Primary: Nút chính
-  primary: kRoseRed,
-  onPrimary: Colors.white,
-
-  // Secondary: Accent phụ
-  secondary: kClaret,
-  onSecondary: Colors.white,
-
-  // Tertiary: Nhẹ nhàng cho icon phụ
-  tertiary: kSalmonPink,
-  onTertiary: Colors.white,
-
-  // Error
-  error: kFollyRed,
-  onError: Colors.black,
-
-  // Surface: Nền cơ bản
-  surface: kChocolateCosmos,
-  onSurface: kLavenderBlush,
-
-  // Các mức container
-  surfaceContainerLowest: Color(0xFF3D0E1F),
-  surfaceContainer: Color(0xFF4B1124),
-  surfaceContainerHighest: kClaret,
-
-  // Outline & shadows
-  outline: kSalmonPink,
-  shadow: Color(0x66000000),
-  scrim: Color(0x66000000),
-
-  // Inverse
-  inverseSurface: kLavenderBlush,
-  onInverseSurface: kChocolateCosmos,
-  inversePrimary: kTickleMePink,
-  surfaceTint: kRoseRed,
-);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -141,15 +54,28 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Merriweather',
             fontWeight: FontWeight.w600,
           ),
+          displaySmall: const TextStyle(
+            fontFamily: 'Merriweather',
+            fontWeight: FontWeight.w600,
+          ),
           headlineLarge: const TextStyle(fontWeight: FontWeight.w600),
+          headlineSmall: const TextStyle(fontWeight: FontWeight.w600),
           labelLarge: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+          labelMedium: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+          labelSmall: const TextStyle(
+            // fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -165,13 +91,13 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final textHdSmall = Theme.of(context).textTheme.headlineSmall;
+    final colorPrimary = Theme.of(context).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Logging',
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          style: textHdSmall?.copyWith(color: colorPrimary),
         ),
       ),
       body: Padding(
@@ -179,7 +105,7 @@ class MyHomePage extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [EmologForm(storage: FormLogStorage())],
+            children: [EmologForm()],
           ),
         ), //
       ),
@@ -187,47 +113,8 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-// read & write data in file as storage
-class FormLogStorage {
-  Future<String> get _localPath async =>
-      (await getApplicationDocumentsDirectory()).path;
-
-  Future<File> get _localFile async => File('${await _localPath}/formlog.txt');
-
-  Future<File> writeFormLog(List<String> formLogList) async {
-    final file = await _localFile;
-    final jsonLines = formLogList.map((log) => json.encode(log)).join('\n');
-    return file.writeAsString(jsonLines, flush: true);
-  }
-
-  Future<File> appendFormLog(String newFormLog) async {
-    final file = await _localFile;
-    return file.writeAsString(
-      '${json.encode(newFormLog)}\n',
-      mode: FileMode.append,
-      flush: true,
-    );
-  }
-
-  Future<List<String>> readFormLog() async {
-    try {
-      final file = await _localFile;
-      final contents = await file.readAsString();
-      return contents
-          .split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .map((line) => json.decode(line) as String)
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-}
-
 class EmologForm extends StatefulWidget {
-  const EmologForm({super.key, required this.storage});
-  final FormLogStorage storage;
-
+  const EmologForm({super.key});
   @override
   State<EmologForm> createState() => _EmologFormState();
 }
@@ -235,17 +122,8 @@ class EmologForm extends StatefulWidget {
 class _EmologFormState extends State<EmologForm> {
   final _formKey = GlobalKey<FormState>();
   final _controller = TextEditingController();
-  List<String> _formLogList = [];
-  String _selectedMood = 'chill';
-
-  // read & write into file
-  @override
-  void initState() {
-    super.initState();
-    widget.storage.readFormLog().then(
-      (value) => setState(() => _formLogList = value),
-    );
-  }
+  String _selectedLabelMood = 'chill';
+  // int _selectedNumericMood = 0;
 
   // used to discard resources used by obj when don't need obj anymore, avoid mmr leak
   @override
@@ -256,11 +134,14 @@ class _EmologFormState extends State<EmologForm> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final log =
-          'Note: ${_controller.text}\nMood: $_selectedMood\nDate: ${DateTime.now().toIso8601String()}';
-      await widget.storage.appendFormLog(log);
+      final isarService = IsarService();
+      isarService.saveNote(
+        NoteLog()
+          ..note = _controller.text
+          ..labelMood = _selectedLabelMood
+          ..date = DateTime.now(),
+      );
       if (!mounted) return;
-      setState(() => _formLogList.add(log));
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
         ..showSnackBar(SnackBar(content: Text('log has been recorded')));
@@ -277,17 +158,16 @@ class _EmologFormState extends State<EmologForm> {
         children: <Widget>[
           HelloLog(),
           const SizedBox(height: 10),
-          NoteLog(controller: _controller),
+          NoteLogForm(controller: _controller),
           const SizedBox(height: 20),
           MoodPicker(
-            onMoodSelected: (mood) => setState(() => _selectedMood = mood),
+            onMoodSelected: (mood) => setState(() => _selectedLabelMood = mood),
           ),
           const SizedBox(height: 20),
           ElevatedButton(onPressed: _submitForm, child: const Text('Submit')),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, '/logs', arguments: _formLogList),
+            onPressed: () => Navigator.pushNamed(context, '/logs'),
             child: const Text('History'),
           ),
         ],
@@ -301,18 +181,20 @@ class HelloLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
+    final colorPrimary = Theme.of(context).colorScheme.primary;
     return Text(
       'Hi sweetie, how is your day?',
-      style: Theme.of(context).textTheme.displayMedium?.copyWith(
-        color: Theme.of(context).colorScheme.primary,
+      style: textDisplaySmall?.copyWith(
+        color: adjustLightness(colorPrimary, 0),
         fontStyle: FontStyle.italic,
       ),
     );
   }
 }
 
-class NoteLog extends StatelessWidget {
-  const NoteLog({super.key, required this.controller});
+class NoteLogForm extends StatelessWidget {
+  const NoteLogForm({super.key, required this.controller});
   final TextEditingController controller;
 
   @override
@@ -357,6 +239,9 @@ class _MoodPickerState extends State<MoodPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final colorBgPrimary = Theme.of(context).colorScheme.primaryContainer;
+    final colorPrimary = Theme.of(context).colorScheme.primary;
+    final textLabelLarge = Theme.of(context).textTheme.labelLarge;
     return SizedBox(
       height: 200,
       child: SingleChildScrollView(
@@ -367,10 +252,6 @@ class _MoodPickerState extends State<MoodPicker> {
           runSpacing: 15,
           children: moods.entries.map((entry) {
             final selected = _selectedMood == entry.key;
-            final bgButtonColor = Theme.of(
-              context,
-            ).colorScheme.primaryContainer;
-            final primaryColor = Theme.of(context).colorScheme.primary;
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -381,11 +262,11 @@ class _MoodPickerState extends State<MoodPicker> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: selected
-                        ? adjustLightness(bgButtonColor, -0.15)
-                        : bgButtonColor,
+                        ? adjustLightness(colorBgPrimary, -0.15)
+                        : colorBgPrimary,
                     foregroundColor: selected
-                        ? adjustLightness(primaryColor, -0.1)
-                        : primaryColor,
+                        ? adjustLightness(colorPrimary, -0.1)
+                        : colorPrimary,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -394,9 +275,7 @@ class _MoodPickerState extends State<MoodPicker> {
                 ),
                 Text(
                   entry.key,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelLarge?.copyWith(color: primaryColor),
+                  style: textLabelLarge?.copyWith(color: colorPrimary),
                 ),
               ],
             );
@@ -407,46 +286,85 @@ class _MoodPickerState extends State<MoodPicker> {
   }
 }
 
-class HistoryLog {
-  final String note;
-  final String mood;
-  final String date;
-  const HistoryLog(this.note, this.mood, this.date);
-}
-
-class HistoryLogPage extends StatelessWidget {
+class HistoryLogPage extends StatefulWidget {
   const HistoryLogPage({super.key});
 
   @override
+  State<HistoryLogPage> createState() => _HistoryLogPageState();
+}
+
+class _HistoryLogPageState extends State<HistoryLogPage> {
+  final isarService = IsarService();
+  late Future<List<NoteLog>> _noteLogsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _noteLogsFuture = isarService.getAllNotes();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<String> history =
-        ModalRoute.of(context)!.settings.arguments as List<String>;
+    final colorPrimary = Theme.of(context).colorScheme.primary;
+    final textHdSmall = Theme.of(context).textTheme.headlineSmall;
+    final textLabelLarge = Theme.of(context).textTheme.labelLarge;
+    final textLabelMedium = Theme.of(context).textTheme.labelMedium;
     return Scaffold(
-      appBar: AppBar(title: const Text('History')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: SizedBox(
-              height: 600,
-              child: ListView(
-                scrollDirection: Axis.vertical,
-                children: [
-                  for (var i in history)
-                    ListTile(
-                      leading: Icon(Icons.monitor_heart),
-                      title: Text(i),
-                    ),
-                ],
+      appBar: AppBar(
+        title: Text(
+          'History',
+          style: textHdSmall?.copyWith(color: colorPrimary),
+        ),
+      ),
+      body: FutureBuilder(
+        future: _noteLogsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            final logs = snapshot.data;
+            return ListView.builder(
+              padding: const EdgeInsets.only(bottom: 100),
+              itemCount: logs?.length,
+              itemBuilder: (context, index) {
+                final log = logs?[index];
+                return ListTile(
+                  leading: Icon(Icons.monitor_heart, color: colorPrimary),
+                  title: Text(
+                    log?.note ?? log?.date.toIso8601String() ?? 'Default note',
+                    style: textLabelLarge?.copyWith(color: colorPrimary),
+                  ),
+                  subtitle: Text(
+                    log?.date.toIso8601String() ?? 'Default datetime',
+                  ),
+                  trailing: Text(
+                    log?.labelMood ??
+                        log?.numericMood.toString() ??
+                        'Default mood',
+                    style: textLabelMedium?.copyWith(color: colorPrimary),
+                  ),
+                );
+              },
+            );
+          }
+        },
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            height: 30,
+            width: 160,
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Go back'),
               ),
             ),
           ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Go back', style: TextStyle(fontSize: 16)),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -502,19 +420,19 @@ class HistoryLogPage extends StatelessWidget {
   /** sqflite
   final NoteLogDB _db = NoteLogDB();
   Future<void> _saveNote(String note) async {
-    final newNote = NoteLog(note: note, date: DateTime.now().toIso8601String());
+    final newNote = NoteLogForm(note: note, date: DateTime.now().toIso8601String());
     await _db.insertNote(newNote);
   }
    */
 
 // sqflite
 /**
-class NoteLog {
+class NoteLogForm {
   final int? id;
   final String note;
   final String date;
 
-  NoteLog({this.id, required this.note, required this.date});
+  NoteLogForm({this.id, required this.note, required this.date});
 
   // Convert data into a Map, each key must correspond to name of col in db
   Map<String, Object?> toMap() => {
@@ -544,7 +462,7 @@ class NoteLogDB {
     );
   }
 
-  Future<void> insertNote(NoteLog newNote) async {
+  Future<void> insertNote(NoteLogForm newNote) async {
     final db = await database;
     await db.insert(
       'notelogs',
@@ -553,7 +471,7 @@ class NoteLogDB {
     );
   }
 
-  Future<List<NoteLog>> notelogs() async {
+  Future<List<NoteLogForm>> notelogs() async {
     final db = await database;
     final List<Map<String, Object?>> notelogMaps = await db.query('notelogs');
     return [
@@ -563,19 +481,19 @@ class NoteLogDB {
             'date': date as String,
           }
           in notelogMaps)
-        NoteLog(id: id, note: note, date: date),
+        NoteLogForm(id: id, note: note, date: date),
     ];
   }
 
-  Future<void> updateNote(NoteLog notelog) async {
+  Future<void> updateNote(NoteLogForm NoteLogForm) async {
     final db = await database;
     await db.update(
       'notelogs',
-      notelog.toMap(),
+      NoteLogForm.toMap(),
       // Ensure that the note has a matching id.
       where: 'id = ?',
       // Pass the note's id as a whereArg to prevent SQL injection.
-      whereArgs: [notelog.id],
+      whereArgs: [NoteLogForm.id],
     );
   }
 

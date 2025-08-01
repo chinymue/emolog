@@ -122,3 +122,26 @@ MaterialApp(
   },
 );
 ```
+
+#### Widget Scaffold và bottomNavigationBar
+
+- Nếu không giới hạn chiều rộng thì sẽ trải toàn bộ width của Scaffold (tức là toàn bộ width của màn hình).
+- Nếu không giới hạn chiều cao mà sử dụng các widget như `Align`, `Center` sẽ khiến `bottomNavigationBar` chiếm **toàn bộ không gian** của `body` của `Scaffold`.
+
+```
+ bottomNavigationBar: SafeArea(
+  child: Padding(
+    padding: const EdgeInsets.all(20),
+    child: SizedBox(
+      height: 30,
+      width: 160,
+      child: Center(
+        child: ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Go back'),
+        ),
+      ),
+    ),
+  ),
+),
+```

@@ -15,7 +15,7 @@ ListView(
 ```
 
 - list theo chiều ngang: `scrollDirection: Axis.horizontal`
-- chú ý cần wrap listview vào container giới hạn chiều cao, hoặc `Expanded`.
+- chú ý cần wrap listview vào container giới hạn chiều cao, hoặc `Expanded` trừ khi dùng `ListView.builder()`.
 - thêm divider / khoảng cách giữa các item: `ListView.separated`
 
 > dùng `ListView.builder()` để lazy load, cần truyền `itemCount` và `itemBuilder`:
