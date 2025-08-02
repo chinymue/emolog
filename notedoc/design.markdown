@@ -9,7 +9,7 @@
 - các định dạng file font hỗ trợ: `.ttc`, `.ttf`, `.otf`
 - tải xuống file zip chứa các file font `.ttf`, chuyển vào thư mục `root/assets/fonts/..` và khai báo trong pubspec.yaml rồi chạy `flutter pub get` để lưu.
 - có hai dạng file **static** và **\_opsz,wght** do ggfont đặt: opsz (optical size — cỡ chữ thông minh), wght (weight — độ đậm). Có thể chỉ có một trong hai.
-- ngoài ra có thể sử dụng trực tiếp `GoogleFonts.` mà không cần setup gì: `GoogleFonts.oswald(fontSize: 30, fontStyle: FontStyle.italic)`.
+- ngoài ra có thể sử dụng trực tiếp `GoogleFonts.` mà không cần setup chi tiết: `GoogleFonts.oswald(fontSize: 30, fontStyle: FontStyle.italic)` nếu cài package `google_fonts`.
 
 > khai báo font:
 

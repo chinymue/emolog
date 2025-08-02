@@ -12,11 +12,12 @@ class IsarService {
 
   // CREATE or UPDATE
   // tự động tạo mới hoặc cập nhật nếu có id
-  Future<void> saveNote(NoteLog note) async {
+  Future<NoteLog> saveNote(NoteLog note) async {
     final isar = await db;
     await isar.writeTxn(() async {
       await isar.noteLogs.put(note);
     });
+    return note;
   }
 
   // READ - lấy tất cả ghi chú
@@ -39,7 +40,7 @@ class IsarService {
     });
   }
 
-  Future<void> cleanDB() async {
+  Future<void> clearDB() async {
     final isar = await db;
     await isar.writeTxn(() => isar.clear());
   }

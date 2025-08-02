@@ -365,7 +365,7 @@ class IsarService {
 }
 ```
 
-> create & update
+> create & update: lưu ý nếu đặt id là `autoIncreament` thì phải trả về kiểu giá trị nếu muốn biết id của object mới lưu, thay vì trả về kiểu `void`.
 
 ```
   // CREATE or UPDATE
@@ -374,6 +374,17 @@ class IsarService {
     await isar.writeTxn(() async {
       await isar.noteLogs.put(note); // tự động tạo mới hoặc cập nhật nếu có id
     });
+  }
+```
+
+```
+  // CREATE or UPDATE w return
+  Future<NoteLog> saveNote(NoteLog note) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.noteLogs.put(note); // tự động tạo mới hoặc cập nhật nếu có id
+    });
+    return note // đã cập nhận id
   }
 ```
 
