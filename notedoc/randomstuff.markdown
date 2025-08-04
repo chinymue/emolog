@@ -34,7 +34,10 @@
 #### FutureBuilder
 
 - widget này có thể nhận dữ liệu kiểu `Future` ở field `future` sau đó sẽ xử lý bằng `builder`.
+<<<<<<< HEAD
 - Cẩn thận sử dụng vì vẫn chưa áp dụng được thành công. Không dùng cho những dữ liệu cần thay đổi linh hoạt
+=======
+>>>>>>> b8bd79a071e1f544b3d4d28efd7ae0a34ba66d69
 
   > `FutureBuilder` example:
 

@@ -3,15 +3,11 @@ import 'dart:async';
 import './isar/model/notelog.dart';
 import './isar/isar_service.dart';
 import './ultils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
-
-// final RouteObserver<ModalRoute<void>> routeObserver =
-//     RouteObserver<ModalRoute<void>>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -22,11 +18,7 @@ class MyApp extends StatelessWidget {
       title: 'Emolog',
       theme: buildAppTheme(follyRed),
       initialRoute: '/',
-      routes: {
-        '/': (c) => MyHomePage(),
-        '/logs': (c) => HistoryPage(),
-        '/db': (c) => DatabasePage(),
-      },
+      routes: {'/': (c) => MyHomePage(), '/logs': (c) => HistoryPage()},
       // navigatorObservers: [routeObserver],
     );
   }
@@ -161,13 +153,6 @@ class NoteLogForm extends StatelessWidget {
       child: TextFormField(
         maxLines: 5,
         decoration: const InputDecoration(hintText: 'Tell me your feelings'),
-        // validator receives text that user entered
-        // validator: (value) {
-        //   if (value == null || value.isEmpty) {
-        //     return 'Please enter some text';
-        //   }
-        //   return null;
-        // },
         style: TextStyle(letterSpacing: 0.75),
         controller: controller,
       ),
@@ -251,7 +236,6 @@ class _MoodPickerState extends State<MoodPicker> {
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
-
   @override
   State<HistoryPage> createState() => _HistoryLogPageState();
 }
@@ -365,99 +349,6 @@ class _HistoryLogPageState extends State<HistoryPage> {
                   Navigator.pushNamed(c, '/db');
                 },
                 child: Text('DB Page'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class DatabasePage extends StatelessWidget {
-  DatabasePage({super.key});
-  final isarService = IsarService();
-
-  @override
-  Widget build(BuildContext c) {
-    return Scaffold(
-      appBar: buildAppBar(c, 'Database'),
-      body: _buildBody(),
-      bottomNavigationBar: _buildBottomBar(c),
-    );
-  }
-
-  Widget _buildBody() => FutureBuilder(
-    future: isarService.getAllNotes(),
-    builder: (context, snap) {
-      if (snap.connectionState == ConnectionState.waiting) {
-        return const Center(child: CircularProgressIndicator());
-      } else if (snap.hasError) {
-        return Center(child: Text('Error: ${snap.error}'));
-      } else {
-        final logs = snap.data?.reversed.toList() ?? [];
-        if (logs.isEmpty) {
-          return const Center(child: Text('No logs yet'));
-        } else {
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
-            itemCount: logs.length,
-            itemBuilder: (c, i) => _buildLogTitle(c, logs[i]),
-          );
-        }
-      }
-    },
-  );
-
-  String _shorten(String note) =>
-      note.length > 16 ? '${note.substring(0, 16)}…' : note;
-
-  Widget _buildLogTitle(BuildContext c, NoteLog log) {
-    final theme = Theme.of(c);
-    // final numMood = log.numericMood.toString();
-    return ListTile(
-      leading: Icon(
-        Icons.monitor_heart,
-        color: log.isFavor
-            ? theme.colorScheme.primary
-            : adjustLightness(theme.colorScheme.primary, 0.3),
-      ),
-      title: Text(
-        _shorten(log.note!),
-        style: theme.textTheme.headlineSmall?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      ),
-      subtitle: Text(
-        formatShortDateTime(log.date),
-        style: theme.textTheme.labelMedium?.copyWith(
-          fontWeight: kFontWeightRegular,
-        ),
-      ),
-      trailing: Icon(
-        moods[log.labelMood],
-        size: 30,
-        color: theme.colorScheme.primary,
-      ),
-    );
-  }
-
-  Widget _buildBottomBar(BuildContext c) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: SizedBox(
-        height: 30,
-        width: 100,
-        child: Center(
-          child: Row(
-            children: [
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(c, '/'),
-                child: Text('Main Page'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(c, '/logs'),
-                child: Text('History Page'),
               ),
             ],
           ),
