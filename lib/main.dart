@@ -3,6 +3,8 @@ import 'dart:async';
 import './isar/model/notelog.dart';
 import './isar/isar_service.dart';
 import './ultils.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,13 @@ class MyApp extends StatelessWidget {
         pages[1]['route']: (c) => HistoryPage(),
         pages[2]['route']: (c) => SettingsPage(),
       },
-      // navigatorObservers: [routeObserver],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        quill.FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('vi')],
     );
   }
 }
@@ -94,6 +102,7 @@ class _EmologFormState extends State<EmologForm> {
           HelloLog(),
           const SizedBox(height: kPadding),
           MoodPicker(
+            selectedMood: _selectedLabelMood,
             onMoodSelected: (mood) => setState(() => _selectedLabelMood = mood),
           ),
           const SizedBox(height: kPaddingLarge),
@@ -139,41 +148,54 @@ class NoteLogForm extends StatelessWidget {
 }
 
 class MoodPicker extends StatefulWidget {
-  MoodPicker({super.key, required this.onMoodSelected});
+  MoodPicker({
+    super.key,
+    required this.selectedMood,
+    required this.onMoodSelected,
+  });
   final void Function(String selectedMood) onMoodSelected;
+  final String selectedMood;
 
   @override
   State<MoodPicker> createState() => _MoodPickerState();
 }
 
 class _MoodPickerState extends State<MoodPicker> {
-  String _selectedMood = 'chill';
+  late String _currentMood;
+  @override
+  void initState() {
+    super.initState();
+    _currentMood = widget.selectedMood;
+  }
 
   @override
   Widget build(BuildContext c) {
     final colorPrimary = Theme.of(c).colorScheme.primary;
     return SizedBox(
-      height: 50,
+      height: 70,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: moods.entries.map((entry) {
-            final selected = _selectedMood == entry.key;
-            return IconButton(
-              icon: Icon(
-                entry.value,
-                size: iconMaxSize,
-                color: selected
-                    ? colorPrimary
-                    : adjustLightness(colorPrimary, 0.2),
+            final selected = _currentMood == entry.key;
+            return Tooltip(
+              message: entry.key,
+              preferBelow: false,
+              child: IconButton(
+                icon: Icon(
+                  entry.value,
+                  size: iconMaxSize,
+                  color: selected
+                      ? colorPrimary
+                      : adjustLightness(colorPrimary, 0.2),
+                ),
+                onPressed: () {
+                  setState(() => _currentMood = entry.key);
+                  widget.onMoodSelected(entry.key);
+                },
+                splashRadius: kBorderRadiusSmall,
               ),
-              onPressed: () {
-                setState(() => _selectedMood = entry.key);
-                widget.onMoodSelected(entry.key);
-              },
-              tooltip: entry.key,
-              splashRadius: kBorderRadiusSmall,
             );
           }).toList(),
         ),
@@ -276,6 +298,12 @@ class _HistoryPageState extends State<HistoryPage> {
     final colorScheme = Theme.of(c).colorScheme;
     // final numMood = log.numericMood.toString();
     return ListTile(
+      onTap: () => Navigator.push(
+        c,
+        MaterialPageRoute(
+          builder: (c) => DetailsLog(isarService: isarService, content: log),
+        ),
+      ),
       leading: IconButton(
         icon: Icon(
           Icons.monitor_heart,
@@ -300,6 +328,77 @@ class _HistoryPageState extends State<HistoryPage> {
         moods[log.labelMood],
         size: iconSizeLarge,
         color: colorScheme.primary,
+      ),
+    );
+  }
+}
+
+class DetailsLog extends StatefulWidget {
+  const DetailsLog({
+    super.key,
+    required this.isarService,
+    required this.content,
+  });
+  final NoteLog content;
+  final IsarService isarService;
+
+  @override
+  State<DetailsLog> createState() => _DetailsLogState();
+}
+
+class _DetailsLogState extends State<DetailsLog> {
+  late final quill.QuillController _controller;
+  late final String rawNote;
+  late final String? _currentMood;
+  // late final int? _currentMoodPoint;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentMood = widget.content.labelMood;
+    rawNote = (widget.content.note ?? '').split('\n').first.trim();
+    final doc = quill.Document()..insert(0, rawNote);
+    _controller = quill.QuillController(
+      document: doc,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+  }
+
+  Future<void> _saveChanged(NoteLog log) async {
+    await widget.isarService.saveNote(log);
+  }
+
+  @override
+  Widget build(BuildContext c) {
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Note detail',
+          style: textTheme.headlineMedium?.copyWith(color: colorScheme.outline),
+        ),
+        actions: [
+          IconButton(icon: Icon(Icons.save), onPressed: () => _saveChanged),
+        ],
+      ),
+      body: Column(
+        children: [
+          MoodPicker(
+            selectedMood: _currentMood ?? '',
+            onMoodSelected: (mood) => setState(() => _currentMood = mood),
+          ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(kPadding),
+              child: quill.QuillEditor.basic(controller: _controller),
+            ),
+          ),
+          quill.QuillSimpleToolbar(
+            controller: _controller,
+            config: quill.QuillSimpleToolbarConfig(),
+          ),
+        ],
       ),
     );
   }

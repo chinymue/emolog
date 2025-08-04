@@ -312,3 +312,52 @@ ElevatedButton(
 only different w/ ElevatedButton is `tooltip` property used to show some description when hover the button.
 
 `FloatingActionButton(tooltip: 'Show me the value!',...)`
+
+### Form with style (Rich Text)
+
+- chỉ xử lý `rich text` cho hiển thị UI thì dùng widget `ExtendedTextField` với các kiểu `TextSpan`.
+- cho phép người dùng nhập chỉnh sửa định dạng các kiểu dùng package `Quill`.
+
+#### Quill
+
+1. `flutter pub add flutter_quill`
+2. import các thư viện cần dùng:
+
+```
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:flutter_localizations/flutter_localizations.dart';
+```
+
+> Example using `Quill`:
+
+```
+class RichTextEditor extends StatefulWidget {
+  @override
+  State<RichTextEditor> createState() => _RichTextEditorState();
+}
+
+class _RichTextEditorState extends State<RichTextEditor> {
+  final quill.QuillController _controller = quill.QuillController.basic();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Quill Editor")),
+      body: Column(
+        children: [
+          quill.QuillToolbar.basic(controller: _controller),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(12),
+              child: quill.QuillEditor.basic(
+                controller: _controller,
+                readOnly: false,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
