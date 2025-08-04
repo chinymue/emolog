@@ -279,6 +279,8 @@ class NoteLogDB {
 
 2. Annotate classes w `@collection`
 
+- lưu ý mỗi lần chỉnh sửa collection đều phải gọi build lại file ở bước 4!
+
 ```
 import 'package:isar/isar.dart';
 

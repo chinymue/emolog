@@ -13,4 +13,6 @@ class NoteLog {
   int? numericMood;
 
   late DateTime date;
+
+  bool isFavor = false;
 }

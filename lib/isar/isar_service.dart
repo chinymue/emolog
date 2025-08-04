@@ -2,6 +2,8 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import './model/notelog.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+// import '../ultils.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class IsarService {
   late Future<Isar> db;
@@ -26,6 +28,16 @@ class IsarService {
     return await isar.noteLogs.where().findAll();
   }
 
+  // // chưa áp dụng được thành công
+  // Stream<List<NoteLog>> watchAllNotes() {
+  //   // Trả về một Stream emit ngay và khi có bất kỳ thay đổi trên collection noteLogs
+  //   return Stream.fromFuture(db).asyncExpand((isar) {
+  //     return isar.noteLogs
+  //         .where() // query tất cả NoteLog
+  //         .watch(fireImmediately: true);
+  //   });
+  // }
+
   // READ - theo id
   Future<NoteLog?> getNoteById(int id) async {
     final isar = await db;
@@ -44,6 +56,28 @@ class IsarService {
     final isar = await db;
     await isar.writeTxn(() => isar.clear());
   }
+
+  // // chưa áp dụng được thành công
+  // // Đồng bộ lại trường isFavor của NoteLog từ SharedPreferences
+  // Future<void> syncFavoritesFromPrefs() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final favList = prefs.getStringList(kPrefsKey) ?? [];
+
+  //   final isar = await db; // hoặc instance của Isar
+  //   // Lấy tất cả notes
+  //   final allNotes = await isar.noteLogs.where().findAll();
+
+  //   await isar.writeTxn(() async {
+  //     for (final note in allNotes) {
+  //       // Cập nhật isFavor dựa trên prefs
+  //       note.isFavor = favList.contains(note.id.toString());
+  //       await isar.noteLogs.put(note);
+  //     }
+  //   });
+
+  //   // Xóa cache tạm trong prefs
+  //   await prefs.remove(kPrefsKey);
+  // }
 
   Future<Isar> _openDB() async {
     if (Isar.instanceNames.isEmpty) {

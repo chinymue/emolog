@@ -22,18 +22,23 @@ const NoteLogSchema = CollectionSchema(
       name: r'date',
       type: IsarType.dateTime,
     ),
-    r'labelMood': PropertySchema(
+    r'isFavor': PropertySchema(
       id: 1,
+      name: r'isFavor',
+      type: IsarType.bool,
+    ),
+    r'labelMood': PropertySchema(
+      id: 2,
       name: r'labelMood',
       type: IsarType.string,
     ),
     r'note': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'note',
       type: IsarType.string,
     ),
     r'numericMood': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'numericMood',
       type: IsarType.long,
     )
@@ -80,9 +85,10 @@ void _noteLogSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.date);
-  writer.writeString(offsets[1], object.labelMood);
-  writer.writeString(offsets[2], object.note);
-  writer.writeLong(offsets[3], object.numericMood);
+  writer.writeBool(offsets[1], object.isFavor);
+  writer.writeString(offsets[2], object.labelMood);
+  writer.writeString(offsets[3], object.note);
+  writer.writeLong(offsets[4], object.numericMood);
 }
 
 NoteLog _noteLogDeserialize(
@@ -94,9 +100,10 @@ NoteLog _noteLogDeserialize(
   final object = NoteLog();
   object.date = reader.readDateTime(offsets[0]);
   object.id = id;
-  object.labelMood = reader.readStringOrNull(offsets[1]);
-  object.note = reader.readStringOrNull(offsets[2]);
-  object.numericMood = reader.readLongOrNull(offsets[3]);
+  object.isFavor = reader.readBool(offsets[1]);
+  object.labelMood = reader.readStringOrNull(offsets[2]);
+  object.note = reader.readStringOrNull(offsets[3]);
+  object.numericMood = reader.readLongOrNull(offsets[4]);
   return object;
 }
 
@@ -110,10 +117,12 @@ P _noteLogDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -310,6 +319,16 @@ extension NoteLogQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> isFavorEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isFavor',
+        value: value,
       ));
     });
   }
@@ -695,6 +714,18 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByIsFavor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByIsFavorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavor', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByLabelMood() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'labelMood', Sort.asc);
@@ -758,6 +789,18 @@ extension NoteLogQuerySortThenBy
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByIsFavor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByIsFavorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavor', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByLabelMood() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'labelMood', Sort.asc);
@@ -803,6 +846,12 @@ extension NoteLogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByIsFavor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isFavor');
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByLabelMood(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -835,6 +884,12 @@ extension NoteLogQueryProperty
   QueryBuilder<NoteLog, DateTime, QQueryOperations> dateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'date');
+    });
+  }
+
+  QueryBuilder<NoteLog, bool, QQueryOperations> isFavorProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isFavor');
     });
   }
 

@@ -5,12 +5,17 @@ import 'package:google_fonts/google_fonts.dart';
 /// === CONSTANTS ===
 /// except color
 
+/// Icon ----------------------------------------------
+
+const int iconMinSize = 20;
+const int iconMaxSize = 30;
+
 /// Padding -------------------------------------------
 const double kPaddingSmall = 8.0;
 const double kPadding = 16.0;
 const double kPaddingLarge = 20.0;
 
-/// Height & Width
+/// Height & Width ------------------------------------
 const double kButtonMinHeight = 20.0;
 const double kButtonHeight = 48.0;
 const double kButtonMinWidth = 50.0;
@@ -69,6 +74,22 @@ double responsiveFontSize(
   final width = MediaQuery.of(context).size.width;
   return (width >= breakpoint) ? (baseSize + increment) : baseSize;
 }
+
+/// === THIS APP ONLY CONSTANTS ===
+
+/// Moods ---------------------------------------------
+
+const Map<String, IconData> moods = {
+  'terrible': Icons.sentiment_very_dissatisfied,
+  'not good': Icons.sentiment_dissatisfied,
+  'chill': Icons.sentiment_neutral,
+  'good': Icons.sentiment_satisfied,
+  'awesome': Icons.sentiment_very_satisfied,
+};
+
+/// Other constants ------------------------------------
+
+const kPrefsKey = 'favorite_note_ids';
 
 /// === THEME ===
 
@@ -165,6 +186,9 @@ String formatTime(DateTime date) => DateFormat('HH:mm:ss').format(date);
 String formatFullDateTime(DateTime date) =>
     DateFormat('EEEE yyyy-MM-dd HH:mm:ss').format(date);
 
+String formatFullDateTimeShortDay(DateTime date) =>
+    DateFormat('EEE yyyy-MM-dd HH:mm:ss').format(date);
+
 String formatDateTime(DateTime date) =>
     DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
 
@@ -180,3 +204,14 @@ String formatFullWeekday(DateTime date, {String locale = 'vi_VN'}) {
   Intl.defaultLocale = locale;
   return DateFormat('EEEE').format(date); // Thứ Bảy
 }
+
+/// === Default Widgets ===
+
+PreferredSizeWidget buildAppBar(BuildContext c, String pageName) => AppBar(
+  title: Text(
+    pageName,
+    style: Theme.of(
+      c,
+    ).textTheme.headlineLarge?.copyWith(color: Theme.of(c).colorScheme.primary),
+  ),
+);
