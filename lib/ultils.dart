@@ -7,8 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Icon ----------------------------------------------
 
-const int iconMinSize = 20;
-const int iconMaxSize = 30;
+const double iconMinSize = 20.0;
+const double iconSize = 30.0;
+const double iconSizeLarge = 40.0;
+const double iconMaxSize = 50.0;
 
 /// Padding -------------------------------------------
 const double kPaddingSmall = 8.0;
@@ -17,7 +19,7 @@ const double kPaddingLarge = 20.0;
 
 /// Height & Width ------------------------------------
 const double kButtonMinHeight = 20.0;
-const double kButtonHeight = 48.0;
+const double kButtonHeight = 35.0;
 const double kButtonMinWidth = 50.0;
 const double kButtonWidth = 120.0;
 const double kFormWidth = 500.0;
@@ -53,6 +55,8 @@ const FontWeight kFontWeightBold = FontWeight.w700;
 const double kBorderRadiusSmall = 8.0;
 const double kBorderRadius = 12.0;
 const double kBorderRadiusLarge = 20.0;
+const double kSplashRadiusSmall = 10.0;
+const double kSplashRadius = 20.0;
 
 /// Duration ------------------------------------------
 const Duration kAnimationDurationShort = Duration(milliseconds: 200);
@@ -76,6 +80,14 @@ double responsiveFontSize(
 }
 
 /// === THIS APP ONLY CONSTANTS ===
+
+/// Pages ---------------------------------------------
+
+const List<Map<String, dynamic>> pages = [
+  {'route': '/', 'label': 'Home', 'icon': Icons.home},
+  {'route': '/logs', 'label': 'History', 'icon': Icons.history},
+  {'route': '/settings', 'label': 'Setting', 'icon': Icons.settings},
+];
 
 /// Moods ---------------------------------------------
 
@@ -207,11 +219,38 @@ String formatFullWeekday(DateTime date, {String locale = 'vi_VN'}) {
 
 /// === Default Widgets ===
 
-PreferredSizeWidget buildAppBar(BuildContext c, String pageName) => AppBar(
-  title: Text(
-    pageName,
-    style: Theme.of(
-      c,
-    ).textTheme.headlineLarge?.copyWith(color: Theme.of(c).colorScheme.primary),
-  ),
-);
+// Scaffold with bottom navigation bar
+
+class MainScaffold extends StatelessWidget {
+  final int currentIndex;
+  final Widget child;
+
+  const MainScaffold({
+    required this.currentIndex,
+    required this.child,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext c) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          pages[currentIndex]['label'] ?? 'Not found name',
+          style: Theme.of(c).textTheme.headlineLarge?.copyWith(
+            color: Theme.of(c).colorScheme.primary,
+          ),
+        ),
+      ),
+      body: child,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (i) => Navigator.pushReplacementNamed(c, pages[i]['route']),
+        items: [
+          for (var i in pages)
+            BottomNavigationBarItem(icon: Icon(i['icon']), label: i['label']),
+        ],
+      ),
+    );
+  }
+}

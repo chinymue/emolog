@@ -17,47 +17,25 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Emolog',
       theme: buildAppTheme(follyRed),
-      initialRoute: '/',
-      routes: {'/': (c) => MyHomePage(), '/logs': (c) => HistoryPage()},
+      initialRoute: pages[0]['route'],
+      routes: {
+        pages[0]['route']: (c) => HomePage(),
+        pages[1]['route']: (c) => HistoryPage(),
+        pages[2]['route']: (c) => SettingsPage(),
+      },
       // navigatorObservers: [routeObserver],
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
-    return Scaffold(
-      appBar: buildAppBar(c, 'Logging'),
-      body: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
-      bottomNavigationBar: _buildBottomBar(c),
+    return MainScaffold(
+      currentIndex: 0,
+      child: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
     );
   }
-
-  Widget _buildBottomBar(BuildContext c) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: SizedBox(
-        height: 30,
-        width: 100,
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(c, '/logs'),
-                child: Text('History Page'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(c, '/db'),
-                child: Text('DB Page'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 class EmologForm extends StatefulWidget {
@@ -93,7 +71,7 @@ class _EmologFormState extends State<EmologForm> {
         ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
         ..showSnackBar(
           SnackBar(
-            content: Text('log has been recorded'),
+            content: Text('log ${savedNote.id} has been recorded'),
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () async {
@@ -173,9 +151,7 @@ class _MoodPickerState extends State<MoodPicker> {
 
   @override
   Widget build(BuildContext c) {
-    final colorBgPrimary = Theme.of(c).colorScheme.primaryContainer;
     final colorPrimary = Theme.of(c).colorScheme.primary;
-    final textLabelSmall = Theme.of(c).textTheme.labelSmall;
     return SizedBox(
       height: 50,
       child: SingleChildScrollView(
@@ -184,48 +160,20 @@ class _MoodPickerState extends State<MoodPicker> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: moods.entries.map((entry) {
             final selected = _selectedMood == entry.key;
-            return Tooltip(
-              message: entry.key,
-              waitDuration: const Duration(
-                milliseconds: 200,
-              ), // thời gian chờ trước khi hiển thị
-              showDuration: const Duration(
-                seconds: 2,
-              ), // thời gian tooltip còn hiển thị
-              preferBelow: false, // tooltip hiện bên trên nút (nếu đủ chỗ)
-              decoration: BoxDecoration(
+            return IconButton(
+              icon: Icon(
+                entry.value,
+                size: iconMaxSize,
                 color: selected
-                    ? adjustLightness(colorBgPrimary, -0.15)
-                    : colorBgPrimary,
-                borderRadius: BorderRadius.circular(4),
+                    ? colorPrimary
+                    : adjustLightness(colorPrimary, 0.2),
               ),
-              textStyle: textLabelSmall?.copyWith(
-                color: selected
-                    ? adjustLightness(colorPrimary, -0.1)
-                    : colorPrimary,
-              ),
-              child: RawMaterialButton(
-                onPressed: () {
-                  setState(() => _selectedMood = entry.key);
-                  widget.onMoodSelected(entry.key);
-                },
-                fillColor: selected
-                    ? adjustLightness(colorBgPrimary, -0.15)
-                    : colorBgPrimary,
-                elevation: selected ? 8 : 2,
-                constraints: const BoxConstraints.tightFor(
-                  width: 56,
-                  height: 56,
-                ),
-                shape: const CircleBorder(),
-                child: Icon(
-                  entry.value,
-                  size: 30,
-                  color: selected
-                      ? adjustLightness(colorPrimary, -0.1)
-                      : colorPrimary,
-                ),
-              ),
+              onPressed: () {
+                setState(() => _selectedMood = entry.key);
+                widget.onMoodSelected(entry.key);
+              },
+              tooltip: entry.key,
+              splashRadius: kBorderRadiusSmall,
             );
           }).toList(),
         ),
@@ -237,10 +185,10 @@ class _MoodPickerState extends State<MoodPicker> {
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
   @override
-  State<HistoryPage> createState() => _HistoryLogPageState();
+  State<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryLogPageState extends State<HistoryPage> {
+class _HistoryPageState extends State<HistoryPage> {
   final isarService = IsarService();
   late List<NoteLog> changedLogs = [];
   late List<NoteLog> logs = [];
@@ -260,13 +208,40 @@ class _HistoryLogPageState extends State<HistoryPage> {
     });
   }
 
+  Future<void> _removeLogs(NoteLog log, int index) async {
+    setState(() => logs.removeAt(index));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
+      ..showSnackBar(
+        SnackBar(
+          content: Text('log ${log.id} has been dismissed'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              setState(() => logs.insert(index, log));
+              await isarService.saveNote(log);
+            },
+          ),
+        ),
+      );
+    if (!logs.contains(log)) await isarService.deleteNoteById(log.id);
+  }
+
+  Future<void> _toggleFavorite(NoteLog log) async {
+    setState(() {
+      log.isFavor = !log.isFavor;
+    });
+    await isarService.saveNote(log);
+    // print('Saved log no ${log.id} with favor is ${log.isFavor}');
+  }
+
   @override
-  Widget build(BuildContext c) => Scaffold(
-    appBar: buildAppBar(c, 'History'),
-    body: isLoading
+  Widget build(BuildContext c) => MainScaffold(
+    currentIndex: 1,
+    child: isLoading
         ? const Center(child: CircularProgressIndicator())
         : _buildBody(),
-    bottomNavigationBar: _buildBottomBar(c),
   );
 
   Widget _buildBody() {
@@ -274,86 +249,65 @@ class _HistoryLogPageState extends State<HistoryPage> {
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 100),
       itemCount: logs.length,
-      itemBuilder: (c, i) => _buildLogTitle(c, logs[i]),
+      itemBuilder: (c, i) {
+        final log = logs[i];
+        final colorScheme = Theme.of(c).colorScheme;
+        return Dismissible(
+          key: ValueKey(log.id),
+          direction: DismissDirection.endToStart,
+          onDismissed: (direction) => _removeLogs(log, i),
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: EdgeInsets.symmetric(horizontal: kPaddingLarge),
+            color: colorScheme.errorContainer,
+            child: Icon(Icons.delete, color: colorScheme.onErrorContainer),
+          ),
+          child: _buildLogTitle(c, log),
+        );
+      },
     );
-  }
-
-  Future<void> _toggleFavorite(NoteLog log) async {
-    setState(() {
-      log.isFavor = !log.isFavor;
-      changedLogs.add(log);
-    });
-    print('Saved log no ${log.id} with favor is ${log.isFavor}');
   }
 
   String _shorten(String note) =>
       note.length > 16 ? '${note.substring(0, 16)}…' : note;
 
   Widget _buildLogTitle(BuildContext c, NoteLog log) {
-    final theme = Theme.of(c);
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
     // final numMood = log.numericMood.toString();
     return ListTile(
       leading: IconButton(
         icon: Icon(
           Icons.monitor_heart,
+          size: iconSize,
           color: log.isFavor
-              ? theme.colorScheme.primary
-              : adjustLightness(theme.colorScheme.primary, 0.4),
+              ? colorScheme.primary
+              : adjustLightness(colorScheme.primary, 0.4),
         ),
         onPressed: () => _toggleFavorite(log),
-        splashRadius: 20,
+        splashRadius: kSplashRadius,
         tooltip: log.isFavor ? 'Unfavourite' : 'Favourite',
       ),
       title: Text(
         _shorten(log.note!),
-        style: theme.textTheme.headlineSmall?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
+        style: textTheme.headlineSmall?.copyWith(color: colorScheme.primary),
       ),
       subtitle: Text(
         formatShortDateTime(log.date),
-        style: theme.textTheme.labelMedium?.copyWith(
-          fontWeight: kFontWeightRegular,
-        ),
+        style: textTheme.labelMedium?.copyWith(fontWeight: kFontWeightRegular),
       ),
       trailing: Icon(
         moods[log.labelMood],
-        size: 30,
-        color: theme.colorScheme.primary,
+        size: iconSizeLarge,
+        color: colorScheme.primary,
       ),
     );
   }
+}
 
-  Widget _buildBottomBar(BuildContext c) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: SizedBox(
-        height: 30,
-        width: 100,
-        child: Center(
-          child: Row(
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  for (NoteLog i in changedLogs) {
-                    await isarService.saveNote(i);
-                  }
-                  // await isarService.syncFavoritesFromPrefs();
-                  Navigator.pushNamed(c, '/');
-                },
-                child: Text('Main Page'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  // await isarService.syncFavoritesFromPrefs();
-                  Navigator.pushNamed(c, '/db');
-                },
-                child: Text('DB Page'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+class SettingsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MainScaffold(currentIndex: 2, child: Placeholder());
+  }
 }
