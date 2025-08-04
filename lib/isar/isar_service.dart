@@ -26,6 +26,15 @@ class IsarService {
     return await isar.noteLogs.where().findAll();
   }
 
+  Stream<List<NoteLog>> watchAllNotes() {
+    // Trả về một Stream emit ngay và khi có bất kỳ thay đổi trên collection noteLogs
+    return Stream.fromFuture(db).asyncExpand((isar) {
+      return isar.noteLogs
+          .where() // query tất cả NoteLog
+          .watch(fireImmediately: true);
+    });
+  }
+
   // READ - theo id
   Future<NoteLog?> getNoteById(int id) async {
     final isar = await db;
