@@ -72,8 +72,8 @@
 
 ##### ✋ Gestures
 
-- [ ] `Handle taps` – click để xem chi tiết
-- [ ] `Implement swipe to dismiss` – vuốt để xoá log
+- [x] `Handle taps` – click để xem chi tiết
+- [x] `Implement swipe to dismiss` – vuốt để xoá log
 
 ##### 🧪 Testing (cơ bản)
 

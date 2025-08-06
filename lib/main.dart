@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import './isar/model/notelog.dart';
@@ -212,8 +213,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final isarService = IsarService();
-  late List<NoteLog> changedLogs = [];
-  late List<NoteLog> logs = [];
+  late List<NoteLog> _logs = [];
   bool isLoading = true;
 
   @override
@@ -225,13 +225,20 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> _loadLogs() async {
     final data = await isarService.getAllNotes();
     setState(() {
-      logs = data.reversed.toList();
+      _logs = data.reversed.toList();
       isLoading = false;
     });
   }
 
+  Future<void> _loadALogs(NoteLog log, int index) async {
+    final data = await isarService.getNoteById(log.id);
+    setState(() {
+      if (data != null) _logs[index] = data;
+    });
+  }
+
   Future<void> _removeLogs(NoteLog log, int index) async {
-    setState(() => logs.removeAt(index));
+    setState(() => _logs.removeAt(index));
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
@@ -241,13 +248,13 @@ class _HistoryPageState extends State<HistoryPage> {
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () async {
-              setState(() => logs.insert(index, log));
+              setState(() => _logs.insert(index, log));
               await isarService.saveNote(log);
             },
           ),
         ),
       );
-    if (!logs.contains(log)) await isarService.deleteNoteById(log.id);
+    if (!_logs.contains(log)) await isarService.deleteNoteById(log.id);
   }
 
   Future<void> _toggleFavorite(NoteLog log) async {
@@ -267,12 +274,12 @@ class _HistoryPageState extends State<HistoryPage> {
   );
 
   Widget _buildBody() {
-    if (logs.isEmpty) return const Center(child: Text('No logs yet'));
+    if (_logs.isEmpty) return const Center(child: Text('No logs yet'));
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 100),
-      itemCount: logs.length,
+      itemCount: _logs.length,
       itemBuilder: (c, i) {
-        final log = logs[i];
+        final log = _logs[i];
         final colorScheme = Theme.of(c).colorScheme;
         return Dismissible(
           key: ValueKey(log.id),
@@ -290,20 +297,19 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  String _shorten(String note) =>
-      note.length > 16 ? '${note.substring(0, 16)}…' : note;
-
   Widget _buildLogTitle(BuildContext c, NoteLog log) {
     final textTheme = Theme.of(c).textTheme;
     final colorScheme = Theme.of(c).colorScheme;
     // final numMood = log.numericMood.toString();
     return ListTile(
-      onTap: () => Navigator.push(
-        c,
-        MaterialPageRoute(
-          builder: (c) => DetailsLog(isarService: isarService, content: log),
-        ),
-      ),
+      onTap: () async {
+        final updated = await Navigator.push(
+          c,
+          MaterialPageRoute(builder: (c) => DetailsLog(content: log)),
+        );
+        final index = _logs.indexOf(log);
+        if (updated == true && index != -1) _loadALogs(log, index);
+      },
       leading: IconButton(
         icon: Icon(
           Icons.monitor_heart,
@@ -317,7 +323,7 @@ class _HistoryPageState extends State<HistoryPage> {
         tooltip: log.isFavor ? 'Unfavourite' : 'Favourite',
       ),
       title: Text(
-        _shorten(log.note!),
+        shortenText(deltaToPlainText(log.note!)),
         style: textTheme.headlineSmall?.copyWith(color: colorScheme.primary),
       ),
       subtitle: Text(
@@ -334,30 +340,34 @@ class _HistoryPageState extends State<HistoryPage> {
 }
 
 class DetailsLog extends StatefulWidget {
-  const DetailsLog({
-    super.key,
-    required this.isarService,
-    required this.content,
-  });
+  const DetailsLog({super.key, required this.content});
   final NoteLog content;
-  final IsarService isarService;
 
   @override
   State<DetailsLog> createState() => _DetailsLogState();
 }
 
 class _DetailsLogState extends State<DetailsLog> {
+  final isarService = IsarService();
   late final quill.QuillController _controller;
-  late final String rawNote;
-  late final String? _currentMood;
-  // late final int? _currentMoodPoint;
+  String? _currentMood;
+  int? _currentMoodPoint;
+  bool _isFavor = false;
+  DateTime _date = DateTime.now();
+  NoteLog newLog = NoteLog();
+  bool _hasChanged = false;
 
   @override
   void initState() {
     super.initState();
+    _date = widget.content.date;
+    _isFavor = widget.content.isFavor;
     _currentMood = widget.content.labelMood;
-    rawNote = (widget.content.note ?? '').split('\n').first.trim();
-    final doc = quill.Document()..insert(0, rawNote);
+    _currentMoodPoint = widget.content.numericMood;
+
+    final doc = (widget.content.note?.isNotEmpty ?? false)
+        ? quill.Document.fromJson(jsonDecode(widget.content.note!))
+        : quill.Document();
     _controller = quill.QuillController(
       document: doc,
       selection: const TextSelection.collapsed(offset: 0),
@@ -365,40 +375,77 @@ class _DetailsLogState extends State<DetailsLog> {
   }
 
   Future<void> _saveChanged(NoteLog log) async {
-    await widget.isarService.saveNote(log);
+    await isarService.saveNote(log);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
+      ..showSnackBar(
+        SnackBar(
+          content: Text('log ${log.id} has been saved'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              await isarService.saveNote(widget.content);
+            },
+          ),
+        ),
+      );
   }
 
   @override
   Widget build(BuildContext c) {
     final textTheme = Theme.of(c).textTheme;
     final colorScheme = Theme.of(c).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Note detail',
-          style: textTheme.headlineMedium?.copyWith(color: colorScheme.outline),
-        ),
-        actions: [
-          IconButton(icon: Icon(Icons.save), onPressed: () => _saveChanged),
-        ],
-      ),
-      body: Column(
-        children: [
-          MoodPicker(
-            selectedMood: _currentMood ?? '',
-            onMoodSelected: (mood) => setState(() => _currentMood = mood),
-          ),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(kPadding),
-              child: quill.QuillEditor.basic(controller: _controller),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, _hasChanged);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Note detail',
+            style: textTheme.headlineMedium?.copyWith(
+              color: colorScheme.outline,
             ),
           ),
-          quill.QuillSimpleToolbar(
-            controller: _controller,
-            config: quill.QuillSimpleToolbarConfig(),
-          ),
-        ],
+          actions: [
+            IconButton(
+              icon: Icon(Icons.save),
+              onPressed: () {
+                newLog = NoteLog()
+                  ..id = widget.content.id
+                  ..isFavor = _isFavor
+                  ..note = jsonEncode(_controller.document.toDelta().toJson())
+                  ..labelMood = _currentMood
+                  ..numericMood = _currentMoodPoint
+                  ..date = _date;
+                setState(
+                  () => _hasChanged = isNoteLogChanged(newLog, widget.content),
+                );
+                _saveChanged(newLog);
+              },
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            MoodPicker(
+              selectedMood: _currentMood ?? '',
+              onMoodSelected: (mood) => setState(() => _currentMood = mood),
+            ),
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(kPadding),
+                child: quill.QuillEditor.basic(controller: _controller),
+              ),
+            ),
+            quill.QuillSimpleToolbar(
+              controller: _controller,
+              config: quill.QuillSimpleToolbarConfig(),
+            ),
+          ],
+        ),
       ),
     );
   }

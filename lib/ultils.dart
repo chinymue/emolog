@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert'; // Để dùng jsonDecode
+import 'package:flutter_quill/flutter_quill.dart'
+    as quill; // Để dùng quill.Document
+import './isar/model/notelog.dart';
 
 /// === CONSTANTS ===
 /// except color
@@ -217,7 +221,34 @@ String formatFullWeekday(DateTime date, {String locale = 'vi_VN'}) {
   return DateFormat('EEEE').format(date); // Thứ Bảy
 }
 
-/// === Default Widgets ===
+/// === STRING & JSON UTILS ===
+
+String shortenText(String text, [int maxLength = 20]) {
+  return (text.length <= maxLength)
+      ? text
+      : '${text.substring(0, maxLength)}...';
+}
+
+String deltaToPlainText(String deltaJson) {
+  try {
+    final doc = quill.Document.fromJson(jsonDecode(deltaJson));
+    return doc.toPlainText().trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+/// === DATA TYPE UTILS ===
+
+bool isNoteLogChanged(NoteLog a, NoteLog b) {
+  return a.note != b.note ||
+      a.labelMood != b.labelMood ||
+      a.numericMood != b.numericMood ||
+      a.isFavor != b.isFavor ||
+      a.date != b.date;
+}
+
+/// === DEFAULT WIDGETS ===
 
 // Scaffold with bottom navigation bar
 
