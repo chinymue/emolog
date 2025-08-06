@@ -55,11 +55,15 @@ class EmologForm extends StatefulWidget {
 
 class _EmologFormState extends State<EmologForm> {
   final _formKey = GlobalKey<FormState>();
-  final _controller = TextEditingController();
+  late final quill.QuillController _controller;
   String _selectedLabelMood = 'chill';
   // int _selectedNumericMood = 0;
+  @override
+  void initState() {
+    super.initState();
+    _controller = quill.QuillController.basic();
+  }
 
-  // used to discard resources used by obj when don't need obj anymore, avoid mmr leak
   @override
   void dispose() {
     _controller.dispose();
@@ -71,7 +75,7 @@ class _EmologFormState extends State<EmologForm> {
       final isarService = IsarService();
       final savedNote = await isarService.saveNote(
         NoteLog()
-          ..note = _controller.text
+          ..note = jsonEncode(_controller.document.toDelta().toJson())
           ..labelMood = _selectedLabelMood
           ..date = DateTime.now(),
       );
@@ -107,7 +111,14 @@ class _EmologFormState extends State<EmologForm> {
             onMoodSelected: (mood) => setState(() => _selectedLabelMood = mood),
           ),
           const SizedBox(height: kPaddingLarge),
-          NoteLogForm(controller: _controller),
+          SizedBox(
+            height: kFormMaxHeight,
+            width: kFormMaxWidth,
+            child: DefaultQuillEditor(
+              controller: _controller,
+              hintText: 'Tell me your feelings',
+            ),
+          ),
           const SizedBox(height: kPaddingLarge),
           ElevatedButton(onPressed: _submitForm, child: const Text('Submit')),
         ],
@@ -128,81 +139,6 @@ class HelloLog extends StatelessWidget {
       fontStyle: FontStyle.italic,
     ),
   );
-}
-
-class NoteLogForm extends StatelessWidget {
-  const NoteLogForm({super.key, required this.controller});
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext c) {
-    return SizedBox(
-      width: 500,
-      child: TextFormField(
-        maxLines: 5,
-        decoration: const InputDecoration(hintText: 'Tell me your feelings'),
-        style: TextStyle(letterSpacing: 0.75),
-        controller: controller,
-      ),
-    );
-  }
-}
-
-class MoodPicker extends StatefulWidget {
-  MoodPicker({
-    super.key,
-    required this.selectedMood,
-    required this.onMoodSelected,
-  });
-  final void Function(String selectedMood) onMoodSelected;
-  final String selectedMood;
-
-  @override
-  State<MoodPicker> createState() => _MoodPickerState();
-}
-
-class _MoodPickerState extends State<MoodPicker> {
-  late String _currentMood;
-  @override
-  void initState() {
-    super.initState();
-    _currentMood = widget.selectedMood;
-  }
-
-  @override
-  Widget build(BuildContext c) {
-    final colorPrimary = Theme.of(c).colorScheme.primary;
-    return SizedBox(
-      height: 70,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: moods.entries.map((entry) {
-            final selected = _currentMood == entry.key;
-            return Tooltip(
-              message: entry.key,
-              preferBelow: false,
-              child: IconButton(
-                icon: Icon(
-                  entry.value,
-                  size: iconMaxSize,
-                  color: selected
-                      ? colorPrimary
-                      : adjustLightness(colorPrimary, 0.2),
-                ),
-                onPressed: () {
-                  setState(() => _currentMood = entry.key);
-                  widget.onMoodSelected(entry.key);
-                },
-                splashRadius: kBorderRadiusSmall,
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
 }
 
 class HistoryPage extends StatefulWidget {
@@ -364,14 +300,19 @@ class _DetailsLogState extends State<DetailsLog> {
     _isFavor = widget.content.isFavor;
     _currentMood = widget.content.labelMood;
     _currentMoodPoint = widget.content.numericMood;
+    _controller = quill.QuillController.basic();
+    if (widget.content.note != null) {
+      final doc = (widget.content.note?.isNotEmpty ?? false)
+          ? quill.Document.fromJson(jsonDecode(widget.content.note!))
+          : quill.Document();
+      _controller.document = doc;
+    }
+  }
 
-    final doc = (widget.content.note?.isNotEmpty ?? false)
-        ? quill.Document.fromJson(jsonDecode(widget.content.note!))
-        : quill.Document();
-    _controller = quill.QuillController(
-      document: doc,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _saveChanged(NoteLog log) async {
@@ -434,16 +375,7 @@ class _DetailsLogState extends State<DetailsLog> {
               selectedMood: _currentMood ?? '',
               onMoodSelected: (mood) => setState(() => _currentMood = mood),
             ),
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.all(kPadding),
-                child: quill.QuillEditor.basic(controller: _controller),
-              ),
-            ),
-            quill.QuillSimpleToolbar(
-              controller: _controller,
-              config: quill.QuillSimpleToolbarConfig(),
-            ),
+            Expanded(child: DefaultQuillEditor(controller: _controller)),
           ],
         ),
       ),
