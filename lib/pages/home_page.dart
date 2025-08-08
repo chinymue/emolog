@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../widgets/default_scaffold.dart';
 import '../widgets/message.dart';
-import '../utils/constant.dart';
-import '../export/log_essential.dart';
+import '../export/notelog_essential.dart';
+import '../export/basic_utils.dart';
+import '../widgets/detail_log/details_log.dart';
 
 class HomePage extends StatelessWidget {
+  final isarService = IsarService();
+
   @override
   Widget build(BuildContext c) {
     return MainScaffold(
@@ -24,20 +26,6 @@ class EmologForm extends StatefulWidget {
 
 class _EmologFormState extends State<EmologForm> {
   final _formKey = GlobalKey<FormState>();
-  late final quill.QuillController _controller;
-  String _selectedLabelMood = 'chill';
-  // int _selectedNumericMood = 0;
-  @override
-  void initState() {
-    super.initState();
-    _controller = quill.QuillController.basic();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -62,7 +50,6 @@ class _EmologFormState extends State<EmologForm> {
             ),
           ),
         );
-      _controller.clear();
     }
   }
 
@@ -75,18 +62,10 @@ class _EmologFormState extends State<EmologForm> {
         children: <Widget>[
           HelloLog(),
           const SizedBox(height: kPadding),
-          MoodPicker(
-            selectedMood: _selectedLabelMood,
-            onMoodSelected: (mood) => setState(() => _selectedLabelMood = mood),
-          ),
-          const SizedBox(height: kPaddingLarge),
           SizedBox(
-            height: kFormMaxHeight,
+            height: kFormMaxHeight + kSingleRowScrollMaxHeight,
             width: kFormMaxWidth,
-            child: DefaultQuillEditor(
-              controller: _controller,
-              hintText: 'Tell me your feelings',
-            ),
+            child: DetailsLog(),
           ),
           const SizedBox(height: kPaddingLarge),
           ElevatedButton(onPressed: _submitForm, child: const Text('Submit')),

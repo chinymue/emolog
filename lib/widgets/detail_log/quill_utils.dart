@@ -2,7 +2,7 @@ import 'dart:convert'; // Để dùng jsonDecode
 import 'package:flutter_quill/flutter_quill.dart'
     as quill; // Để dùng quill.Document
 import 'package:flutter/material.dart';
-import '../utils/constant.dart';
+import '../../export/basic_utils.dart';
 
 /// === CONSTANTS ===
 
@@ -36,7 +36,7 @@ String deltaToPlainText(String deltaJson) {
   }
 }
 
-String plainTextToDelta(quill.Document doc) {
+String jsonFromDoc(quill.Document doc) {
   try {
     return jsonEncode(doc.toDelta().toJson());
   } catch (_) {
@@ -44,7 +44,7 @@ String plainTextToDelta(quill.Document doc) {
   }
 }
 
-quill.Document documentFromJsonOrEmpty(String? deltaJson) {
+quill.Document docFromJson(String? deltaJson) {
   try {
     if (deltaJson?.isNotEmpty ?? false) {
       return quill.Document.fromJson(jsonDecode(deltaJson!));
@@ -100,15 +100,13 @@ quill.QuillSimpleToolbarConfig buildToolbarConfig({
 
 // Quill editor widget
 class DefaultQuillEditor extends StatefulWidget {
-  final quill.QuillController controller;
-  final double padding;
-  final String? hintText;
+  final String? initialContent;
+  final void Function(String doc) onContentChanged;
 
   const DefaultQuillEditor({
     super.key,
-    required this.controller,
-    this.padding = kPadding,
-    this.hintText,
+    this.initialContent,
+    required this.onContentChanged,
   });
 
   @override
@@ -119,11 +117,25 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
   bool _showToolbar = true;
   bool _useFullToolbar = false;
 
-  final FocusNode _focusNode = FocusNode();
+  late final quill.QuillController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final doc = docFromJson(widget.initialContent);
+    _controller = quill.QuillController(
+      document: doc,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+
+    _controller.addListener(() {
+      widget.onContentChanged(jsonFromDoc(_controller.document));
+    });
+  }
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -159,22 +171,20 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
 
         Expanded(
           child: Padding(
-            padding: EdgeInsets.all(widget.padding),
+            padding: EdgeInsets.all(kPaddingLarge),
             child: quill.QuillEditor.basic(
-              controller: widget.controller,
-              focusNode: _focusNode,
+              controller: _controller,
               config: quill.QuillEditorConfig(
-                // autoFocus: true,
-                placeholder: widget.hintText ?? '',
+                placeholder: 'Tell me your feeling',
               ),
             ),
           ),
         ),
         if (_showToolbar)
           _useFullToolbar
-              ? quill.QuillSimpleToolbar(controller: widget.controller)
+              ? quill.QuillSimpleToolbar(controller: _controller)
               : quill.QuillSimpleToolbar(
-                  controller: widget.controller,
+                  controller: _controller,
                   config: buildToolbarConfig(
                     includeButtons: [...textFormattingButtons],
                   ),

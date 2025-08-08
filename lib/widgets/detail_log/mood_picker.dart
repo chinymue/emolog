@@ -1,25 +1,11 @@
 import 'package:flutter/material.dart';
-import '../export/basic_utils.dart';
-
-/// Moods default data ---------------------------------------------
-
-const Map<String, IconData> moods = {
-  'terrible': Icons.sentiment_very_dissatisfied,
-  'not good': Icons.sentiment_dissatisfied,
-  'chill': Icons.sentiment_neutral,
-  'good': Icons.sentiment_satisfied,
-  'awesome': Icons.sentiment_very_satisfied,
-};
+import '../../export/decor_utils.dart';
 
 // Mood picker widget -----------------------------------------------
 class MoodPicker extends StatefulWidget {
-  MoodPicker({
-    super.key,
-    required this.selectedMood,
-    required this.onMoodSelected,
-  });
+  MoodPicker({super.key, this.selectedMood, required this.onMoodSelected});
   final void Function(String selectedMood) onMoodSelected;
-  final String selectedMood;
+  final String? selectedMood;
 
   @override
   State<MoodPicker> createState() => _MoodPickerState();
@@ -30,7 +16,8 @@ class _MoodPickerState extends State<MoodPicker> {
   @override
   void initState() {
     super.initState();
-    _currentMood = widget.selectedMood;
+    widget.selectedMood ?? initialMood;
+    _currentMood = widget.selectedMood!;
   }
 
   @override
