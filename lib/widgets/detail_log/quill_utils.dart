@@ -154,18 +154,6 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
               tooltip: _showToolbar ? 'Ẩn toolbar' : 'Hiện toolbar',
               onPressed: () => setState(() => _showToolbar = !_showToolbar),
             ),
-            IconButton(
-              icon: Icon(
-                _useFullToolbar ? Icons.fullscreen_exit : Icons.fullscreen,
-              ),
-              tooltip: _useFullToolbar
-                  ? 'Dùng toolbar đơn giản'
-                  : 'Dùng toolbar đầy đủ',
-              onPressed: () => setState(() {
-                _useFullToolbar = !_useFullToolbar;
-                _showToolbar = true;
-              }),
-            ),
           ],
         ),
 
@@ -181,14 +169,40 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
           ),
         ),
         if (_showToolbar)
-          _useFullToolbar
-              ? quill.QuillSimpleToolbar(controller: _controller)
-              : quill.QuillSimpleToolbar(
-                  controller: _controller,
-                  config: buildToolbarConfig(
-                    includeButtons: [...textFormattingButtons],
+          SizedBox(
+            height: kToolbarHeight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: _useFullToolbar
+                        ? quill.QuillSimpleToolbar(controller: _controller)
+                        : quill.QuillSimpleToolbar(
+                            controller: _controller,
+                            config: buildToolbarConfig(
+                              includeButtons: [...textFormattingButtons],
+                            ),
+                          ),
                   ),
                 ),
+                IconButton(
+                  icon: Icon(
+                    _useFullToolbar
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                  ),
+                  tooltip: _useFullToolbar
+                      ? 'Dùng toolbar đơn giản'
+                      : 'Dùng toolbar đầy đủ',
+                  onPressed: () => setState(() {
+                    _useFullToolbar = !_useFullToolbar;
+                    _showToolbar = true;
+                  }),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

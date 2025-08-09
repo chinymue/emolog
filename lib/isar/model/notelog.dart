@@ -14,5 +14,20 @@ class NoteLog {
 
   late DateTime date;
 
+  late DateTime lastUpdated;
+
   bool isFavor = false;
+}
+
+extension NoteLogClone on NoteLog {
+  NoteLog clone() {
+    return NoteLog()
+      ..id = id
+      ..date = date
+      ..isFavor = isFavor
+      ..note = note
+      ..labelMood = labelMood
+      ..numericMood = numericMood
+      ..lastUpdated = lastUpdated;
+  }
 }

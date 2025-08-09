@@ -45,6 +45,7 @@ class _LogsListState extends State<LogsList> {
   }
 
   Future<void> _saveChanged(NoteLog log, int index) async {
+    log.lastUpdated = DateTime.now();
     await widget.isarService.saveNote(log);
     final previousLog = _logs[index];
     if (!mounted) return;
@@ -94,9 +95,9 @@ class _LogsListState extends State<LogsList> {
             onLogUpdated: (updatedLog, index, action) {
               if (action == 'removed') {
                 _removeLogs(updatedLog, index);
-              } else if (action == 'updated') {
+              } else if (action == 'favourited') {
                 _loadALogs(updatedLog, index);
-              } else if (action == 'saved') {
+              } else if (action == 'updated') {
                 _saveChanged(updatedLog, index);
               }
             },

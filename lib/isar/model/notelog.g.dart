@@ -32,13 +32,18 @@ const NoteLogSchema = CollectionSchema(
       name: r'labelMood',
       type: IsarType.string,
     ),
-    r'note': PropertySchema(
+    r'lastUpdated': PropertySchema(
       id: 3,
+      name: r'lastUpdated',
+      type: IsarType.dateTime,
+    ),
+    r'note': PropertySchema(
+      id: 4,
       name: r'note',
       type: IsarType.string,
     ),
     r'numericMood': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'numericMood',
       type: IsarType.long,
     )
@@ -87,8 +92,9 @@ void _noteLogSerialize(
   writer.writeDateTime(offsets[0], object.date);
   writer.writeBool(offsets[1], object.isFavor);
   writer.writeString(offsets[2], object.labelMood);
-  writer.writeString(offsets[3], object.note);
-  writer.writeLong(offsets[4], object.numericMood);
+  writer.writeDateTime(offsets[3], object.lastUpdated);
+  writer.writeString(offsets[4], object.note);
+  writer.writeLong(offsets[5], object.numericMood);
 }
 
 NoteLog _noteLogDeserialize(
@@ -102,8 +108,9 @@ NoteLog _noteLogDeserialize(
   object.id = id;
   object.isFavor = reader.readBool(offsets[1]);
   object.labelMood = reader.readStringOrNull(offsets[2]);
-  object.note = reader.readStringOrNull(offsets[3]);
-  object.numericMood = reader.readLongOrNull(offsets[4]);
+  object.lastUpdated = reader.readDateTime(offsets[3]);
+  object.note = reader.readStringOrNull(offsets[4]);
+  object.numericMood = reader.readLongOrNull(offsets[5]);
   return object;
 }
 
@@ -121,8 +128,10 @@ P _noteLogDeserializeProp<P>(
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -479,6 +488,59 @@ extension NoteLogQueryFilter
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> lastUpdatedEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastUpdated',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> lastUpdatedGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastUpdated',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> lastUpdatedLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastUpdated',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> lastUpdatedBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastUpdated',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> noteIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -738,6 +800,18 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByLastUpdated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUpdated', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByLastUpdatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUpdated', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -813,6 +887,18 @@ extension NoteLogQuerySortThenBy
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByLastUpdated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUpdated', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByLastUpdatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUpdated', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -859,6 +945,12 @@ extension NoteLogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByLastUpdated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastUpdated');
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByNote(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -896,6 +988,12 @@ extension NoteLogQueryProperty
   QueryBuilder<NoteLog, String?, QQueryOperations> labelMoodProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'labelMood');
+    });
+  }
+
+  QueryBuilder<NoteLog, DateTime, QQueryOperations> lastUpdatedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastUpdated');
     });
   }
 

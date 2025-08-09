@@ -20,22 +20,13 @@ class DetailsLog extends StatefulWidget {
 }
 
 class _DetailsLogState extends State<DetailsLog> {
-  String? _currentNote;
-  String? _currentMood;
-  int? _currentMoodPoint;
-  bool _isFavor = false;
-  DateTime _date = DateTime.now();
-  NoteLog newLog = NoteLog();
   bool _hasChanged = false;
+  late NoteLog _currentLog;
 
   @override
   void initState() {
     super.initState();
-    _date = widget.content.date;
-    _isFavor = widget.content.isFavor;
-    _currentMood = widget.content.labelMood;
-    _currentMoodPoint = widget.content.numericMood;
-    _currentNote = widget.content.note;
+    _currentLog = widget.content.clone();
   }
 
   @override
@@ -52,17 +43,13 @@ class _DetailsLogState extends State<DetailsLog> {
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () {
-              newLog = NoteLog()
-                ..id = widget.content.id
-                ..isFavor = _isFavor
-                ..note = _currentNote
-                ..labelMood = _currentMood
-                ..numericMood = _currentMoodPoint
-                ..date = _date;
               setState(
-                () => _hasChanged = isNoteLogChanged(newLog, widget.content),
+                () =>
+                    _hasChanged = isNoteLogChanged(_currentLog, widget.content),
               );
-              if (_hasChanged) widget.onLogUpdated(newLog, 'saved');
+              if (_hasChanged) {
+                widget.onLogUpdated(_currentLog, 'updated');
+              }
             },
           ),
         ],
@@ -70,17 +57,62 @@ class _DetailsLogState extends State<DetailsLog> {
       body: Column(
         children: [
           MoodPicker(
-            selectedMood: _currentMood,
-            onMoodSelected: (mood) => setState(() => _currentMood = mood),
+            selectedMood: _currentLog.labelMood,
+            onMoodSelected: (mood) {
+              _currentLog.labelMood = mood;
+              // widget.onLogUpdated(_currentLog, 'updated');
+            },
           ),
           Expanded(
             child: DefaultQuillEditor(
-              initialContent: _currentNote ?? '',
-              onContentChanged: (doc) => _currentNote = doc,
+              initialContent: _currentLog.note ?? '',
+              onContentChanged: (doc) {
+                _currentLog.note = doc;
+                // widget.onLogUpdated(_currentLog, 'updated');
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class DetailsLogContent extends StatefulWidget {
+  const DetailsLogContent({
+    super.key,
+    required this.isarService,
+    required this.onLogUpdated,
+  });
+  final IsarService isarService;
+  final void Function(NoteLog updatedLog) onLogUpdated;
+
+  @override
+  State<DetailsLogContent> createState() => _DetailsLogContentState();
+}
+
+class _DetailsLogContentState extends State<DetailsLogContent> {
+  NoteLog _currentLog = NoteLog()..labelMood = initialMood;
+  @override
+  Widget build(BuildContext c) {
+    return Column(
+      children: [
+        MoodPicker(
+          selectedMood: _currentLog.labelMood,
+          onMoodSelected: (mood) {
+            _currentLog.labelMood = mood;
+            widget.onLogUpdated(_currentLog);
+          },
+        ),
+        Expanded(
+          child: DefaultQuillEditor(
+            onContentChanged: (doc) {
+              _currentLog.note = doc;
+              widget.onLogUpdated(_currentLog);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

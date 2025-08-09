@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import '../isar/model/notelog.dart';
+import 'dart:convert'; // Để dùng jsonDecode
 
 /// === DATE UTILS ===
 
@@ -31,10 +32,35 @@ String formatFullWeekday(DateTime date, {String locale = 'vi_VN'}) {
 
 /// === STRING & JSON UTILS ===
 
-String shortenText(String text, [int maxLength = 20]) {
-  return (text.length <= maxLength)
-      ? text
-      : '${text.substring(0, maxLength)}...';
+String shortenText(String? text, [int maxLength = 20]) {
+  if (text == null || text.isEmpty) return '';
+
+  // Cắt tại newline nếu có
+  final firstLine = text.split('\n').first;
+
+  return (firstLine.length <= maxLength)
+      ? firstLine
+      : '${firstLine.substring(0, maxLength)}...';
+}
+
+String plainTextFromDeltaJson(String? deltaJson) {
+  try {
+    if (deltaJson == null || deltaJson == '') return '';
+    final List<dynamic> ops = jsonDecode(deltaJson);
+    final buffer = StringBuffer();
+
+    for (final op in ops) {
+      if (op is Map && op.containsKey('insert')) {
+        final insertValue = op['insert'];
+        if (insertValue is String) {
+          buffer.write(insertValue);
+        }
+      }
+    }
+    return buffer.toString();
+  } catch (_) {
+    return '';
+  }
 }
 
 /// === THIS APP ONLY DATA ===

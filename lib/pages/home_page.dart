@@ -13,64 +13,65 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext c) {
     return MainScaffold(
       currentIndex: 0,
-      child: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: EmologForm(isarService: isarService),
+      ),
     );
   }
 }
 
 class EmologForm extends StatefulWidget {
-  const EmologForm({super.key});
+  const EmologForm({super.key, required this.isarService});
+  final IsarService isarService;
   @override
   State<EmologForm> createState() => _EmologFormState();
 }
 
 class _EmologFormState extends State<EmologForm> {
-  final _formKey = GlobalKey<FormState>();
+  NoteLog _newLog = NoteLog();
 
-  Future<void> _submitForm() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final isarService = IsarService();
-      final savedNote = await isarService.saveNote(
-        NoteLog()
-          ..note = plainTextToDelta(_controller.document)
-          ..labelMood = _selectedLabelMood
-          ..date = DateTime.now(),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
-        ..showSnackBar(
-          SnackBar(
-            content: Text('log ${savedNote.id} has been recorded'),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                await isarService.deleteNoteById(savedNote.id);
-              },
-            ),
+  Future<void> _saveLog() async {
+    _newLog.date = DateTime.now();
+    _newLog.lastUpdated = DateTime.now();
+    final savedNote = await widget.isarService.saveNote(_newLog);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('log ${savedNote.id} has been recorded'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              await widget.isarService.deleteNoteById(savedNote.id);
+            },
           ),
-        );
-    }
+        ),
+      );
   }
 
   @override
-  Widget build(BuildContext c) => Form(
-    key: _formKey,
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          HelloLog(),
-          const SizedBox(height: kPadding),
-          SizedBox(
-            height: kFormMaxHeight + kSingleRowScrollMaxHeight,
-            width: kFormMaxWidth,
-            child: DetailsLog(),
+  Widget build(BuildContext c) => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        HelloLog(),
+        const SizedBox(height: kPadding),
+        SizedBox(
+          height: kFormMaxHeight + kSingleRowScrollMaxHeight,
+          width: kFormMaxWidth,
+          child: DetailsLogContent(
+            isarService: widget.isarService,
+            onLogUpdated: (updatedLog) => _newLog = updatedLog,
           ),
-          const SizedBox(height: kPaddingLarge),
-          ElevatedButton(onPressed: _submitForm, child: const Text('Submit')),
-        ],
-      ),
+        ),
+        const SizedBox(height: kPaddingLarge),
+        ElevatedButton(
+          onPressed: () async => _saveLog(),
+          child: const Text('Submit'),
+        ),
+      ],
     ),
   );
 }

@@ -79,7 +79,7 @@ class _DefaultLogTileState extends State<DefaultLogTile> {
     setState(() {
       log.isFavor = !log.isFavor;
     });
-    widget.onLogUpdated(log, 'updated');
+    widget.onLogUpdated(log, 'favourited');
   }
 
   @override
@@ -116,7 +116,7 @@ class _DefaultLogTileState extends State<DefaultLogTile> {
         tooltip: widget.logTile.isFavor ? 'Unfavourite' : 'Favourite',
       ),
       title: Text(
-        shortenText(widget.logTile.note!),
+        shortenText(plainTextFromDeltaJson(widget.logTile.note)),
         style: textTheme.headlineSmall?.copyWith(color: colorScheme.primary),
       ),
       subtitle: Text(

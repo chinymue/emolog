@@ -16,8 +16,7 @@ class _MoodPickerState extends State<MoodPicker> {
   @override
   void initState() {
     super.initState();
-    widget.selectedMood ?? initialMood;
-    _currentMood = widget.selectedMood!;
+    _currentMood = widget.selectedMood ?? initialMood;
   }
 
   @override
