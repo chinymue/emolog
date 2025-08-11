@@ -32,6 +32,8 @@ class _EmologFormState extends State<EmologForm> {
   NoteLog _newLog = NoteLog();
 
   Future<void> _saveLog() async {
+    _newLog.date = DateTime.now();
+    _newLog.lastUpdated = DateTime.now();
     final savedNote = await widget.isarService.saveNote(_newLog);
     if (!mounted) return;
     ScaffoldMessenger.of(context)

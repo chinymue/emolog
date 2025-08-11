@@ -45,8 +45,9 @@ class _LogsListState extends State<LogsList> {
   }
 
   Future<void> _saveChanged(NoteLog log, int index) async {
+    log.lastUpdated = DateTime.now();
+    await widget.isarService.saveNote(log);
     final previousLog = _logs[index];
-    await widget.isarService.updateNote(log);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar() // nếu gọi nhiều snackbar trong thời gian gần nhau
@@ -56,7 +57,7 @@ class _LogsListState extends State<LogsList> {
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () async =>
-                await widget.isarService.updateNote(previousLog),
+                await widget.isarService.saveNote(previousLog),
           ),
         ),
       );
