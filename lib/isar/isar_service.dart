@@ -22,6 +22,15 @@ class IsarService {
     return note;
   }
 
+  Future<void> updateNote(NoteLog note) async {
+    final isar = await db;
+    if (isar.noteLogs.get(note.id) != NoteLog()) {
+      await isar.writeTxn(() async {
+        await isar.noteLogs.put(note);
+      });
+    }
+  }
+
   // READ - lấy tất cả ghi chú
   Future<List<NoteLog>> getAllNotes() async {
     final isar = await db;
