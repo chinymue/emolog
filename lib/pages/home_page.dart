@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../export/app_essential.dart';
 import 'dart:async';
 import '../widgets/default_scaffold.dart';
 import '../widgets/message.dart';
@@ -7,46 +7,39 @@ import '../export/basic_utils.dart';
 import '../widgets/detail_log/details_log.dart';
 
 class HomePage extends StatelessWidget {
-  final isarService = IsarService();
-
   @override
   Widget build(BuildContext c) {
     return MainScaffold(
       currentIndex: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: EmologForm(isarService: isarService),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
     );
   }
 }
 
-class EmologForm extends StatefulWidget {
-  const EmologForm({super.key, required this.isarService});
-  final IsarService isarService;
-  @override
-  State<EmologForm> createState() => _EmologFormState();
-}
-
-class _EmologFormState extends State<EmologForm> {
-  NoteLog _newLog = NoteLog();
-
-  Future<void> _saveLog() async {
-    final savedNote = await widget.isarService.saveNote(_newLog);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('log ${savedNote.id} has been recorded'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () async {
-              await widget.isarService.deleteNoteById(savedNote.id);
-            },
+class EmologForm extends StatelessWidget {
+  const EmologForm({super.key});
+  Future<void> _saveLog(BuildContext c) async {
+    final logProvider = c.read<LogProvider>();
+    try {
+      final savedLog = await logProvider.addLog();
+      if (!c.mounted) return;
+      ScaffoldMessenger.of(c)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('log ${savedLog.id} has been recorded'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => logProvider.deleteLog(id: savedLog.id),
+            ),
           ),
-        ),
-      );
+        );
+    } catch (e) {
+      if (!c.mounted) return;
+      ScaffoldMessenger.of(c)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('Save failed: $e')));
+    }
   }
 
   @override
@@ -59,14 +52,11 @@ class _EmologFormState extends State<EmologForm> {
         SizedBox(
           height: kFormMaxHeight + kSingleRowScrollMaxHeight,
           width: kFormMaxWidth,
-          child: DetailsLogContent(
-            isarService: widget.isarService,
-            onLogUpdated: (updatedLog) => _newLog = updatedLog,
-          ),
+          child: DetailsLogContent(),
         ),
         const SizedBox(height: kPaddingLarge),
         ElevatedButton(
-          onPressed: () async => _saveLog(),
+          onPressed: () => _saveLog(c),
           child: const Text('Submit'),
         ),
       ],
