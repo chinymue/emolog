@@ -10,7 +10,7 @@ class NoteLog {
 
   String? labelMood;
 
-  int? numericMood;
+  double? numericMood;
 
   late DateTime date;
 

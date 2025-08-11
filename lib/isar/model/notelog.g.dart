@@ -45,7 +45,7 @@ const NoteLogSchema = CollectionSchema(
     r'numericMood': PropertySchema(
       id: 5,
       name: r'numericMood',
-      type: IsarType.long,
+      type: IsarType.double,
     )
   },
   estimateSize: _noteLogEstimateSize,
@@ -94,7 +94,7 @@ void _noteLogSerialize(
   writer.writeString(offsets[2], object.labelMood);
   writer.writeDateTime(offsets[3], object.lastUpdated);
   writer.writeString(offsets[4], object.note);
-  writer.writeLong(offsets[5], object.numericMood);
+  writer.writeDouble(offsets[5], object.numericMood);
 }
 
 NoteLog _noteLogDeserialize(
@@ -110,7 +110,7 @@ NoteLog _noteLogDeserialize(
   object.labelMood = reader.readStringOrNull(offsets[2]);
   object.lastUpdated = reader.readDateTime(offsets[3]);
   object.note = reader.readStringOrNull(offsets[4]);
-  object.numericMood = reader.readLongOrNull(offsets[5]);
+  object.numericMood = reader.readDoubleOrNull(offsets[5]);
   return object;
 }
 
@@ -132,7 +132,7 @@ P _noteLogDeserializeProp<P>(
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -704,46 +704,54 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodEqualTo(
-      int? value) {
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'numericMood',
         value: value,
+        epsilon: epsilon,
       ));
     });
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodGreaterThan(
-    int? value, {
+    double? value, {
     bool include = false,
+    double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
         property: r'numericMood',
         value: value,
+        epsilon: epsilon,
       ));
     });
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodLessThan(
-    int? value, {
+    double? value, {
     bool include = false,
+    double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
         property: r'numericMood',
         value: value,
+        epsilon: epsilon,
       ));
     });
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodBetween(
-    int? lower,
-    int? upper, {
+    double? lower,
+    double? upper, {
     bool includeLower = true,
     bool includeUpper = true,
+    double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
@@ -752,6 +760,7 @@ extension NoteLogQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -1003,7 +1012,7 @@ extension NoteLogQueryProperty
     });
   }
 
-  QueryBuilder<NoteLog, int?, QQueryOperations> numericMoodProperty() {
+  QueryBuilder<NoteLog, double?, QQueryOperations> numericMoodProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'numericMood');
     });
