@@ -45,28 +45,26 @@ class DetailsLog extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: () async => c.read<LogProvider>().saveEditableLog(),
+            onPressed: () => c.read<LogProvider>().saveEditableLog(),
           ),
         ],
       ),
-      body: editable == NoteLog()
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                MoodPicker(
-                  selectedMood: editable.labelMood,
-                  onMoodSelected: (mood) =>
-                      c.read<LogProvider>().updateLabelMood(mood: mood),
-                ),
-                Expanded(
-                  child: DefaultQuillEditor(
-                    initialContent: editable.note ?? '',
-                    onContentChanged: (doc) =>
-                        c.read<LogProvider>().updateNote(note: doc),
-                  ),
-                ),
-              ],
+      body: Column(
+        children: [
+          MoodPicker(
+            selectedMood: editable.labelMood,
+            onMoodSelected: (mood) =>
+                c.read<LogProvider>().updateLabelMood(mood: mood),
+          ),
+          Expanded(
+            child: DefaultQuillEditor(
+              initialContent: editable.note ?? '',
+              onContentChanged: (doc) =>
+                  c.read<LogProvider>().updateNote(note: doc),
             ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -76,7 +74,7 @@ class DetailsLogContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final logProvider = c.watch<LogProvider>();
+    final logProvider = c.read<LogProvider>();
     return Column(
       children: [
         MoodPicker(

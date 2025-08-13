@@ -61,16 +61,10 @@ class DefaultLogTile extends StatelessWidget {
       c.read<LogProvider>().saveUpdatedLog(id: logId);
     }
 
-    Future<void> handleTap() async {
-      final updated = await Navigator.push(
-        c,
-        MaterialPageRoute(builder: (c) => DetailsLog(logId: logId)),
-      );
-
-      if (updated == true) {
-        c.read<LogProvider>().updateLog(updatedLog: log);
-      }
-    }
+    Future<void> handleTap() async => await Navigator.push(
+      c,
+      MaterialPageRoute(builder: (c) => DetailsLog(logId: logId)),
+    );
 
     return ListTile(
       onTap: () => handleTap(),
