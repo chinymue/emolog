@@ -15,9 +15,8 @@ class LogsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final logProvider = c.watch<LogProvider>();
     return FutureBuilder(
-      future: logProvider.fetchLogs(),
+      future: c.read<LogProvider>().fetchLogs(),
       builder: (c, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

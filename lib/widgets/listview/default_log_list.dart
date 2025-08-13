@@ -9,7 +9,7 @@ class DefaultList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final logProvider = c.watch<LogProvider>();
+    final logProvider = c.read<LogProvider>();
     final logs = logProvider.logs;
     if (logs.isEmpty) {
       return Center(
@@ -24,22 +24,7 @@ class DefaultList extends StatelessWidget {
         final log = logs[i];
         final colorScheme = Theme.of(c).colorScheme;
 
-        void handleDissmis() => logProvider.deleteLog(id: log.id);
-        void handleFavor() {
-          logProvider.updateFavor(log: log);
-          logProvider.updateLog(updatedLog: log);
-        }
-
-        Future<void> handleTap() async {
-          final updated = await Navigator.push(
-            c,
-            MaterialPageRoute(builder: (c) => DetailsLog(logId: log.id)),
-          );
-
-          if (updated == true) {
-            logProvider.updateLog(updatedLog: log);
-          }
-        }
+        void handleDissmis() => c.read<LogProvider>().deleteLog(id: log.id);
 
         return Dismissible(
           key: ValueKey(log.id),
@@ -51,11 +36,7 @@ class DefaultList extends StatelessWidget {
             color: colorScheme.errorContainer,
             child: Icon(Icons.delete, color: colorScheme.onErrorContainer),
           ),
-          child: DefaultLogTile(
-            logTile: log,
-            onTap: () => handleTap(),
-            onFavor: handleFavor,
-          ),
+          child: DefaultLogTile(logId: log.id),
         );
       },
     );
@@ -63,46 +44,58 @@ class DefaultList extends StatelessWidget {
 }
 
 class DefaultLogTile extends StatelessWidget {
-  final NoteLog logTile;
-  final VoidCallback? onTap;
-  final VoidCallback? onFavor;
+  final int logId;
 
-  const DefaultLogTile({
-    super.key,
-    required this.logTile,
-    this.onTap,
-    this.onFavor,
-  });
+  const DefaultLogTile({super.key, required this.logId});
 
   @override
   Widget build(BuildContext c) {
     final textTheme = Theme.of(c).textTheme;
     final colorScheme = Theme.of(c).colorScheme;
+    final log = c.select<LogProvider, NoteLog>(
+      (provider) => provider.logs.firstWhere((l) => l.id == logId),
+    );
+
+    void handleFavor() {
+      c.read<LogProvider>().updateLogFavor(id: logId);
+      c.read<LogProvider>().saveUpdatedLog(id: logId);
+    }
+
+    Future<void> handleTap() async {
+      final updated = await Navigator.push(
+        c,
+        MaterialPageRoute(builder: (c) => DetailsLog(logId: logId)),
+      );
+
+      if (updated == true) {
+        c.read<LogProvider>().updateLog(updatedLog: log);
+      }
+    }
 
     return ListTile(
-      onTap: onTap,
+      onTap: () => handleTap(),
       leading: IconButton(
         icon: Icon(
           Icons.monitor_heart,
           size: iconSize,
-          color: logTile.isFavor
+          color: log.isFavor
               ? colorScheme.primary
               : adjustLightness(colorScheme.primary, 0.4),
         ),
-        onPressed: () => onFavor?.call(),
+        onPressed: () => handleFavor(),
         splashRadius: kSplashRadius,
-        tooltip: logTile.isFavor ? 'Unfavourite' : 'Favourite',
+        tooltip: log.isFavor ? 'Unfavourite' : 'Favourite',
       ),
       title: Text(
-        shortenText(plainTextFromDeltaJson(logTile.note)),
+        shortenText(plainTextFromDeltaJson(log.note)),
         style: textTheme.headlineSmall?.copyWith(color: colorScheme.primary),
       ),
       subtitle: Text(
-        formatShortDateTime(logTile.date),
+        formatShortDateTime(log.date),
         style: textTheme.labelMedium?.copyWith(fontWeight: kFontWeightRegular),
       ),
       trailing: Icon(
-        moods[logTile.labelMood],
+        moods[log.labelMood],
         size: iconSizeLarge,
         color: colorScheme.primary,
       ),

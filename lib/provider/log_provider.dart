@@ -18,7 +18,7 @@ class LogProvider extends ChangeNotifier {
 
   void setMoodPoint({required double moodPoint, bool notify = false}) {
     if (moodPoint >= 0 && moodPoint <= 1) {
-      newLog.numericMood = moodPoint;
+      newLog.moodPoint = moodPoint;
       if (notify) notifyListeners();
     }
   }
@@ -69,8 +69,16 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> saveUpdatedLog({required int id}) async {
+    if (isFetchedLogs) {
+      final index = logs.indexWhere((log) => log.id == id);
+      if (index != -1) {
+        await isarService.updateLog(logs[index]);
+      }
+    }
+  }
+
   Future<void> updateLog({required NoteLog updatedLog}) async {
-    if (updatedLog == NoteLog()) return;
     await isarService.updateLog(updatedLog);
     if (isFetchedLogs) {
       final index = logs.indexWhere((log) => log.id == updatedLog.id);
@@ -86,7 +94,7 @@ class LogProvider extends ChangeNotifier {
     if (isFetchedLogs) {
       final index = logs.indexWhere((l) => l.id == id);
       if (index != -1) {
-        logs[index].isFavor = !logs[index].isFavor;
+        logs[index] = logs[index].copyWith(isFavor: !logs[index].isFavor);
         notifyListeners();
       }
     }
@@ -109,7 +117,7 @@ class LogProvider extends ChangeNotifier {
 
   void updateMoodPoint({required double moodPoint, bool notify = false}) {
     if (moodPoint >= 0 && moodPoint <= 1) {
-      editableLog.numericMood = moodPoint;
+      editableLog.moodPoint = moodPoint;
       if (notify) notifyListeners();
     }
   }
@@ -127,18 +135,16 @@ class LogProvider extends ChangeNotifier {
   }
 
   Future<void> saveEditableLog() async {
+    await isarService.updateLog(editableLog);
     if (isFetchedLogs) {
       final index = logs.indexWhere((log) => log.id == editableLog.id);
       if (isNoteLogChanged(logs[index], editableLog)) {
-        await isarService.updateLog(editableLog);
         if (index != -1) {
           logs[index] = editableLog;
           editableLog = NoteLog();
           notifyListeners();
         }
       }
-    } else {
-      await isarService.updateLog(editableLog);
     }
   }
 }
