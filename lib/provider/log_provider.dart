@@ -6,45 +6,97 @@ import '../export/basic_utils.dart';
 class LogProvider extends ChangeNotifier {
   final IsarService isarService = IsarService();
 
-  // làm việc với các log có sẵn
-  List<NoteLog> logs = [];
+  /// CREATE A NEW LOG
+  NoteLog newLog = NoteLog();
 
-  // read all log
+  void setLabelMood({required String mood, bool notify = false}) {
+    if (moods.containsKey(mood)) {
+      newLog.labelMood = mood;
+      if (notify) notifyListeners();
+    }
+  }
+
+  void setMoodPoint({required double moodPoint, bool notify = false}) {
+    if (moodPoint >= 0 && moodPoint <= 1) {
+      newLog.numericMood = moodPoint;
+      if (notify) notifyListeners();
+    }
+  }
+
+  void setNote({String? note, bool notify = false}) {
+    if (note != null) {
+      newLog.note = note;
+      if (notify) notifyListeners();
+    }
+  }
+
+  void setFavor({bool notify = false}) {
+    newLog.isFavor = !newLog.isFavor;
+    if (notify) notifyListeners();
+  }
+
+  Future<NoteLog> addLog() async {
+    if (logs.any((l) => l.id == newLog.id)) return newLog;
+    await isarService.saveLog(newLog);
+
+    if (isFetchedLogs) {
+      logs.add(newLog);
+      notifyListeners();
+    }
+
+    final savedLog = newLog;
+    newLog = NoteLog();
+    return savedLog;
+  }
+
+  /// FETCH LOGS FROM ISAR
+  List<NoteLog> logs = [];
+  bool isFetchedLogs = false;
+
   Future<void> fetchLogs() async {
-    if (logs.isEmpty) {
-      logs = await isarService.getAllNotes();
+    if (!isFetchedLogs) {
+      logs = await isarService.getAllLogs();
+      isFetchedLogs = true;
       notifyListeners();
     }
   }
 
-  // // read log with id
-  // Future<NoteLog?> readLogWithId({required int id}) async {
-  //   return await isarService.getNoteById(id);
-  // }
-
-  // delete
   Future<void> deleteLog({required int id}) async {
-    await isarService.deleteNoteById(id);
-    logs.removeWhere((log) => log.id == id);
-    notifyListeners();
+    await isarService.deleteLogById(id);
+    if (isFetchedLogs) {
+      logs.removeWhere((log) => log.id == id);
+      notifyListeners();
+    }
   }
 
-  NoteLog editableLog = NoteLog();
-
-  // tạo mới log
-  Future<NoteLog> addLog() async {
-    if (logs.any((l) => l.id == editableLog.id)) return editableLog;
-    await isarService.saveNote(editableLog);
-    logs.add(editableLog);
-    final savedLog = editableLog;
-    editableLog = NoteLog();
-    notifyListeners();
-    return savedLog;
+  Future<void> updateLog({required NoteLog updatedLog}) async {
+    if (updatedLog == NoteLog()) return;
+    await isarService.updateLog(updatedLog);
+    if (isFetchedLogs) {
+      final index = logs.indexWhere((log) => log.id == updatedLog.id);
+      if (index != -1) {
+        logs[index] = updatedLog;
+        notifyListeners();
+      }
+    }
   }
 
-  // update fields
-  void setEditableLog(NoteLog? log) {
-    editableLog = log != null ? log.clone() : NoteLog();
+  // only if logs is fetched
+  void updateLogFavor({required int id}) {
+    if (isFetchedLogs) {
+      final index = logs.indexWhere((l) => l.id == id);
+      if (index != -1) {
+        logs[index].isFavor = !logs[index].isFavor;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// UPDATE IN DETAILS LOG
+  late NoteLog editableLog;
+
+  void setEditableLog(NoteLog log) {
+    editableLog = log.clone();
     notifyListeners();
   }
 
@@ -56,7 +108,7 @@ class LogProvider extends ChangeNotifier {
   }
 
   void updateMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
+    if (moodPoint >= 0 && moodPoint <= 1) {
       editableLog.numericMood = moodPoint;
       if (notify) notifyListeners();
     }
@@ -69,36 +121,24 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
-  void updateFavor({NoteLog? log, bool notify = false}) {
-    if (log == null) {
-      editableLog.isFavor = !editableLog.isFavor;
-    } else {
-      log.isFavor = !log.isFavor;
-    }
+  void updateFavor({bool notify = false}) {
+    editableLog.isFavor = !editableLog.isFavor;
     if (notify) notifyListeners();
   }
 
   Future<void> saveEditableLog() async {
-    if (editableLog == NoteLog()) return;
-    final index = logs.indexWhere((log) => log.id == editableLog.id);
-    if (isNoteLogChanged(logs[index], editableLog)) {
-      await isarService.updateNote(editableLog);
-      if (index != -1) {
-        logs[index] = editableLog;
-        editableLog = NoteLog();
-        notifyListeners();
+    if (isFetchedLogs) {
+      final index = logs.indexWhere((log) => log.id == editableLog.id);
+      if (isNoteLogChanged(logs[index], editableLog)) {
+        await isarService.updateLog(editableLog);
+        if (index != -1) {
+          logs[index] = editableLog;
+          editableLog = NoteLog();
+          notifyListeners();
+        }
       }
-    }
-  }
-
-  Future<void> updateLog({required NoteLog updatedLog}) async {
-    if (updatedLog == NoteLog()) return;
-    await isarService.updateNote(updatedLog);
-    final index = logs.indexWhere((log) => log.id == updatedLog.id);
-    if (index != -1) {
-      logs[index] = updatedLog;
-      editableLog = NoteLog();
-      notifyListeners();
+    } else {
+      await isarService.updateLog(editableLog);
     }
   }
 }

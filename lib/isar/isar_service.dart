@@ -15,7 +15,7 @@ class IsarService {
 
   // CREATE or UPDATE
   // tự động tạo mới hoặc cập nhật nếu có id
-  Future<NoteLog> saveNote(NoteLog log) async {
+  Future<NoteLog> saveLog(NoteLog log) async {
     final isar = await db;
     log.date = DateTime.now();
     log.lastUpdated = DateTime.now();
@@ -26,7 +26,7 @@ class IsarService {
     return log;
   }
 
-  Future<void> updateNote(NoteLog log) async {
+  Future<void> updateLog(NoteLog log) async {
     final isar = await db;
     log.lastUpdated = DateTime.now();
     final existedLog = await isar.noteLogs.get(log.id);
@@ -38,19 +38,19 @@ class IsarService {
   }
 
   // READ - lấy tất cả ghi chú
-  Future<List<NoteLog>> getAllNotes() async {
+  Future<List<NoteLog>> getAllLogs() async {
     final isar = await db;
     return await isar.noteLogs.where().findAll();
   }
 
   // READ - theo id
-  Future<NoteLog?> getNoteById(int id) async {
+  Future<NoteLog?> getLogById(int id) async {
     final isar = await db;
     return await isar.noteLogs.get(id);
   }
 
   // DELETE - theo id
-  Future<void> deleteNoteById(int id) async {
+  Future<void> deleteLogById(int id) async {
     final isar = await db;
     await isar.writeTxn(() async {
       await isar.noteLogs.delete(id);
