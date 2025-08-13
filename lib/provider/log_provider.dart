@@ -102,10 +102,12 @@ class LogProvider extends ChangeNotifier {
 
   /// UPDATE IN DETAILS LOG
   late NoteLog editableLog;
+  bool hasEditableLog = false;
 
-  void setEditableLog(NoteLog log) {
+  void setEditableLog({required NoteLog log, bool notify = true}) {
     editableLog = log.clone();
-    notifyListeners();
+    hasEditableLog = true;
+    if (notify) notifyListeners();
   }
 
   void updateLabelMood({required String mood, bool notify = false}) {
@@ -142,6 +144,7 @@ class LogProvider extends ChangeNotifier {
         if (index != -1) {
           logs[index] = editableLog;
           editableLog = NoteLog();
+          hasEditableLog = false;
           notifyListeners();
         }
       }

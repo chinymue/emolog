@@ -1,6 +1,5 @@
 import '../../export/app_essential.dart';
 import '../../export/detail_log_essential.dart';
-import '../../export/common_utils.dart';
 
 class DetailsLog extends StatelessWidget {
   const DetailsLog({super.key, required this.logId});
@@ -12,10 +11,14 @@ class DetailsLog extends StatelessWidget {
     final colorScheme = Theme.of(c).colorScheme;
 
     final logProvider = c.watch<LogProvider>();
-    final logList = logProvider.logs.where((l) => l.id == logId).toList();
-    final log = logList.isEmpty ? null : logList.first;
+    if (!logProvider.hasEditableLog || logProvider.editableLog.id != logId) {
+      logProvider.setEditableLog(
+        log: logProvider.logs.firstWhere((l) => l.id == logId),
+        notify: false,
+      );
+    }
 
-    if (log == null) {
+    if (!logProvider.hasEditableLog || logProvider.editableLog.id == 0) {
       return Scaffold(
         appBar: AppBar(
           title: Text(
@@ -26,29 +29,12 @@ class DetailsLog extends StatelessWidget {
           ),
         ),
         body: Center(
-          child: Text(
-            'Log does not exist',
-            style: Theme.of(c).textTheme.displayMedium,
-          ),
+          child: Text('Log does not exist', style: textTheme.displayMedium),
         ),
       );
     }
 
-    // Set editableLog nếu chưa có hoặc khác với log hiện tại
-    if (logProvider.editableLog == NoteLog() ||
-        logProvider.editableLog.id != log.id) {
-      // Đặt bản sao editable khi lần đầu build hoặc khi logId thay đổi
-      Future.microtask(() => logProvider.setEditableLog(log));
-    }
-
-    final editableLog = logProvider.editableLog;
-
-    void handleSave() async {
-      if (editableLog == NoteLog()) return;
-      if (isNoteLogChanged(editableLog, log)) {
-        await logProvider.saveEditableLog();
-      }
-    }
+    final editable = logProvider.editableLog;
 
     return Scaffold(
       appBar: AppBar(
@@ -59,24 +45,24 @@ class DetailsLog extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: () async => handleSave(),
+            onPressed: () async => c.read<LogProvider>().saveEditableLog(),
           ),
         ],
       ),
-      body: editableLog == NoteLog()
+      body: editable == NoteLog()
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 MoodPicker(
-                  selectedMood: editableLog.labelMood,
+                  selectedMood: editable.labelMood,
                   onMoodSelected: (mood) =>
-                      logProvider.updateLabelMood(mood: mood),
+                      c.read<LogProvider>().updateLabelMood(mood: mood),
                 ),
                 Expanded(
                   child: DefaultQuillEditor(
-                    initialContent: editableLog.note ?? '',
+                    initialContent: editable.note ?? '',
                     onContentChanged: (doc) =>
-                        logProvider.updateNote(note: doc),
+                        c.read<LogProvider>().updateNote(note: doc),
                   ),
                 ),
               ],
