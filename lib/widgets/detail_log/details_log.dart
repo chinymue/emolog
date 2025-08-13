@@ -91,18 +91,16 @@ class DetailsLogContent extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
     final logProvider = c.watch<LogProvider>();
-    final editableLog = logProvider.editableLog;
-
     return Column(
       children: [
         MoodPicker(
-          selectedMood: editableLog.labelMood,
-          onMoodSelected: (mood) => logProvider.updateLabelMood(mood: mood),
+          selectedMood: logProvider.newLog.labelMood,
+          onMoodSelected: (mood) => logProvider.setLabelMood(mood: mood),
         ),
         Expanded(
           child: DefaultQuillEditor(
-            initialContent: editableLog.note ?? '',
-            onContentChanged: (doc) => logProvider.updateNote(note: doc),
+            initialContent: logProvider.newLog.note ?? '',
+            onContentChanged: (doc) => logProvider.setNote(note: doc),
           ),
         ),
       ],

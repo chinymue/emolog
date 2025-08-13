@@ -21,16 +21,16 @@ class EmologForm extends StatelessWidget {
   Future<void> _saveLog(BuildContext c) async {
     final logProvider = c.read<LogProvider>();
     try {
-      final savedLog = await logProvider.addLog();
+      final savedLogId = await logProvider.addLog();
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('log ${savedLog.id} has been recorded'),
+            content: Text('log $savedLogId has been recorded'),
             action: SnackBarAction(
               label: 'Undo',
-              onPressed: () => logProvider.deleteLog(id: savedLog.id),
+              onPressed: () => logProvider.deleteLog(id: savedLogId),
             ),
           ),
         );

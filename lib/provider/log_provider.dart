@@ -35,8 +35,8 @@ class LogProvider extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
-  Future<NoteLog> addLog() async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog;
+  Future<int> addLog() async {
+    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -46,7 +46,7 @@ class LogProvider extends ChangeNotifier {
 
     final savedLog = newLog;
     newLog = NoteLog();
-    return savedLog;
+    return savedLog.id;
   }
 
   /// FETCH LOGS FROM ISAR
