@@ -1,38 +1,41 @@
-import 'package:flutter/material.dart';
+import '../../export/app_essential.dart';
 import '../../export/detail_log_essential.dart';
-import '../../export/common_utils.dart';
 
-class DetailsLog extends StatefulWidget {
-  const DetailsLog({
-    super.key,
-    required this.isarService,
-    required this.content,
-    required this.onLogUpdated,
-  });
-  final IsarService isarService;
-  final NoteLog content;
-
-  /// Callback để thông báo log đã được cập nhật
-  final void Function(NoteLog updatedLog, String action) onLogUpdated;
-
-  @override
-  State<DetailsLog> createState() => _DetailsLogState();
-}
-
-class _DetailsLogState extends State<DetailsLog> {
-  bool _hasChanged = false;
-  late NoteLog _currentLog;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentLog = widget.content.clone();
-  }
+class DetailsLog extends StatelessWidget {
+  const DetailsLog({super.key, required this.logId});
+  final int logId;
 
   @override
   Widget build(BuildContext c) {
     final textTheme = Theme.of(c).textTheme;
     final colorScheme = Theme.of(c).colorScheme;
+
+    final logProvider = c.watch<LogProvider>();
+    if (!logProvider.hasEditableLog || logProvider.editableLog.id != logId) {
+      logProvider.setEditableLog(
+        log: logProvider.logs.firstWhere((l) => l.id == logId),
+        notify: false,
+      );
+    }
+
+    if (!logProvider.hasEditableLog || logProvider.editableLog.id == 0) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Note detail',
+            style: textTheme.headlineMedium?.copyWith(
+              color: colorScheme.outline,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Text('Log does not exist', style: textTheme.displayMedium),
+        ),
+      );
+    }
+
+    final editable = logProvider.editableLog;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -42,34 +45,22 @@ class _DetailsLogState extends State<DetailsLog> {
         actions: [
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: () {
-              setState(
-                () =>
-                    _hasChanged = isNoteLogChanged(_currentLog, widget.content),
-              );
-              if (_hasChanged) {
-                widget.onLogUpdated(_currentLog, 'updated');
-              }
-            },
+            onPressed: () => c.read<LogProvider>().saveEditableLog(),
           ),
         ],
       ),
       body: Column(
         children: [
           MoodPicker(
-            selectedMood: _currentLog.labelMood,
-            onMoodSelected: (mood) {
-              _currentLog.labelMood = mood;
-              // widget.onLogUpdated(_currentLog, 'updated');
-            },
+            selectedMood: editable.labelMood,
+            onMoodSelected: (mood) =>
+                c.read<LogProvider>().updateLabelMood(mood: mood),
           ),
           Expanded(
             child: DefaultQuillEditor(
-              initialContent: _currentLog.note ?? '',
-              onContentChanged: (doc) {
-                _currentLog.note = doc;
-                // widget.onLogUpdated(_currentLog, 'updated');
-              },
+              initialContent: editable.note ?? '',
+              onContentChanged: (doc) =>
+                  c.read<LogProvider>().updateNote(note: doc),
             ),
           ),
         ],
@@ -78,38 +69,22 @@ class _DetailsLogState extends State<DetailsLog> {
   }
 }
 
-class DetailsLogContent extends StatefulWidget {
-  const DetailsLogContent({
-    super.key,
-    required this.isarService,
-    required this.onLogUpdated,
-  });
-  final IsarService isarService;
-  final void Function(NoteLog updatedLog) onLogUpdated;
+class DetailsLogContent extends StatelessWidget {
+  const DetailsLogContent({super.key});
 
-  @override
-  State<DetailsLogContent> createState() => _DetailsLogContentState();
-}
-
-class _DetailsLogContentState extends State<DetailsLogContent> {
-  NoteLog _currentLog = NoteLog()..labelMood = initialMood;
   @override
   Widget build(BuildContext c) {
+    final logProvider = c.read<LogProvider>();
     return Column(
       children: [
         MoodPicker(
-          selectedMood: _currentLog.labelMood,
-          onMoodSelected: (mood) {
-            _currentLog.labelMood = mood;
-            widget.onLogUpdated(_currentLog);
-          },
+          selectedMood: logProvider.newLog.labelMood,
+          onMoodSelected: (mood) => logProvider.setLabelMood(mood: mood),
         ),
         Expanded(
           child: DefaultQuillEditor(
-            onContentChanged: (doc) {
-              _currentLog.note = doc;
-              widget.onLogUpdated(_currentLog);
-            },
+            initialContent: logProvider.newLog.note ?? '',
+            onContentChanged: (doc) => logProvider.setNote(note: doc),
           ),
         ),
       ],

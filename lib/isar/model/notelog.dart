@@ -10,7 +10,7 @@ class NoteLog {
 
   String? labelMood;
 
-  int? numericMood;
+  double? moodPoint;
 
   late DateTime date;
 
@@ -27,7 +27,26 @@ extension NoteLogClone on NoteLog {
       ..isFavor = isFavor
       ..note = note
       ..labelMood = labelMood
-      ..numericMood = numericMood
+      ..moodPoint = moodPoint
       ..lastUpdated = lastUpdated;
+  }
+}
+
+extension NoteLogCopyWith on NoteLog {
+  NoteLog copyWith({
+    Id? id,
+    String? note,
+    String? labelMood,
+    double? moodPoint,
+    DateTime? date,
+    bool? isFavor,
+  }) {
+    return NoteLog()
+      ..id = id ?? this.id
+      ..note = note ?? this.note
+      ..labelMood = labelMood ?? this.labelMood
+      ..moodPoint = moodPoint ?? this.moodPoint
+      ..date = date ?? this.date
+      ..isFavor = isFavor ?? this.isFavor;
   }
 }

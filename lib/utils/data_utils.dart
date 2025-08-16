@@ -68,7 +68,7 @@ String plainTextFromDeltaJson(String? deltaJson) {
 bool isNoteLogChanged(NoteLog a, NoteLog b) {
   return a.note != b.note ||
       a.labelMood != b.labelMood ||
-      a.numericMood != b.numericMood ||
+      a.moodPoint != b.moodPoint ||
       a.isFavor != b.isFavor ||
       a.date != b.date;
 }

@@ -37,15 +37,15 @@ const NoteLogSchema = CollectionSchema(
       name: r'lastUpdated',
       type: IsarType.dateTime,
     ),
-    r'note': PropertySchema(
+    r'moodPoint': PropertySchema(
       id: 4,
+      name: r'moodPoint',
+      type: IsarType.double,
+    ),
+    r'note': PropertySchema(
+      id: 5,
       name: r'note',
       type: IsarType.string,
-    ),
-    r'numericMood': PropertySchema(
-      id: 5,
-      name: r'numericMood',
-      type: IsarType.long,
     )
   },
   estimateSize: _noteLogEstimateSize,
@@ -93,8 +93,8 @@ void _noteLogSerialize(
   writer.writeBool(offsets[1], object.isFavor);
   writer.writeString(offsets[2], object.labelMood);
   writer.writeDateTime(offsets[3], object.lastUpdated);
-  writer.writeString(offsets[4], object.note);
-  writer.writeLong(offsets[5], object.numericMood);
+  writer.writeDouble(offsets[4], object.moodPoint);
+  writer.writeString(offsets[5], object.note);
 }
 
 NoteLog _noteLogDeserialize(
@@ -109,8 +109,8 @@ NoteLog _noteLogDeserialize(
   object.isFavor = reader.readBool(offsets[1]);
   object.labelMood = reader.readStringOrNull(offsets[2]);
   object.lastUpdated = reader.readDateTime(offsets[3]);
-  object.note = reader.readStringOrNull(offsets[4]);
-  object.numericMood = reader.readLongOrNull(offsets[5]);
+  object.moodPoint = reader.readDoubleOrNull(offsets[4]);
+  object.note = reader.readStringOrNull(offsets[5]);
   return object;
 }
 
@@ -130,9 +130,9 @@ P _noteLogDeserializeProp<P>(
     case 3:
       return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -541,6 +541,84 @@ extension NoteLogQueryFilter
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'moodPoint',
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'moodPoint',
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'moodPoint',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'moodPoint',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'moodPoint',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'moodPoint',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> noteIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -686,75 +764,6 @@ extension NoteLogQueryFilter
       ));
     });
   }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'numericMood',
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'numericMood',
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodEqualTo(
-      int? value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'numericMood',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'numericMood',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodLessThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'numericMood',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> numericMoodBetween(
-    int? lower,
-    int? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'numericMood',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
 }
 
 extension NoteLogQueryObject
@@ -812,6 +821,18 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByMoodPoint() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'moodPoint', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByMoodPointDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'moodPoint', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -821,18 +842,6 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNoteDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.desc);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNumericMood() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'numericMood', Sort.asc);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNumericMoodDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'numericMood', Sort.desc);
     });
   }
 }
@@ -899,6 +908,18 @@ extension NoteLogQuerySortThenBy
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByMoodPoint() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'moodPoint', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByMoodPointDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'moodPoint', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -908,18 +929,6 @@ extension NoteLogQuerySortThenBy
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByNoteDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.desc);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByNumericMood() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'numericMood', Sort.asc);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByNumericMoodDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'numericMood', Sort.desc);
     });
   }
 }
@@ -951,16 +960,16 @@ extension NoteLogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByMoodPoint() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'moodPoint');
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByNote(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'note', caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByNumericMood() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'numericMood');
     });
   }
 }
@@ -997,15 +1006,15 @@ extension NoteLogQueryProperty
     });
   }
 
-  QueryBuilder<NoteLog, String?, QQueryOperations> noteProperty() {
+  QueryBuilder<NoteLog, double?, QQueryOperations> moodPointProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'note');
+      return query.addPropertyName(r'moodPoint');
     });
   }
 
-  QueryBuilder<NoteLog, int?, QQueryOperations> numericMoodProperty() {
+  QueryBuilder<NoteLog, String?, QQueryOperations> noteProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'numericMood');
+      return query.addPropertyName(r'note');
     });
   }
 }
