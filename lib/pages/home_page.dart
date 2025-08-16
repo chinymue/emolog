@@ -1,8 +1,8 @@
-import '../export/app_essential.dart';
+import '../export/package/app_essential.dart';
 import 'dart:async';
 import '../widgets/default_scaffold.dart';
 import '../widgets/message.dart';
-import '../export/notelog_essential.dart';
+import '../export/provider/log_provider.dart';
 import '../export/basic_utils.dart';
 import '../widgets/detail_log/details_log.dart';
 

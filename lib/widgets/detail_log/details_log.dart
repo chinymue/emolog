@@ -1,4 +1,4 @@
-import '../../export/app_essential.dart';
+import '../../export/package/app_essential.dart';
 import '../../export/detail_log_essential.dart';
 
 class DetailsLog extends StatelessWidget {

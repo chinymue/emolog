@@ -1,6 +1,7 @@
-import '../../export/app_essential.dart';
+import '../../export/package/app_essential.dart';
 import 'dart:async';
-import '../../export/notelog_essential.dart';
+import '../../export/provider/log_provider.dart';
+import '../../provider/log_view_provider.dart';
 import '../../export/common_utils.dart';
 import '../../widgets/detail_log/details_log.dart';
 
@@ -9,11 +10,17 @@ class DefaultList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final logProvider = c.read<LogProvider>();
-    final logs = logProvider.logs;
-    if (logs.isEmpty) {
+    final colorScheme = Theme.of(c).colorScheme;
+    final textTheme = Theme.of(c).textTheme;
+    final logViewProvider = c.watch<LogViewProvider>();
+    final logs = logViewProvider.allLogs;
+
+    if (logs.isEmpty && logViewProvider.isFetchedLogs) {
       return Center(
-        child: Text('No logs yet', style: Theme.of(c).textTheme.displayMedium),
+        child: Text(
+          'No logs yet',
+          style: textTheme.displayMedium?.copyWith(color: colorScheme.primary),
+        ),
       );
     }
 
@@ -22,7 +29,6 @@ class DefaultList extends StatelessWidget {
       itemCount: logs.length,
       itemBuilder: (c, i) {
         final log = logs[i];
-        final colorScheme = Theme.of(c).colorScheme;
 
         void handleDissmis() => c.read<LogProvider>().deleteLog(id: log.id);
 
