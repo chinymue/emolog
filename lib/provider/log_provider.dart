@@ -1,5 +1,4 @@
-import 'package:emolog/export/notelog_essential.dart';
-import '../isar/isar_service.dart';
+import '../export/data/notelog_isar.dart';
 import 'package:flutter/material.dart';
 import '../export/basic_utils.dart';
 

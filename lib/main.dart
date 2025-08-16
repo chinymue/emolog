@@ -1,5 +1,5 @@
-import 'package:emolog/provider/log_provider.dart';
-import './export/app_essential.dart';
+import 'export/package/app_essential.dart';
+import 'export/provider/main_essential.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import './export/theme_essential.dart';
@@ -23,7 +23,10 @@ class MyApp extends StatelessWidget {
         initialRoute: pages[0]['route'],
         routes: {
           pages[0]['route']: (c) => HomePage(),
-          pages[1]['route']: (c) => HistoryPage(),
+          pages[1]['route']: (c) => ChangeNotifierProvider(
+            create: (c) => LogViewProvider(),
+            child: HistoryPage(),
+          ),
           pages[2]['route']: (c) => SettingsPage(),
         },
         localizationsDelegates: const [
