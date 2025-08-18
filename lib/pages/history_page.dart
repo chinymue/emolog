@@ -40,6 +40,19 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
+  Future<void> _showMoodRangePicker(BuildContext c) async {
+    return showModalBottomSheet(
+      context: c,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(kPaddingSmall),
+        child: MoodRangePicker(
+          onChangedRange: (values) =>
+              c.read<LogViewProvider>().setMoodRangeFilter(values),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext c) {
     final logViewProvider = c.read<LogViewProvider>();
@@ -52,7 +65,9 @@ class HistoryPage extends StatelessWidget {
     final isFavorFilter = c.select<LogViewProvider, bool>(
       (provider) => provider.isFavoredLog,
     );
-
+    // RangeValues currentRangeValues = c.select<LogViewProvider, RangeValues>(
+    //   (provider) => provider.moodRangeFilter,
+    // );
     return MainScaffold(
       currentIndex: 1,
       actions: [
@@ -66,6 +81,11 @@ class HistoryPage extends StatelessWidget {
           onPressed: () => _showMoodPicker(c),
           icon: Icon(Icons.emoji_emotions),
           tooltip: "Lọc theo mood",
+        ),
+        IconButton(
+          onPressed: () => _showMoodRangePicker(c),
+          icon: Icon(Icons.percent),
+          tooltip: "Lọc theo % mood",
         ),
         IconButton(
           onPressed: () => logViewProvider.setFilterFavor(),

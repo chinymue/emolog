@@ -45,14 +45,17 @@ class LogViewProvider extends ChangeNotifier {
   DateTime? _filterEndDate;
   bool? _isFavoredLog;
   String? _moodFilter;
+  RangeValues _moodRangeFilter = const RangeValues(minMoodPoint, maxMoodPoint);
 
   bool get isFavoredLog => _isFavoredLog ?? false;
+  RangeValues get moodRangeFilter => _moodRangeFilter;
 
   bool get hasActiveFilter {
     return _filterStartDate != null ||
         _filterEndDate != null ||
         _isFavoredLog == true ||
-        _moodFilter != null;
+        _moodFilter != null ||
+        _moodRangeFilter != const RangeValues(minMoodPoint, maxMoodPoint);
   }
 
   void clearFilters() {
@@ -60,6 +63,7 @@ class LogViewProvider extends ChangeNotifier {
     _filterEndDate = null;
     _isFavoredLog = null;
     _moodFilter = null;
+    _moodRangeFilter = const RangeValues(minMoodPoint, maxMoodPoint);
     notifyListeners();
   }
 
@@ -94,6 +98,18 @@ class LogViewProvider extends ChangeNotifier {
       logs = logs.where((log) => log.labelMood == _moodFilter).toList();
     }
 
+    if (_moodRangeFilter != const RangeValues(minMoodPoint, maxMoodPoint) &&
+        _moodRangeFilter.start >= minMoodPoint &&
+        _moodRangeFilter.end <= maxMoodPoint) {
+      logs = logs
+          .where(
+            (log) =>
+                log.moodPoint! >= _moodRangeFilter.start &&
+                log.moodPoint! <= _moodRangeFilter.end,
+          )
+          .toList();
+    }
+
     return logs;
   }
 
@@ -114,6 +130,11 @@ class LogViewProvider extends ChangeNotifier {
 
   void setMoodFilter(String? mood) {
     _moodFilter = mood;
+    notifyListeners();
+  }
+
+  void setMoodRangeFilter(RangeValues values) {
+    _moodRangeFilter = values;
     notifyListeners();
   }
 }
