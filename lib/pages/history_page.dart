@@ -1,4 +1,6 @@
+import 'package:emolog/export/decor_utils.dart';
 import 'package:emolog/provider/log_view_provider.dart';
+import 'package:emolog/widgets/detail_log/mood_picker.dart';
 import '../export/package/app_essential.dart';
 import '../provider/log_provider.dart';
 import '../widgets/default_scaffold.dart';
@@ -23,6 +25,21 @@ class HistoryPage extends StatelessWidget {
     }
   }
 
+  Future<void> _showMoodPicker(BuildContext c) async {
+    return showModalBottomSheet(
+      context: c,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(kPaddingSmall),
+        child: MoodPicker(
+          onMoodSelected: (mood) {
+            c.read<LogViewProvider>().setMoodFilter(mood);
+            Navigator.pop(c);
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext c) {
     final logViewProvider = c.read<LogViewProvider>();
@@ -43,16 +60,24 @@ class HistoryPage extends StatelessWidget {
           IconButton(
             onPressed: () => logViewProvider.clearFilters(),
             icon: Icon(Icons.filter_alt_off),
+            tooltip: "Xóa các filter đã chọn",
           ),
+        IconButton(
+          onPressed: () => _showMoodPicker(c),
+          icon: Icon(Icons.emoji_emotions),
+          tooltip: "Lọc theo mood",
+        ),
         IconButton(
           onPressed: () => logViewProvider.setFilterFavor(),
           icon: isFavorFilter
               ? Icon(Icons.favorite_border)
               : Icon(Icons.favorite),
+          tooltip: isFavorFilter ? "Xóa lọc favorite" : "Lọc favorite",
         ),
         IconButton(
           onPressed: () => _selectDate(c),
           icon: Icon(Icons.date_range),
+          tooltip: "Chọn khoảng thời gian hiển thị",
         ),
         IconButton(
           onPressed: () => logViewProvider.toggleSortDateOrder(),
@@ -61,6 +86,9 @@ class HistoryPage extends StatelessWidget {
                 ? Icons.arrow_downward
                 : Icons.arrow_upward,
           ),
+          tooltip: sortDateOrder == SortDateOrder.newestFirst
+              ? "Xếp theo cũ nhất"
+              : "Xếp theo mới nhất",
         ),
       ],
       child: LogsList(),

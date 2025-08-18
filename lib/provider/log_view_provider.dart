@@ -1,6 +1,6 @@
 import '../export/data/notelog_isar.dart';
 import 'package:flutter/material.dart';
-// import '../export/basic_utils.dart';
+import '../export/basic_utils.dart';
 
 enum SortDateOrder { newestFirst, oldestFirst }
 
@@ -43,18 +43,23 @@ class LogViewProvider extends ChangeNotifier {
   /// FILTERS
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
-  bool isFavoredLog = false;
+  bool? _isFavoredLog;
+  String? _moodFilter;
+
+  bool get isFavoredLog => _isFavoredLog ?? false;
 
   bool get hasActiveFilter {
     return _filterStartDate != null ||
         _filterEndDate != null ||
-        isFavoredLog == true;
+        _isFavoredLog == true ||
+        _moodFilter != null;
   }
 
   void clearFilters() {
     _filterStartDate = null;
     _filterEndDate = null;
-    isFavoredLog = false;
+    _isFavoredLog = null;
+    _moodFilter = null;
     notifyListeners();
   }
 
@@ -81,8 +86,12 @@ class LogViewProvider extends ChangeNotifier {
           .toList();
     }
 
-    if (isFavoredLog) {
+    if (_isFavoredLog != null && _isFavoredLog == true) {
       logs = logs.where((log) => log.isFavor == true).toList();
+    }
+
+    if (_moodFilter != null && moods.containsKey(_moodFilter)) {
+      logs = logs.where((log) => log.labelMood == _moodFilter).toList();
     }
 
     return logs;
@@ -95,7 +104,16 @@ class LogViewProvider extends ChangeNotifier {
   }
 
   void setFilterFavor() {
-    isFavoredLog = !isFavoredLog;
+    if (_isFavoredLog == null) {
+      _isFavoredLog = true;
+    } else {
+      _isFavoredLog = !_isFavoredLog!;
+    }
+    notifyListeners();
+  }
+
+  void setMoodFilter(String? mood) {
+    _moodFilter = mood;
     notifyListeners();
   }
 }
