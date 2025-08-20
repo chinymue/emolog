@@ -1,7 +1,7 @@
 import '../../export/package/app_essential.dart';
 import 'dart:async';
 import '../../export/provider/log_provider.dart';
-import '../../provider/log_view_provider.dart';
+import '../../provider/log_view_pvd.dart';
 import '../../export/common_utils.dart';
 import '../../widgets/detail_log/details_log.dart';
 
@@ -12,10 +12,10 @@ class DefaultList extends StatelessWidget {
   Widget build(BuildContext c) {
     final colorScheme = Theme.of(c).colorScheme;
     final textTheme = Theme.of(c).textTheme;
-    final logViewProvider = c.watch<LogViewProvider>();
-    final logs = logViewProvider.allLogs;
+    final logViewPvd = c.watch<LogViewProvider>();
+    final logs = logViewPvd.allLogs;
 
-    if (logs.isEmpty && logViewProvider.isFetchedLogs) {
+    if (logs.isEmpty && logViewPvd.isFetchedLogs) {
       return Center(
         child: Text(
           'No logs yet',

@@ -3,7 +3,11 @@ import '../../export/decor_utils.dart';
 
 // Mood picker widget -----------------------------------------------
 class MoodPicker extends StatefulWidget {
-  MoodPicker({super.key, this.selectedMood, required this.onMoodSelected});
+  const MoodPicker({
+    super.key,
+    this.selectedMood,
+    required this.onMoodSelected,
+  });
   final void Function(String selectedMood) onMoodSelected;
   final String? selectedMood;
 
@@ -51,6 +55,83 @@ class _MoodPickerState extends State<MoodPicker> {
           }).toList(),
         ),
       ),
+    );
+  }
+}
+
+class MoodPointPicker extends StatefulWidget {
+  MoodPointPicker({
+    super.key,
+    this.selectedMoodPoint,
+    required this.onChangedMoodPoint,
+  });
+  final void Function(double value) onChangedMoodPoint;
+  final double? selectedMoodPoint;
+
+  @override
+  State<MoodPointPicker> createState() => _MoodPointPickerState();
+}
+
+class _MoodPointPickerState extends State<MoodPointPicker> {
+  late double _value;
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.selectedMoodPoint ?? 0.5;
+  }
+
+  @override
+  Widget build(BuildContext c) {
+    final colorScheme = Theme.of(c).colorScheme;
+    return Slider(
+      value: _value,
+      min: minMoodPoint,
+      max: maxMoodPoint,
+      divisions: 100,
+      label: "${(_value * 100).round().toString()}%",
+      onChanged: (double value) {
+        setState(() {
+          _value = value;
+        });
+        widget.onChangedMoodPoint(value);
+      },
+      activeColor: colorScheme.primary,
+      inactiveColor: colorScheme.secondary,
+    );
+  }
+}
+
+class MoodRangePicker extends StatefulWidget {
+  const MoodRangePicker({super.key, required this.onChangedRange});
+  final void Function(RangeValues values) onChangedRange;
+
+  @override
+  State<MoodRangePicker> createState() => _MoodRangePickerState();
+}
+
+class _MoodRangePickerState extends State<MoodRangePicker> {
+  RangeValues _currentRange = const RangeValues(minMoodPoint, maxMoodPoint);
+
+  @override
+  Widget build(BuildContext c) {
+    final colorScheme = Theme.of(c).colorScheme;
+    return RangeSlider(
+      values: _currentRange,
+      min: minMoodPoint,
+      max: maxMoodPoint,
+      divisions: 100,
+      labels: RangeLabels(
+        "${(_currentRange.start * 100).round().toString()}%",
+        "${(_currentRange.end * 100).round().toString()}%",
+      ),
+      onChanged: (RangeValues values) {
+        setState(() {
+          _currentRange = values;
+        });
+        widget.onChangedRange(values);
+      },
+      activeColor: colorScheme.primary,
+      inactiveColor: colorScheme.secondary,
     );
   }
 }

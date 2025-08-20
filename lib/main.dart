@@ -16,7 +16,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (c) => LogProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (c) => LogProvider()),
+        ChangeNotifierProvider(create: (c) => UserProvider()),
+      ],
       child: MaterialApp(
         title: 'Emolog',
         theme: buildAppTheme(follyRed),

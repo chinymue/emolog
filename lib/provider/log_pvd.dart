@@ -16,7 +16,7 @@ class LogProvider extends ChangeNotifier {
   }
 
   void setMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= 0 && moodPoint <= 1) {
+    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
       newLog.moodPoint = moodPoint;
       if (notify) notifyListeners();
     }
@@ -117,7 +117,7 @@ class LogProvider extends ChangeNotifier {
   }
 
   void updateMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= 0 && moodPoint <= 1) {
+    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
       editableLog.moodPoint = moodPoint;
       if (notify) notifyListeners();
     }

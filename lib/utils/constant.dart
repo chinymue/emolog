@@ -83,4 +83,4 @@ const Map<String, IconData> moods = {
 
 const String initialMood = 'chill';
 const double minMoodPoint = 0.0;
-const double maxMoodPoint = 5.0;
+const double maxMoodPoint = 1.0;
