@@ -1,8 +1,8 @@
 import 'package:emolog/export/decor_utils.dart';
-import 'package:emolog/provider/log_view_provider.dart';
+import 'package:emolog/provider/log_view_pvd.dart';
 import 'package:emolog/widgets/detail_log/mood_picker.dart';
 import '../export/package/app_essential.dart';
-import '../provider/log_provider.dart';
+import '../provider/log_pvd.dart';
 import '../widgets/default_scaffold.dart';
 import '../widgets/listview/default_log_list.dart';
 
@@ -20,6 +20,7 @@ class HistoryPage extends StatelessWidget {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
+      if (!c.mounted) return;
       c.read<LogViewProvider>().setFilterDateRange(picked.start, picked.end);
       // print("Ngày chọn: ${picked.start} - ${picked.end}");
     }
