@@ -6,6 +6,7 @@ class UserProvider extends ChangeNotifier {
   // TODO: thay vì tạo mới, truyền isarService qua constructor
   IsarService isarService = IsarService();
   late User _currentUser;
+  bool isFetchedUser = false;
   User? get user => _currentUser;
 
   /// CREATE NEW USER
@@ -15,13 +16,15 @@ class UserProvider extends ChangeNotifier {
 
   Future<int> addUser() async {
     _currentUser = await isarService.saveUser(newUser);
+    isFetchedUser = true;
+    userList.add(_currentUser);
     newUser = User();
     notifyListeners();
     return _currentUser.id;
   }
 
   // default guest
-  void setGuestAccount() {
+  void setGuestAccount({bool notify = false}) {
     newUser.username = "guest";
     newUser.password = "default_pw";
     newUser.fullName = newUser.username;
@@ -29,7 +32,7 @@ class UserProvider extends ChangeNotifier {
     newUser.avatarUrl = "default_url";
     newUser.language = LanguageAvailable.en;
     newUser.theme = ThemeStyle.light;
-    notifyListeners();
+    if (notify) notifyListeners();
   }
 
   // set account info
@@ -42,13 +45,13 @@ class UserProvider extends ChangeNotifier {
     LanguageAvailable? newLanguage,
     ThemeStyle? newTheme,
   ) {
-    newUser.username = "guest";
-    newUser.password = "default_pw";
-    newUser.fullName = newUser.username;
-    newUser.email = "${newUser.username}@emolog.com";
-    newUser.avatarUrl = "default_url";
-    newUser.language = LanguageAvailable.en;
-    newUser.theme = ThemeStyle.light;
+    newUser.username = newUsername;
+    newUser.password = newPass;
+    newUser.fullName = newFullname ?? newUsername;
+    newUser.email = newEmail;
+    newUser.avatarUrl = newURL ?? "";
+    newUser.language = newLanguage ?? LanguageAvailable.en;
+    newUser.theme = newTheme ?? ThemeStyle.light;
     notifyListeners();
   }
 
@@ -89,10 +92,17 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// FETCH SPECIFIC USER
+  /// FETCH USER
 
   Future<void> loadUser({required int userId}) async {
-    _currentUser = await isarService.getById(userId);
+    _currentUser = await isarService.getById(User, userId);
+    isFetchedUser = true;
+    notifyListeners();
+  }
+
+  List<User> userList = [];
+  Future<void> fetchAllUsers() async {
+    userList = await isarService.getAll<User>();
     notifyListeners();
   }
 

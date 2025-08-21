@@ -75,12 +75,7 @@ int _userEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  {
-    final value = object.avatarUrl;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.avatarUrl.length * 3;
   {
     final value = object.email;
     if (value != null) {
@@ -119,18 +114,18 @@ User _userDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = User(
-    avatarUrl: reader.readStringOrNull(offsets[0]),
-    email: reader.readStringOrNull(offsets[1]),
-    fullName: reader.readStringOrNull(offsets[2]),
-    language: _UserlanguageValueEnumMap[reader.readByteOrNull(offsets[3])] ??
-        LanguageAvailable.en,
-    password: reader.readString(offsets[4]),
-    theme: _UserthemeValueEnumMap[reader.readByteOrNull(offsets[5])] ??
-        ThemeStyle.light,
-    username: reader.readString(offsets[6]),
-  );
+  final object = User();
+  object.avatarUrl = reader.readString(offsets[0]);
+  object.email = reader.readStringOrNull(offsets[1]);
+  object.fullName = reader.readStringOrNull(offsets[2]);
   object.id = id;
+  object.language =
+      _UserlanguageValueEnumMap[reader.readByteOrNull(offsets[3])] ??
+          LanguageAvailable.en;
+  object.password = reader.readString(offsets[4]);
+  object.theme = _UserthemeValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+      ThemeStyle.light;
+  object.username = reader.readString(offsets[6]);
   return object;
 }
 
@@ -142,7 +137,7 @@ P _userDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
@@ -269,24 +264,8 @@ extension UserQueryWhere on QueryBuilder<User, User, QWhereClause> {
 }
 
 extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
-  QueryBuilder<User, User, QAfterFilterCondition> avatarUrlIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'avatarUrl',
-      ));
-    });
-  }
-
-  QueryBuilder<User, User, QAfterFilterCondition> avatarUrlIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'avatarUrl',
-      ));
-    });
-  }
-
   QueryBuilder<User, User, QAfterFilterCondition> avatarUrlEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -299,7 +278,7 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
   }
 
   QueryBuilder<User, User, QAfterFilterCondition> avatarUrlGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -314,7 +293,7 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
   }
 
   QueryBuilder<User, User, QAfterFilterCondition> avatarUrlLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -329,8 +308,8 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
   }
 
   QueryBuilder<User, User, QAfterFilterCondition> avatarUrlBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1365,7 +1344,7 @@ extension UserQueryProperty on QueryBuilder<User, User, QQueryProperty> {
     });
   }
 
-  QueryBuilder<User, String?, QQueryOperations> avatarUrlProperty() {
+  QueryBuilder<User, String, QQueryOperations> avatarUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'avatarUrl');
     });

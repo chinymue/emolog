@@ -81,9 +81,14 @@ class IsarService {
   /// READ SPECIFIC ITEMS
 
   // read one item by id
-  Future<T?> getById<T>(int id) async {
+  Future<dynamic> getById(Type type, int id) async {
     final isar = await db;
-    return await isar.collection<T>().get(id);
+    if (type == User) {
+      return await isar.users.get(id);
+    } else if (type == NoteLog) {
+      return await isar.noteLogs.get(id);
+    }
+    throw UnsupportedError("Type $type not supported");
   }
 
   /// DELETE SPECIFIC ITEMS
