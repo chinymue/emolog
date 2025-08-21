@@ -1,10 +1,9 @@
 import 'package:emolog/export/basic_utils.dart';
-import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import './model/notelog.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-// import '../ultils.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
+import 'package:isar/isar.dart';
+import './model/user.dart';
+import './model/notelog.dart';
 
 class IsarService {
   late Future<Isar> db;
@@ -13,8 +12,8 @@ class IsarService {
     db = _openDB();
   }
 
-  // CREATE or UPDATE
-  // tự động tạo mới hoặc cập nhật nếu có id
+  /// CREATE NEW ITEM
+
   Future<NoteLog> saveLog(NoteLog log) async {
     final isar = await db;
     log.date = DateTime.now();
@@ -39,6 +38,18 @@ class IsarService {
     return log;
   }
 
+  Future<User> saveUser(User user) async {
+    final isar = await db;
+    user.avatarUrl = "";
+    user.fullName = user.fullName ?? user.username;
+    await isar.writeTxn(() async {
+      await isar.users.put(user);
+    });
+    return user;
+  }
+
+  /// UPDATE ITEM
+
   Future<void> updateLog(NoteLog log) async {
     final isar = await db;
     log.lastUpdated = DateTime.now();
@@ -50,36 +61,66 @@ class IsarService {
     }
   }
 
-  // READ - lấy tất cả ghi chú
-  Future<List<NoteLog>> getAllLogs() async {
+  Future<void> updateUser(User user) async {
     final isar = await db;
-    return await isar.noteLogs.where().findAll();
+    final existedUser = await isar.users.get(user.id);
+    if (existedUser != null) {
+      await isar.writeTxn(() async {
+        await isar.users.put(user);
+      });
+    }
   }
 
-  // READ - theo id
-  Future<NoteLog?> getLogById(int id) async {
+  // READ ALL ITEMS IN COLLECTION
+
+  Future<List<T>> getAll<T>() async {
     final isar = await db;
-    return await isar.noteLogs.get(id);
+    return await isar.collection<T>().where().findAll();
   }
 
-  // DELETE - theo id
-  Future<void> deleteLogById(int id) async {
+  /// READ SPECIFIC ITEMS
+
+  // read one item by id
+  Future<T?> getById<T>(int id) async {
+    final isar = await db;
+    return await isar.collection<T>().get(id);
+  }
+
+  /// DELETE SPECIFIC ITEMS
+
+  // delete one item by id on collection T
+  Future<void> deleteById<T>(int id) async {
     final isar = await db;
     await isar.writeTxn(() async {
-      await isar.noteLogs.delete(id);
+      await isar.collection<T>().delete(id);
     });
   }
 
+  // TODO: delete all items match id-ref
+
+  /// DELETE COLLECTIONS
+
+  // delete all colections
   Future<void> clearDB() async {
     final isar = await db;
     await isar.writeTxn(() => isar.clear());
   }
 
+  // delete one collection specific: T
+  Future<void> clearCollection<T>() async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.collection<T>().clear();
+    });
+  }
+
+  /// OPEN DATABASES
+
   Future<Isar> _openDB() async {
     if (Isar.instanceNames.isEmpty) {
       if (kIsWeb) {
         return await Isar.open(
-          [NoteLogSchema],
+          [NoteLogSchema, UserSchema],
           directory: '',
           name: 'default',
           inspector: true,
@@ -87,7 +128,7 @@ class IsarService {
       } else {
         final dir = await getApplicationDocumentsDirectory();
         return await Isar.open(
-          [NoteLogSchema],
+          [NoteLogSchema, UserSchema],
           directory: dir.path,
           inspector: true,
         );
