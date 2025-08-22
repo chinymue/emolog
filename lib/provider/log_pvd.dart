@@ -3,10 +3,27 @@ import 'package:flutter/material.dart';
 import '../export/basic_utils.dart';
 
 class LogProvider extends ChangeNotifier {
-  final IsarService isarService = IsarService();
+  final IsarService isarService;
+  LogProvider(this.isarService);
 
   /// CREATE A NEW LOG
   NoteLog newLog = NoteLog();
+
+  Future<int> addLog() async {
+    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+    await isarService.saveLog(newLog);
+
+    if (isFetchedLogs) {
+      logs.add(newLog);
+      notifyListeners();
+    }
+
+    final savedLog = newLog;
+    newLog = NoteLog();
+    return savedLog.id;
+  }
+
+  // set each field
 
   void setLabelMood({required String mood, bool notify = false}) {
     if (moods.containsKey(mood)) {
@@ -34,34 +51,20 @@ class LogProvider extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
-  Future<int> addLog() async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
-    await isarService.saveLog(newLog);
-
-    if (isFetchedLogs) {
-      logs.add(newLog);
-      notifyListeners();
-    }
-
-    final savedLog = newLog;
-    newLog = NoteLog();
-    return savedLog.id;
-  }
-
   /// FETCH LOGS FROM ISAR
   List<NoteLog> logs = [];
   bool isFetchedLogs = false;
 
   Future<void> fetchLogs() async {
     if (!isFetchedLogs) {
-      logs = await isarService.getAllLogs();
+      logs = await isarService.getAll<NoteLog>();
       isFetchedLogs = true;
       notifyListeners();
     }
   }
 
   Future<void> deleteLog({required int id}) async {
-    await isarService.deleteLogById(id);
+    await isarService.deleteById<NoteLog>(id);
     if (isFetchedLogs) {
       logs.removeWhere((log) => log.id == id);
       notifyListeners();

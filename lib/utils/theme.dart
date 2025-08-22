@@ -56,12 +56,12 @@ ThemeData buildAppTheme(Color seedColor) {
           fontWeight: kFontWeightSemiBold,
         ),
         padding: const EdgeInsets.symmetric(
-          horizontal: kPadding,
-          vertical: kPaddingSmall,
+          horizontal: kPaddingLarge,
+          vertical: kPadding,
         ),
-        minimumSize: const Size(kButtonMinWidth, kButtonHeight),
-        fixedSize: const Size(kButtonWidth, kButtonHeight),
-        maximumSize: const Size(double.infinity, kButtonHeight),
+        // minimumSize: const Size(kButtonMinWidth, kButtonHeight),
+        // fixedSize: const Size(kButtonWidth, kButtonHeight),
+        // maximumSize: const Size(double.infinity, kButtonHeight),
       ),
     ),
   );

@@ -1,3 +1,5 @@
+import 'package:emolog/isar/isar_service.dart';
+
 import 'export/package/app_essential.dart';
 import 'export/provider/main_essential.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -17,8 +19,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext c) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (c) => LogProvider()),
-        ChangeNotifierProvider(create: (c) => UserProvider()),
+        Provider<IsarService>(create: (_) => IsarService()),
+        ChangeNotifierProvider(
+          create: (c) => LogProvider(c.read<IsarService>()),
+        ),
+        ChangeNotifierProvider(
+          create: (c) => UserProvider(c.read<IsarService>()),
+        ),
       ],
       child: MaterialApp(
         title: 'Emolog',
