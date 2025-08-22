@@ -37,3 +37,12 @@ Tired of f^cking call `setState` and nothing change as your wish? or have to use
         ```
 
 5.  Use `Provider` inside widgets: `Provider.of`, `Consumer`, `context.watch()`, `Selector`,...
+
+- vấn đề không notify khi đang build: sử dụng `WidgetsBinding`:
+
+```
+    // trigger load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().loadUser(userId: widget.userId);
+    });
+```

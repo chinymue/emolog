@@ -4,6 +4,7 @@ import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/default_scaffold.dart';
+import '../widgets/default_form.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -11,7 +12,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // Key _formKeyReset = UniqueKey();
+  Key _formKeyReset = UniqueKey();
   bool dbscreen = false;
 
   @override
@@ -35,14 +36,14 @@ class _SettingsPageState extends State<SettingsPage> {
               userPvd.setGuestAccount();
               await userPvd.addUser();
               await userPvd.fetchAllUsers();
-              // setState(() => _formKeyReset = UniqueKey());
+              setState(() => _formKeyReset = UniqueKey());
             },
             icon: Icon(Icons.add_box),
           ),
         IconButton(
           onPressed: () {
             userPvd.resetGuest();
-            // setState(() => _formKeyReset = UniqueKey());
+            setState(() => _formKeyReset = UniqueKey());
           },
           icon: Icon(Icons.disabled_by_default),
           tooltip: "Thiết lập lại tài khoản",
@@ -50,7 +51,7 @@ class _SettingsPageState extends State<SettingsPage> {
         IconButton(
           onPressed: () {
             userPvd.resetSetting();
-            // setState(() => _formKeyReset = UniqueKey());
+            setState(() => _formKeyReset = UniqueKey());
           },
           icon: Icon(Icons.restore),
           tooltip: "Thiết lập lại cài đặt",
@@ -75,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
             )
-          : UserInfo(userId: 1),
+          : UserInfo(key: _formKeyReset, userId: 1),
     );
   }
 }
@@ -91,45 +92,96 @@ class UserInfo extends StatefulWidget {
 class _UserInfoState extends State<UserInfo> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controllers
+  late final TextEditingController _usernameCtrl;
+  late final TextEditingController _passwordCtrl;
+  late final TextEditingController _fullnameCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _avatarCtrl;
+
+  // dropdown selections
+  LanguageAvailable? _selectedLanguage;
+  ThemeStyle? _selectedTheme;
+
+  // state flags
+  bool _initializedFromUser = false; // ensure we init controllers once
+  bool _isSaving = false;
+
   @override
   void initState() {
     super.initState();
-    context.read<UserProvider>().loadUser(userId: widget.userId);
+
+    _usernameCtrl = TextEditingController();
+    _passwordCtrl = TextEditingController();
+    _fullnameCtrl = TextEditingController();
+    _emailCtrl = TextEditingController();
+    _avatarCtrl = TextEditingController();
+
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => context.read<UserProvider>().loadUser(userId: widget.userId),
+    );
   }
 
-  late String? _newUsername;
+  @override
+  void dispose() {
+    _usernameCtrl.dispose();
+    _passwordCtrl.dispose();
+    _fullnameCtrl.dispose();
+    _emailCtrl.dispose();
+    _avatarCtrl.dispose();
+    super.dispose();
+  }
 
-  late String? _newPass;
+  bool _hasChanges(User user) {
+    if (_usernameCtrl.text != (user.username)) return true;
+    if (_passwordCtrl.text != (user.password)) return true;
+    if (_fullnameCtrl.text != (user.fullName ?? '')) return true;
+    if (_emailCtrl.text != (user.email ?? '')) return true;
+    if (_avatarCtrl.text != (user.avatarUrl)) return true;
+    if (_selectedLanguage != (user.language)) return true;
+    if (_selectedTheme != (user.theme)) return true;
+    return false;
+  }
 
-  late String? _newFullname;
-
-  late String? _newEmail;
-
-  late String? _newURL;
-
-  late LanguageAvailable? _newLanguage;
-
-  late ThemeStyle? _newTheme;
-
-  void _handleSave(BuildContext c) {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      c.read<UserProvider>().updateUser(
-        newUsername: _newUsername,
-        newPass: _newPass,
-        newFullname: _newFullname,
-        newEmail: _newEmail,
-        newURL: _newURL,
-        newLanguage: _newLanguage,
-        newTheme: _newTheme,
-      );
+  Future<void> _handleSave(User user) async {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(
-        c,
-      ).showSnackBar(const SnackBar(content: Text("Lưu thay đổi thành công")));
-    } else {
-      ScaffoldMessenger.of(
-        c,
+        context,
       ).showSnackBar(const SnackBar(content: Text("Không lưu được thay đổi")));
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    final newUsername = _usernameCtrl.text.trim();
+    final newPass = _passwordCtrl.text;
+    final newFullname = _fullnameCtrl.text.trim();
+    final newEmail = _emailCtrl.text.trim();
+    final newAvatar = _avatarCtrl.text.trim();
+    final newLang = _selectedLanguage ?? user.language;
+    final newTheme = _selectedTheme ?? user.theme;
+
+    try {
+      await context.read<UserProvider>().updateUser(
+        newUsername: newUsername,
+        newPass: newPass,
+        newFullname: newFullname,
+        newEmail: newEmail,
+        newURL: newAvatar,
+        newLanguage: newLang,
+        newTheme: newTheme,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Lưu thay đổi thành công")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lưu thất bại: $e")));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -140,160 +192,69 @@ class _UserInfoState extends State<UserInfo> {
     );
     if (!isFetched) {
       return const Center(child: CircularProgressIndicator());
-    } else {
-      final user = c.select<UserProvider, User>((provider) => provider.user!);
-      return LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints viewportConstraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: viewportConstraints.maxHeight,
-              ),
-              child: IntrinsicHeight(
-                child: Form(
-                  key: _formKey,
-                  child: Padding(
-                    padding: const EdgeInsets.all(kPadding),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: TextFormField(
-                            // key: ValueKey(user.username),
-                            initialValue: user.username,
-                            decoration: const InputDecoration(
-                              labelText: "Username",
-                            ),
-                            onSaved: (value) => _newUsername = value,
-                            validator: (value) =>
-                                (value == null || value.isEmpty)
-                                ? "Không được để trống"
-                                : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: TextFormField(
-                            // key: ValueKey(user.password),
-                            initialValue: user.password,
-                            decoration: const InputDecoration(
-                              labelText: "Password",
-                            ),
-                            onSaved: (value) => _newPass = value,
-                            validator: (value) =>
-                                (value == null || value.isEmpty)
-                                ? "Không được để trống"
-                                : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: TextFormField(
-                            // key: ValueKey(user.fullName),
-                            initialValue: user.fullName ?? "-",
-                            decoration: const InputDecoration(
-                              labelText: "Fullname",
-                            ),
-                            onSaved: (value) => _newFullname = value,
-                            validator: (value) =>
-                                (value == null || value.isEmpty)
-                                ? "Không được để trống"
-                                : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: TextFormField(
-                            // key: ValueKey(user.email),
-                            initialValue: user.email ?? "-",
-                            decoration: const InputDecoration(
-                              labelText: "Email",
-                            ),
-                            onSaved: (value) => _newEmail = value,
-                            validator: (value) =>
-                                (value == null || value.isEmpty)
-                                ? "Không được để trống"
-                                : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: TextFormField(
-                            // key: ValueKey(user.avatarUrl),
-                            initialValue: user.avatarUrl != ""
-                                ? user.avatarUrl
-                                : "-",
-                            decoration: const InputDecoration(
-                              labelText: "Avatar URL",
-                            ),
-                            onSaved: (value) => _newURL = value,
-                            validator: (value) =>
-                                (value == null || value.isEmpty)
-                                ? "Không được để trống"
-                                : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: DropdownButtonFormField<LanguageAvailable>(
-                            // key: ValueKey(user.language),
-                            value: user.language,
-                            decoration: const InputDecoration(
-                              labelText: "language",
-                            ),
-                            items: LanguageAvailable.values.map((lang) {
-                              return DropdownMenuItem(
-                                value: lang,
-                                child: Text(lang.toString().split('.').last),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _newLanguage = value);
-                              }
-                            },
-                            onSaved: (value) => _newLanguage = value,
-                            validator: (value) =>
-                                (value == null) ? "Không được để trống" : null,
-                          ),
-                        ),
-                        SizedBox(
-                          width: kFormMaxWidth,
-                          child: DropdownButtonFormField<ThemeStyle>(
-                            value: user.theme,
-                            decoration: const InputDecoration(
-                              labelText: "theme",
-                            ),
-                            items: ThemeStyle.values.map((ts) {
-                              return DropdownMenuItem(
-                                value: ts,
-                                child: Text(ts.toString().split('.').last),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _newTheme = value);
-                              }
-                            },
-                            onSaved: (value) => _newTheme = value,
-                            validator: (value) =>
-                                (value == null) ? "Không được để trống" : null,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _handleSave(c),
-                          icon: Icon(Icons.save),
-                          tooltip: "Lưu thay đổi",
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
     }
+    final user = c.select<UserProvider, User>((provider) => provider.user!);
+
+    if (!_initializedFromUser) {
+      _initializedFromUser = true;
+      _usernameCtrl.text = user.username;
+      _passwordCtrl.text = user.password;
+      _fullnameCtrl.text = user.fullName ?? '';
+      _emailCtrl.text = user.email ?? '';
+      _avatarCtrl.text = user.avatarUrl;
+      _selectedLanguage = user.language;
+      _selectedTheme = user.theme;
+    }
+
+    final changed = _hasChanges(user);
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: kPaddingLarge,
+        right: kPaddingLarge,
+        top: kPadding,
+        bottom: kPadding,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: kFormMaxWidth + 2 * kPaddingLarge,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildTextField(label: "Username", controller: _usernameCtrl),
+                buildTextField(label: "Password", controller: _passwordCtrl),
+                buildTextField(label: "Fullname", controller: _fullnameCtrl),
+                buildTextField(label: "Email", controller: _emailCtrl),
+                buildTextField(label: "AvatarURL", controller: _avatarCtrl),
+                buildDropdownField<LanguageAvailable>(
+                  label: "Language",
+                  value: _selectedLanguage,
+                  values: LanguageAvailable.values,
+                  onChanged: (value) =>
+                      setState(() => _selectedLanguage = value),
+                ),
+                buildDropdownField<ThemeStyle>(
+                  label: "Theme",
+                  value: _selectedTheme,
+                  values: ThemeStyle.values,
+                  onChanged: (value) => setState(() => _selectedTheme = value),
+                ),
+                SizedBox(height: kPaddingLarge),
+                ElevatedButton(
+                  onPressed: (!_isSaving && changed)
+                      ? () => _handleSave(user)
+                      : null,
+                  child: Text("Lưu thay đổi"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

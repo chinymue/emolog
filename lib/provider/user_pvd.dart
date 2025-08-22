@@ -3,8 +3,9 @@ import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
 
 class UserProvider extends ChangeNotifier {
-  // TODO: thay vì tạo mới, truyền isarService qua constructor
-  IsarService isarService = IsarService();
+  final IsarService isarService;
+  UserProvider(this.isarService);
+
   late User _currentUser;
   bool isFetchedUser = false;
   User? get user => _currentUser;
@@ -127,7 +128,7 @@ class UserProvider extends ChangeNotifier {
 
   /// UPDATE USER INFO
 
-  void updateUser({
+  Future<void> updateUser({
     String? newUsername,
     String? newPass,
     String? newFullname,
@@ -135,7 +136,7 @@ class UserProvider extends ChangeNotifier {
     String? newURL,
     LanguageAvailable? newLanguage,
     ThemeStyle? newTheme,
-  }) {
+  }) async {
     if (newUsername != null) {
       _currentUser.username = newUsername;
     }
@@ -157,6 +158,7 @@ class UserProvider extends ChangeNotifier {
     if (newTheme != null) {
       _currentUser.theme = newTheme;
     }
+    await isarService.updateUser(_currentUser);
     notifyListeners();
   }
 

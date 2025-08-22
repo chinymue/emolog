@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../export/basic_utils.dart';
 
 class LogProvider extends ChangeNotifier {
-  final IsarService isarService = IsarService();
+  final IsarService isarService;
+  LogProvider(this.isarService);
 
   /// CREATE A NEW LOG
   NoteLog newLog = NoteLog();
