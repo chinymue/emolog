@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
+import '../enum/lang.dart';
+import '../enum/theme_style.dart';
 
 class UserProvider extends ChangeNotifier {
   final IsarService isarService;

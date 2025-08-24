@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/default_scaffold.dart';
 import '../widgets/default_form.dart';
+import '../enum/lang.dart';
+import '../enum/theme_style.dart';
 
 class SettingsPage extends StatefulWidget {
   @override

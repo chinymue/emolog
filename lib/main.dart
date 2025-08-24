@@ -1,11 +1,19 @@
 import 'package:emolog/isar/isar_service.dart';
-
-import 'export/package/app_essential.dart';
-import 'export/provider/main_essential.dart';
+import 'package:emolog/provider/lang_pvd.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import './provider/log_pvd.dart';
+import './provider/log_view_pvd.dart';
+import './provider/user_pvd.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
-import './export/theme_essential.dart';
-import 'export/pages.dart';
+import './utils/color_utils.dart';
+import './utils/constant.dart';
+import './utils/theme.dart';
+import './pages/home_page.dart';
+import './pages/history_page.dart';
+import './pages/settings_page.dart';
+import './l10n/app_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +34,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (c) => UserProvider(c.read<IsarService>()),
         ),
+        ChangeNotifierProvider(create: (c) => LanguageProvider()),
       ],
       child: MaterialApp(
         title: 'Emolog',
@@ -39,13 +48,15 @@ class MyApp extends StatelessWidget {
           ),
           pages[2]['route']: (c) => SettingsPage(),
         },
+        locale: c.read<LanguageProvider>().locale,
+        supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
           quill.FlutterQuillLocalizations.delegate,
         ],
-        supportedLocales: const [Locale('en'), Locale('vi')],
       ),
     );
   }

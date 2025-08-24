@@ -160,12 +160,10 @@ P _userDeserializeProp<P>(
 const _UserlanguageEnumValueMap = {
   'en': 0,
   'vi': 1,
-  'jp': 2,
 };
 const _UserlanguageValueEnumMap = {
   0: LanguageAvailable.en,
   1: LanguageAvailable.vi,
-  2: LanguageAvailable.jp,
 };
 const _UserthemeEnumValueMap = {
   'light': 0,
