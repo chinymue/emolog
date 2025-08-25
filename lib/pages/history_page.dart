@@ -1,4 +1,5 @@
 import 'package:emolog/export/decor_utils.dart';
+import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';
 import 'package:emolog/widgets/detail_log/mood_picker.dart';
 import 'package:flutter/material.dart';
@@ -67,9 +68,7 @@ class HistoryPage extends StatelessWidget {
     final isFavorFilter = c.select<LogViewProvider, bool>(
       (provider) => provider.isFavoredLog,
     );
-    // RangeValues currentRangeValues = c.select<LogViewProvider, RangeValues>(
-    //   (provider) => provider.moodRangeFilter,
-    // );
+    final l10n = AppLocalizations.of(c)!;
     return MainScaffold(
       currentIndex: 1,
       actions: [
@@ -77,29 +76,29 @@ class HistoryPage extends StatelessWidget {
           IconButton(
             onPressed: () => logViewProvider.clearFilters(),
             icon: Icon(Icons.filter_alt_off),
-            tooltip: "Xóa các filter đã chọn",
+            tooltip: l10n.filtersClear,
           ),
         IconButton(
           onPressed: () => _showMoodPicker(c),
           icon: Icon(Icons.emoji_emotions),
-          tooltip: "Lọc theo mood",
+          tooltip: l10n.filterMood,
         ),
         IconButton(
           onPressed: () => _showMoodRangePicker(c),
           icon: Icon(Icons.percent),
-          tooltip: "Lọc theo % mood",
+          tooltip: l10n.filterMoodPoint,
         ),
         IconButton(
           onPressed: () => logViewProvider.setFilterFavor(),
           icon: isFavorFilter
               ? Icon(Icons.favorite_border)
               : Icon(Icons.favorite),
-          tooltip: isFavorFilter ? "Xóa lọc favorite" : "Lọc favorite",
+          tooltip: isFavorFilter ? l10n.filterFavorClear : l10n.filterFavor,
         ),
         IconButton(
           onPressed: () => _selectDate(c),
           icon: Icon(Icons.date_range),
-          tooltip: "Chọn khoảng thời gian hiển thị",
+          tooltip: l10n.filterDateRange,
         ),
         IconButton(
           onPressed: () => logViewProvider.toggleSortDateOrder(),
@@ -109,8 +108,8 @@ class HistoryPage extends StatelessWidget {
                 : Icons.arrow_upward,
           ),
           tooltip: sortDateOrder == SortDateOrder.newestFirst
-              ? "Xếp theo cũ nhất"
-              : "Xếp theo mới nhất",
+              ? l10n.sortOldest
+              : l10n.sortNewest,
         ),
       ],
       child: LogsList(),

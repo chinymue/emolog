@@ -1,5 +1,9 @@
-import '../../export/package/app_essential.dart';
-import '../../export/detail_log_essential.dart';
+import 'package:emolog/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../provider/log_pvd.dart';
+import '../../widgets/detail_log/mood_picker.dart';
+import '../../widgets/detail_log/quill_utils.dart';
 
 class DetailsLog extends StatelessWidget {
   const DetailsLog({super.key, required this.logId});
@@ -9,6 +13,7 @@ class DetailsLog extends StatelessWidget {
   Widget build(BuildContext c) {
     final textTheme = Theme.of(c).textTheme;
     final colorScheme = Theme.of(c).colorScheme;
+    final l10n = AppLocalizations.of(c)!;
 
     final logProvider = c.watch<LogProvider>();
     if (!logProvider.hasEditableLog || logProvider.editableLog.id != logId) {
@@ -22,14 +27,14 @@ class DetailsLog extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            'Note detail',
+            l10n.pageDetail,
             style: textTheme.headlineMedium?.copyWith(
               color: colorScheme.outline,
             ),
           ),
         ),
         body: Center(
-          child: Text('Log does not exist', style: textTheme.displayMedium),
+          child: Text(l10n.logNotExist, style: textTheme.displayMedium),
         ),
       );
     }
@@ -39,11 +44,12 @@ class DetailsLog extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Note detail',
+          l10n.pageDetail,
           style: textTheme.headlineMedium?.copyWith(color: colorScheme.outline),
         ),
         actions: [
           IconButton(
+            tooltip: l10n.saveChanges,
             icon: Icon(Icons.save),
             onPressed: () => c.read<LogProvider>().saveEditableLog(),
           ),

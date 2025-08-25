@@ -1,4 +1,5 @@
 import 'dart:convert'; // Để dùng jsonDecode
+import 'package:emolog/l10n/app_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart'
     as quill; // Để dùng quill.Document
 import 'package:flutter/material.dart';
@@ -141,6 +142,7 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         // Toggle controls
@@ -151,7 +153,7 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
               icon: Icon(
                 _showToolbar ? Icons.visibility_off : Icons.visibility,
               ),
-              tooltip: _showToolbar ? 'Ẩn toolbar' : 'Hiện toolbar',
+              tooltip: _showToolbar ? l10n.toolbarShow : l10n.toolbarHidden,
               onPressed: () => setState(() => _showToolbar = !_showToolbar),
             ),
           ],
@@ -163,7 +165,7 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
             child: quill.QuillEditor.basic(
               controller: _controller,
               config: quill.QuillEditorConfig(
-                placeholder: 'Tell me your feeling',
+                placeholder: l10n.logPlaceHolderNeutral,
               ),
             ),
           ),
@@ -193,8 +195,8 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
                         : Icons.arrow_drop_down,
                   ),
                   tooltip: _useFullToolbar
-                      ? 'Dùng toolbar đơn giản'
-                      : 'Dùng toolbar đầy đủ',
+                      ? l10n.toolbarBasic
+                      : l10n.toolbarFull,
                   onPressed: () => setState(() {
                     _useFullToolbar = !_useFullToolbar;
                     _showToolbar = true;

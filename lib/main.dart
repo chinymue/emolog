@@ -36,27 +36,31 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (c) => LanguageProvider()),
       ],
-      child: MaterialApp(
-        title: 'Emolog',
-        theme: buildAppTheme(follyRed),
-        initialRoute: pages[0]['route'],
-        routes: {
-          pages[0]['route']: (c) => HomePage(),
-          pages[1]['route']: (c) => ChangeNotifierProvider(
-            create: (c) => LogViewProvider(),
-            child: HistoryPage(),
-          ),
-          pages[2]['route']: (c) => SettingsPage(),
+      child: Consumer<LanguageProvider>(
+        builder: (c, lang, _) {
+          return MaterialApp(
+            onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
+            theme: buildAppTheme(follyRed),
+            initialRoute: pages[0]['route'],
+            routes: {
+              pages[0]['route']: (c) => HomePage(),
+              pages[1]['route']: (c) => ChangeNotifierProvider(
+                create: (c) => LogViewProvider(),
+                child: HistoryPage(),
+              ),
+              pages[2]['route']: (c) => SettingsPage(),
+            },
+            locale: lang.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              ...AppLocalizations.localizationsDelegates,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              quill.FlutterQuillLocalizations.delegate,
+            ],
+          );
         },
-        locale: c.read<LanguageProvider>().locale,
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          ...AppLocalizations.localizationsDelegates,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          quill.FlutterQuillLocalizations.delegate,
-        ],
       ),
     );
   }

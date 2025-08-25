@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../export/decor_utils.dart';
+import '../../utils/color_utils.dart';
+import '../../utils/constant.dart';
+import 'package:emolog/l10n/app_localizations.dart';
+
+String localizedMood(AppLocalizations l10n, String moodKey) {
+  switch (moodKey) {
+    case 'terrible':
+      return l10n.moodTerrible;
+    case 'not_good':
+      return l10n.moodNotGood;
+    case 'chill':
+      return l10n.moodChill;
+    case 'good':
+      return l10n.moodGood;
+    case 'awesome':
+      return l10n.moodAwesome;
+    default:
+      return moodKey; // fallback
+  }
+}
 
 // Mood picker widget -----------------------------------------------
 class MoodPicker extends StatefulWidget {
@@ -35,7 +54,7 @@ class _MoodPickerState extends State<MoodPicker> {
           children: moods.entries.map((entry) {
             final selected = _currentMood == entry.key;
             return Tooltip(
-              message: entry.key,
+              message: localizedMood(AppLocalizations.of(c)!, entry.key),
               preferBelow: false,
               child: IconButton(
                 icon: Icon(

@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 import '../utils/constant.dart';
+import '../l10n/app_localizations.dart';
+
+String localizedLabel(AppLocalizations l10n, String key) {
+  switch (key) {
+    case 'pageHome':
+      return l10n.pageHome;
+    case 'pageHistory':
+      return l10n.pageHistory;
+    case 'pageSettings':
+      return l10n.pageSettings;
+    default:
+      return key;
+  }
+}
 
 // Scaffold with bottom navigation bar -----------------------------
 class MainScaffold extends StatelessWidget {
@@ -16,10 +30,11 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
+    final l10n = AppLocalizations.of(c)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          pages[currentIndex]['label'] ?? 'Not found name',
+          localizedLabel(l10n, pages[currentIndex]['label']),
           style: Theme.of(c).textTheme.headlineLarge?.copyWith(
             color: Theme.of(c).colorScheme.primary,
           ),
@@ -42,7 +57,10 @@ class MainScaffold extends StatelessWidget {
         onTap: (i) => Navigator.pushReplacementNamed(c, pages[i]['route']),
         items: [
           for (var i in pages)
-            BottomNavigationBarItem(icon: Icon(i['icon']), label: i['label']),
+            BottomNavigationBarItem(
+              icon: Icon(i['icon']),
+              label: localizedLabel(l10n, i['label']),
+            ),
         ],
       ),
     );
