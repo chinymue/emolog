@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../enum/lang.dart';
 
 class LanguageProvider extends ChangeNotifier {
-  LanguageAvailable _lang = LanguageAvailable.en;
+  LanguageAvailable currentLang;
 
-  LanguageAvailable get currentLang => _lang;
-  Locale get locale => _lang.locale;
+  LanguageProvider(this.currentLang);
+
+  Locale get locale => currentLang.locale;
 
   void setLang(LanguageAvailable newLang) {
-    _lang = newLang;
+    currentLang = newLang;
     notifyListeners();
   }
 }

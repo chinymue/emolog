@@ -3,6 +3,8 @@ import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
+import './lang_pvd.dart';
+import 'package:provider/provider.dart';
 
 class UserProvider extends ChangeNotifier {
   final IsarService isarService;
@@ -11,6 +13,7 @@ class UserProvider extends ChangeNotifier {
   late User _currentUser;
   bool isFetchedUser = false;
   User? get user => _currentUser;
+  LanguageAvailable get userLanguagePref => _currentUser.language;
 
   /// CREATE NEW USER
 
@@ -97,10 +100,12 @@ class UserProvider extends ChangeNotifier {
 
   /// FETCH USER
 
-  Future<void> loadUser({required int userId}) async {
+  Future<void> loadUser(BuildContext context, {required int userId}) async {
     _currentUser = await isarService.getById(User, userId);
     isFetchedUser = true;
     notifyListeners();
+    final langProvider = context.read<LanguageProvider>();
+    langProvider.setLang(_currentUser.language);
   }
 
   List<User> userList = [];

@@ -14,6 +14,7 @@ import './pages/home_page.dart';
 import './pages/history_page.dart';
 import './pages/settings_page.dart';
 import './l10n/app_localizations.dart';
+import './enum/lang.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (c) => UserProvider(c.read<IsarService>()),
         ),
-        ChangeNotifierProvider(create: (c) => LanguageProvider()),
+        ChangeNotifierProvider(
+          create: (c) => LanguageProvider(LanguageAvailable.en),
+        ),
       ],
       child: Consumer<LanguageProvider>(
         builder: (c, lang, _) {

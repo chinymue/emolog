@@ -48,7 +48,8 @@ class _UserInfoState extends State<UserInfo> {
     _setupListeners();
 
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<UserProvider>().loadUser(userId: widget.userId),
+      (_) =>
+          context.read<UserProvider>().loadUser(context, userId: widget.userId),
     );
   }
 
@@ -88,7 +89,7 @@ class _UserInfoState extends State<UserInfo> {
     return false;
   }
 
-  Future<void> _handleSave(User user) async {
+  Future<void> _handleSave(User user, bool isChangeLanguage) async {
     final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(
@@ -117,6 +118,7 @@ class _UserInfoState extends State<UserInfo> {
         newLanguage: newLang,
         newTheme: newTheme,
       );
+      context.read<LanguageProvider>().setLang(newLang);
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -226,7 +228,8 @@ class _UserInfoState extends State<UserInfo> {
                 SizedBox(height: kPaddingLarge),
                 ElevatedButton(
                   onPressed: (!_isSaving && changed)
-                      ? () => _handleSave(user)
+                      ? () =>
+                            _handleSave(user, _selectedLanguage != currentLang)
                       : null,
                   child: Text(l10n.saveChanges),
                 ),
