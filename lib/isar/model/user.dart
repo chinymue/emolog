@@ -1,10 +1,7 @@
 import 'package:isar/isar.dart';
-
+import '../../enum/lang.dart';
+import '../../enum/theme_style.dart';
 part 'user.g.dart';
-
-enum ThemeStyle { light, dark }
-
-enum LanguageAvailable { en, vi, jp }
 
 @collection
 class User {

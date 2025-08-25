@@ -1,3 +1,6 @@
+import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/widgets/detail_log/mood_picker.dart';
+
 import '../../export/package/app_essential.dart';
 import 'dart:async';
 import '../../export/provider/log_provider.dart';
@@ -17,9 +20,14 @@ class DefaultList extends StatelessWidget {
 
     if (logs.isEmpty && logViewPvd.isFetchedLogs) {
       return Center(
-        child: Text(
-          'No logs yet',
-          style: textTheme.displayMedium?.copyWith(color: colorScheme.primary),
+        child: Padding(
+          padding: const EdgeInsets.all(kPadding),
+          child: Text(
+            AppLocalizations.of(c)!.logNotFound,
+            style: textTheme.displayMedium?.copyWith(
+              color: colorScheme.primary,
+            ),
+          ),
         ),
       );
     }
@@ -72,19 +80,19 @@ class DefaultLogTile extends StatelessWidget {
       MaterialPageRoute(builder: (c) => DetailsLog(logId: logId)),
     );
 
+    final l10n = AppLocalizations.of(c)!;
+
     return ListTile(
       onTap: () => handleTap(),
       leading: IconButton(
         icon: Icon(
-          Icons.monitor_heart,
+          log.isFavor ? Icons.favorite : Icons.favorite_border,
           size: iconSize,
-          color: log.isFavor
-              ? colorScheme.primary
-              : adjustLightness(colorScheme.primary, 0.4),
+          color: colorScheme.primary,
         ),
         onPressed: () => handleFavor(),
         splashRadius: kSplashRadius,
-        tooltip: log.isFavor ? 'Unfavourite' : 'Favourite',
+        tooltip: log.isFavor ? l10n.logUnfavor : l10n.logFavor,
       ),
       title: Text(
         shortenText(plainTextFromDeltaJson(log.note)),
@@ -94,10 +102,13 @@ class DefaultLogTile extends StatelessWidget {
         formatShortDateTime(log.date),
         style: textTheme.labelMedium?.copyWith(fontWeight: kFontWeightRegular),
       ),
-      trailing: Icon(
-        moods[log.labelMood],
-        size: iconSizeLarge,
-        color: colorScheme.primary,
+      trailing: Tooltip(
+        message: localizedMood(l10n, log.labelMood!),
+        child: Icon(
+          moods[log.labelMood],
+          size: iconSizeLarge,
+          color: colorScheme.primary,
+        ),
       ),
     );
   }

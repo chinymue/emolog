@@ -30,20 +30,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter/Inter-VariableFont_opsz,wght.ttf
-        - asset: assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf
-          style: italic
-    - family: Merriweather_Sans
-      fonts:
-        - asset: assets/fonts/Merriweather_Sans/MerriweatherSans-VariableFont_wght.ttf
-        - asset: assets/fonts/Merriweather_Sans/MerriweatherSans-Italic-VariableFont_wght.ttf
-          style: italic
-    - family: PatrickHand
-      fonts:
-        - asset: assets/fonts/Patrick_Hand/PatrickHand-Regular.ttf
-    - family: PatrickHandSC
-      fonts:
-        - asset: assets/fonts/Patrick_Hand_SC/PatrickHandSC-Regular.ttf
+  generate: true

@@ -1,7 +1,19 @@
+import 'package:emolog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:emolog/export/decor_utils.dart';
 
-Widget buildTextField({
+/// Validator mặc định cho text field
+FormFieldValidator<String> defaultTextValidator(BuildContext context) {
+  return (String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return AppLocalizations.of(context)!.validEmpty;
+    }
+    return null;
+  };
+}
+
+Widget buildTextField(
+  BuildContext context, {
   required String label,
   required TextEditingController controller,
   String? Function(String?)? validator,
@@ -11,10 +23,7 @@ Widget buildTextField({
     child: TextFormField(
       controller: controller,
       decoration: InputDecoration(labelText: label),
-      validator:
-          validator ??
-          (value) =>
-              (value == null || value.isEmpty) ? "Không được để trống" : null,
+      validator: validator ?? defaultTextValidator(context),
     ),
   );
 }
@@ -40,8 +49,7 @@ Widget buildDropdownField<T>({
           )
           .toList(),
       onChanged: onChanged,
-      validator:
-          validator ?? (val) => val == null ? "Không được để trống" : null,
+      validator: validator,
     ),
   );
 }

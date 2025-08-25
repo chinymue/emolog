@@ -1,9 +1,11 @@
-import '../export/package/app_essential.dart';
+import 'package:emolog/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../widgets/default_scaffold.dart';
 import '../widgets/message.dart';
-import '../export/provider/log_provider.dart';
-import '../export/basic_utils.dart';
+import '../../provider/log_pvd.dart';
+import '../utils/constant.dart';
 import '../widgets/detail_log/details_log.dart';
 
 class HomePage extends StatelessWidget {
@@ -19,17 +21,19 @@ class HomePage extends StatelessWidget {
 class EmologForm extends StatelessWidget {
   const EmologForm({super.key});
   Future<void> _saveLog(BuildContext c) async {
+    final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
     try {
       final savedLogId = await logProvider.addLog();
+
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('log $savedLogId has been recorded'),
+            content: Text(l10n.logRecorded(savedLogId)),
             action: SnackBarAction(
-              label: 'Undo',
+              label: l10n.undo,
               onPressed: () => logProvider.deleteLog(id: savedLogId),
             ),
           ),
@@ -38,7 +42,8 @@ class EmologForm extends StatelessWidget {
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Save failed: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.saveFailed)));
+      print(e);
     }
   }
 
@@ -57,7 +62,7 @@ class EmologForm extends StatelessWidget {
         const SizedBox(height: kPaddingLarge),
         ElevatedButton(
           onPressed: () => _saveLog(c),
-          child: const Text('Submit'),
+          child: Text(AppLocalizations.of(c)!.submit),
         ),
       ],
     ),

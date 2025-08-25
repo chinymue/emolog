@@ -66,16 +66,16 @@ const Duration kAnimationDurationLong = Duration(milliseconds: 600);
 // Pages ----------------------------------------------------------
 
 const List<Map<String, dynamic>> pages = [
-  {'route': '/', 'label': 'Home', 'icon': Icons.home},
-  {'route': '/logs', 'label': 'History', 'icon': Icons.history},
-  {'route': '/settings', 'label': 'Setting', 'icon': Icons.settings},
+  {'route': '/', 'label': 'pageHome', 'icon': Icons.home},
+  {'route': '/logs', 'label': 'pageHistory', 'icon': Icons.history},
+  {'route': '/settings', 'label': 'pageSettings', 'icon': Icons.settings},
 ];
 
 /// Moods default data ---------------------------------------------
 
 const Map<String, IconData> moods = {
   'terrible': Icons.sentiment_very_dissatisfied,
-  'not good': Icons.sentiment_dissatisfied,
+  'not_good': Icons.sentiment_dissatisfied,
   'chill': Icons.sentiment_neutral,
   'good': Icons.sentiment_satisfied,
   'awesome': Icons.sentiment_very_satisfied,

@@ -1,4 +1,6 @@
-### intl và DateTime
+### intl
+
+#### DateTime
 
 - chuyển dạng `DateTime` sang chuỗi `String` với định dạng tùy ý: `yyyy-mm-dd`, `HH:mm:ss`, `EEE` (Ngày trong tuần dạng ngắn), `EEEE` (Ngày trong tuần dạng dài),...
 
@@ -22,6 +24,71 @@
    }
    ```
 
+#### Language
+
+- sử dụng `intl` với `locale` để thiết lập ngôn ngữ hiển thị trong `MaterialApp`. Dùng `ChangeNotifier` của `provider` để thay đổi UI theo tùy chọn:
+
+  1. sửa `pubspec.yaml`: thêm setting dưới đây:
+
+  ```
+  flutter:
+    generate: true
+  ```
+
+  2. tạo folder `l10n` trong `lib` chứa các file `app_XX.arb` tương tự: syntax xem ở phần [arb](#arb-syntax)
+
+  ```
+  \\ lib/l10n/app_en.arb
+  {
+    "@@locale": "en",
+    "appTitle": "Emolog",
+    "home": "Home",
+    "settings": "Settings"
+  }
+  ```
+
+  3. chạy command sinh file: `flutter gen-l10n`. (và chạy lại nếu arb có bất kỳ thay đổi nào)
+
+  4. import file cần thiết vào `main` (chứa `MaterialApp`): `import './l10n/app_localizations.dart';`
+
+  5. Sử dụng trong `locale` của `MaterialApp`:
+     `supportedLocales: AppLocalizations.supportedLocales,`
+     `localizationsDelegates: AppLocalizations.localizationsDelegates,`
+
+  ```
+  localizationsDelegates: const [
+    ...AppLocalizations.localizationsDelegates,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    quill.FlutterQuillLocalizations.delegate,
+  ],
+  ```
+
+  6. Sử dụng `AppLocalization.of(context)` để thay đổi text tương thích ngôn ngữ:
+     `final l10n = AppLocalizations.of(context)!; // lấy theo locale hiện tại`
+     `Text(l10n.home)`
+     `MaterialApp(onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,) // trường hợp chưa build context`
+
+##### .arb Syntax
+
+- file .arb là một dạng JSON, yêu cầu cả file thuộc {} và mỗi trường có dạng `"label":value`, mỗi trường cách nhau bởi một dấu _,_. Yêu cầu bắt buộc phải có trường `"@@locale": "en",` với một ngôn ngữ tương ứng.
+
+- có thể khai báo dạng biến bằng `placeholder` và cần đánh dấu bằng _@_.
+
+  ```
+  "logRecorded": "Log {savedLogId} has been recorded",
+  "@logRecorded": {
+    "description": "Message shown after saving a log with id",
+    "placeholders": {
+      "savedLogId": {
+        "type": "int",
+        "example": "123"
+      }
+    }
+  }
+  ```
+
 ### List
 
 #### Cách đảo ngược list
@@ -34,10 +101,7 @@
 #### FutureBuilder
 
 - widget này có thể nhận dữ liệu kiểu `Future` ở field `future` sau đó sẽ xử lý bằng `builder`.
-<<<<<<< HEAD
 - Cẩn thận sử dụng vì vẫn chưa áp dụng được thành công. Không dùng cho những dữ liệu cần thay đổi linh hoạt
-=======
->>>>>>> b8bd79a071e1f544b3d4d28efd7ae0a34ba66d69
 
   > `FutureBuilder` example:
 
