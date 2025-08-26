@@ -4,10 +4,13 @@ import 'constant.dart';
 
 /// === THEME ===
 
-ThemeData buildAppTheme(Color seedColor) {
+ThemeData buildAppTheme(Color seedColor, {bool isLight = true}) {
   return ThemeData(
     fontFamily: GoogleFonts.inter().fontFamily,
-    colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: isLight ? Brightness.light : Brightness.dark,
+    ),
     textTheme: TextTheme(
       displayLarge: TextStyle(
         fontFamily: GoogleFonts.merriweather().fontFamily,
@@ -59,9 +62,6 @@ ThemeData buildAppTheme(Color seedColor) {
           horizontal: kPaddingLarge,
           vertical: kPadding,
         ),
-        // minimumSize: const Size(kButtonMinWidth, kButtonHeight),
-        // fixedSize: const Size(kButtonWidth, kButtonHeight),
-        // maximumSize: const Size(double.infinity, kButtonHeight),
       ),
     ),
   );

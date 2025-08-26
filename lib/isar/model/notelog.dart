@@ -4,7 +4,7 @@ part 'notelog.g.dart';
 
 @collection
 class NoteLog {
-  Id id = Isar.autoIncrement; // you can also use id = null to auto increment
+  Id id = Isar.autoIncrement;
 
   String? note;
 
