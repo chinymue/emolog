@@ -43,7 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         IconButton(
           onPressed: () {
-            userPvd.resetGuest();
+            userPvd.resetGuest(c);
             setState(() => _formKeyReset = UniqueKey());
           },
           icon: Icon(Icons.disabled_by_default),
@@ -51,7 +51,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         IconButton(
           onPressed: () {
-            userPvd.resetSetting();
+            userPvd.resetSetting(c);
             setState(() => _formKeyReset = UniqueKey());
           },
           icon: Icon(Icons.restore),

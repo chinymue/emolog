@@ -1,24 +1,47 @@
-import 'package:emolog/isar/isar_service.dart';
-import 'package:emolog/provider/lang_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:emolog/isar/isar_service.dart';
+import 'package:emolog/provider/lang_pvd.dart';
+import 'package:emolog/provider/theme_pvd.dart';
 import './provider/log_pvd.dart';
 import './provider/log_view_pvd.dart';
 import './provider/user_pvd.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
-import './utils/color_utils.dart';
-import './utils/constant.dart';
-import './utils/theme.dart';
 import './pages/home_page.dart';
 import './pages/history_page.dart';
 import './pages/settings_page.dart';
 import './l10n/app_localizations.dart';
-import './enum/lang.dart';
+import './utils/color_utils.dart';
+import './utils/constant.dart';
+import './utils/theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  final isarService = IsarService();
+  final userPvd = UserProvider(isarService);
+  await userPvd.fetchAllUsers();
+  if (userPvd.userList.isEmpty) {
+    userPvd.setGuestAccount();
+    userPvd.addUser();
+  }
+  await userPvd.loadUser(userId: 1);
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<IsarService>.value(value: isarService),
+        ChangeNotifierProvider(
+          create: (c) => LogProvider(c.read<IsarService>()),
+        ),
+        ChangeNotifierProvider<UserProvider>.value(value: userPvd),
+        ChangeNotifierProvider(
+          create: (_) => LanguageProvider(userPvd.languagePref),
+        ),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(userPvd.themePref)),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -26,45 +49,33 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    return MultiProvider(
-      providers: [
-        Provider<IsarService>(create: (_) => IsarService()),
-        ChangeNotifierProvider(
-          create: (c) => LogProvider(c.read<IsarService>()),
-        ),
-        ChangeNotifierProvider(
-          create: (c) => UserProvider(c.read<IsarService>()),
-        ),
-        ChangeNotifierProvider(
-          create: (c) => LanguageProvider(LanguageAvailable.en),
-        ),
-      ],
-      child: Consumer<LanguageProvider>(
-        builder: (c, lang, _) {
-          return MaterialApp(
-            onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
-            theme: buildAppTheme(follyRed),
-            initialRoute: pages[0]['route'],
-            routes: {
-              pages[0]['route']: (c) => HomePage(),
-              pages[1]['route']: (c) => ChangeNotifierProvider(
-                create: (c) => LogViewProvider(),
-                child: HistoryPage(),
-              ),
-              pages[2]['route']: (c) => SettingsPage(),
-            },
-            locale: lang.locale,
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              ...AppLocalizations.localizationsDelegates,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-              quill.FlutterQuillLocalizations.delegate,
-            ],
-          );
-        },
-      ),
+    return Consumer2<LanguageProvider, ThemeProvider>(
+      builder: (c, lang, theme, _) {
+        return MaterialApp(
+          onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
+          themeMode: theme.themeMode,
+          theme: buildAppTheme(follyRed),
+          darkTheme: buildAppTheme(follyRed, isLight: false),
+          initialRoute: pages[0]['route'],
+          routes: {
+            pages[0]['route']: (_) => HomePage(),
+            pages[1]['route']: (_) => ChangeNotifierProvider(
+              create: (c) => LogViewProvider(),
+              child: HistoryPage(),
+            ),
+            pages[2]['route']: (_) => SettingsPage(),
+          },
+          locale: lang.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            ...AppLocalizations.localizationsDelegates,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            quill.FlutterQuillLocalizations.delegate,
+          ],
+        );
+      },
     );
   }
 }

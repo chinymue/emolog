@@ -1,10 +1,11 @@
+import 'package:emolog/provider/lang_pvd.dart';
+import 'package:emolog/provider/theme_pvd.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
-import './lang_pvd.dart';
-import 'package:provider/provider.dart';
 
 class UserProvider extends ChangeNotifier {
   final IsarService isarService;
@@ -13,7 +14,45 @@ class UserProvider extends ChangeNotifier {
   late User _currentUser;
   bool isFetchedUser = false;
   User? get user => _currentUser;
-  LanguageAvailable get userLanguagePref => _currentUser.language;
+  LanguageAvailable get languagePref => _currentUser.language;
+  ThemeStyle get themePref => _currentUser.theme;
+
+  /// FETCH USER
+
+  Future<void> loadUser({required int userId}) async {
+    _currentUser = await isarService.getById(User, userId);
+    isFetchedUser = true;
+    notifyListeners();
+  }
+
+  List<User> userList = [];
+  Future<void> fetchAllUsers() async {
+    userList = await isarService.getAll<User>();
+    notifyListeners();
+  }
+
+  /// RESET USER INFO INTO DEFAULT
+
+  void resetGuest(BuildContext c) {
+    _currentUser.username = "guest";
+    _currentUser.password = "default_pw";
+    _currentUser.fullName = _currentUser.username;
+    _currentUser.email = "${_currentUser.username}@emolog.com";
+    _currentUser.avatarUrl = "default_url";
+    _currentUser.language = LanguageAvailable.en;
+    _currentUser.theme = ThemeStyle.light;
+    notifyListeners();
+    c.read<LanguageProvider>().resetLang();
+    c.read<ThemeProvider>().resetTheme();
+  }
+
+  void resetSetting(BuildContext c) {
+    _currentUser.language = LanguageAvailable.en;
+    _currentUser.theme = ThemeStyle.light;
+    notifyListeners();
+    c.read<LanguageProvider>().resetLang();
+    c.read<ThemeProvider>().resetTheme();
+  }
 
   /// CREATE NEW USER
 
@@ -95,41 +134,6 @@ class UserProvider extends ChangeNotifier {
 
   void setTheme(ThemeStyle newTheme) {
     newUser.theme = newTheme;
-    notifyListeners();
-  }
-
-  /// FETCH USER
-
-  Future<void> loadUser(BuildContext context, {required int userId}) async {
-    _currentUser = await isarService.getById(User, userId);
-    isFetchedUser = true;
-    notifyListeners();
-    final langProvider = context.read<LanguageProvider>();
-    langProvider.setLang(_currentUser.language);
-  }
-
-  List<User> userList = [];
-  Future<void> fetchAllUsers() async {
-    userList = await isarService.getAll<User>();
-    notifyListeners();
-  }
-
-  /// RESET USER INFO INTO DEFAULT
-
-  void resetGuest() {
-    _currentUser.username = "guest";
-    _currentUser.password = "default_pw";
-    _currentUser.fullName = _currentUser.username;
-    _currentUser.email = "${_currentUser.username}@emolog.com";
-    _currentUser.avatarUrl = "default_url";
-    _currentUser.language = LanguageAvailable.en;
-    _currentUser.theme = ThemeStyle.light;
-    notifyListeners();
-  }
-
-  void resetSetting() {
-    _currentUser.language = LanguageAvailable.en;
-    _currentUser.theme = ThemeStyle.light;
     notifyListeners();
   }
 

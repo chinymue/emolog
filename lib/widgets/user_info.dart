@@ -2,6 +2,7 @@ import 'package:emolog/export/decor_utils.dart';
 import 'package:emolog/isar/model/user.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/lang_pvd.dart';
+import 'package:emolog/provider/theme_pvd.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,8 +49,7 @@ class _UserInfoState extends State<UserInfo> {
     _setupListeners();
 
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) =>
-          context.read<UserProvider>().loadUser(context, userId: widget.userId),
+      (_) => context.read<UserProvider>().loadUser(userId: widget.userId),
     );
   }
 
@@ -89,7 +89,7 @@ class _UserInfoState extends State<UserInfo> {
     return false;
   }
 
-  Future<void> _handleSave(User user, bool isChangeLanguage) async {
+  Future<void> _handleSave(User user) async {
     final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(
@@ -118,7 +118,6 @@ class _UserInfoState extends State<UserInfo> {
         newLanguage: newLang,
         newTheme: newTheme,
       );
-      context.read<LanguageProvider>().setLang(newLang);
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -156,8 +155,6 @@ class _UserInfoState extends State<UserInfo> {
     }
 
     final changed = _hasChanges(user);
-
-    final currentLang = c.watch<LanguageProvider>().currentLang;
     final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(
@@ -176,17 +173,6 @@ class _UserInfoState extends State<UserInfo> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FloatingActionButton(
-                  tooltip: l10n.changeLanguage,
-                  child: Icon(Icons.language),
-                  onPressed: () {
-                    c.read<LanguageProvider>().setLang(
-                      currentLang == LanguageAvailable.en
-                          ? LanguageAvailable.vi
-                          : LanguageAvailable.en,
-                    );
-                  },
-                ),
                 buildTextField(
                   context,
                   label: l10n.username,
@@ -216,20 +202,28 @@ class _UserInfoState extends State<UserInfo> {
                   label: l10n.language,
                   value: _selectedLanguage,
                   values: LanguageAvailable.values,
-                  onChanged: (value) =>
-                      setState(() => _selectedLanguage = value),
+                  onChanged: (value) {
+                    if (value != null) {
+                      c.read<LanguageProvider>().setLang(value);
+                    }
+                    setState(() => _selectedLanguage = value);
+                  },
                 ),
                 buildDropdownField<ThemeStyle>(
                   label: l10n.theme,
                   value: _selectedTheme,
                   values: ThemeStyle.values,
-                  onChanged: (value) => setState(() => _selectedTheme = value),
+                  onChanged: (value) {
+                    if (value != null) {
+                      c.read<ThemeProvider>().setTheme(value);
+                    }
+                    setState(() => _selectedTheme = value);
+                  },
                 ),
                 SizedBox(height: kPaddingLarge),
                 ElevatedButton(
                   onPressed: (!_isSaving && changed)
-                      ? () =>
-                            _handleSave(user, _selectedLanguage != currentLang)
+                      ? () => _handleSave(user)
                       : null,
                   child: Text(l10n.saveChanges),
                 ),
