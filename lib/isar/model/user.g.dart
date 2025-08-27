@@ -38,19 +38,24 @@ const UserSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _UserlanguageEnumValueMap,
     ),
-    r'password': PropertySchema(
+    r'passwordHash': PropertySchema(
       id: 4,
-      name: r'password',
+      name: r'passwordHash',
+      type: IsarType.string,
+    ),
+    r'salt': PropertySchema(
+      id: 5,
+      name: r'salt',
       type: IsarType.string,
     ),
     r'theme': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'theme',
       type: IsarType.byte,
       enumMap: _UserthemeEnumValueMap,
     ),
     r'username': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'username',
       type: IsarType.string,
     )
@@ -60,7 +65,21 @@ const UserSchema = CollectionSchema(
   deserialize: _userDeserialize,
   deserializeProp: _userDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'username': IndexSchema(
+      id: -2899563114555695793,
+      name: r'username',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'username',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _userGetId,
@@ -88,7 +107,8 @@ int _userEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
-  bytesCount += 3 + object.password.length * 3;
+  bytesCount += 3 + object.passwordHash.length * 3;
+  bytesCount += 3 + object.salt.length * 3;
   bytesCount += 3 + object.username.length * 3;
   return bytesCount;
 }
@@ -103,9 +123,10 @@ void _userSerialize(
   writer.writeString(offsets[1], object.email);
   writer.writeString(offsets[2], object.fullName);
   writer.writeByte(offsets[3], object.language.index);
-  writer.writeString(offsets[4], object.password);
-  writer.writeByte(offsets[5], object.theme.index);
-  writer.writeString(offsets[6], object.username);
+  writer.writeString(offsets[4], object.passwordHash);
+  writer.writeString(offsets[5], object.salt);
+  writer.writeByte(offsets[6], object.theme.index);
+  writer.writeString(offsets[7], object.username);
 }
 
 User _userDeserialize(
@@ -122,10 +143,11 @@ User _userDeserialize(
   object.language =
       _UserlanguageValueEnumMap[reader.readByteOrNull(offsets[3])] ??
           LanguageAvailable.en;
-  object.password = reader.readString(offsets[4]);
-  object.theme = _UserthemeValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+  object.passwordHash = reader.readString(offsets[4]);
+  object.salt = reader.readString(offsets[5]);
+  object.theme = _UserthemeValueEnumMap[reader.readByteOrNull(offsets[6])] ??
       ThemeStyle.light;
-  object.username = reader.readString(offsets[6]);
+  object.username = reader.readString(offsets[7]);
   return object;
 }
 
@@ -148,9 +170,11 @@ P _userDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
       return (_UserthemeValueEnumMap[reader.readByteOrNull(offset)] ??
           ThemeStyle.light) as P;
-    case 6:
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -184,6 +208,60 @@ List<IsarLinkBase<dynamic>> _userGetLinks(User object) {
 
 void _userAttach(IsarCollection<dynamic> col, Id id, User object) {
   object.id = id;
+}
+
+extension UserByIndex on IsarCollection<User> {
+  Future<User?> getByUsername(String username) {
+    return getByIndex(r'username', [username]);
+  }
+
+  User? getByUsernameSync(String username) {
+    return getByIndexSync(r'username', [username]);
+  }
+
+  Future<bool> deleteByUsername(String username) {
+    return deleteByIndex(r'username', [username]);
+  }
+
+  bool deleteByUsernameSync(String username) {
+    return deleteByIndexSync(r'username', [username]);
+  }
+
+  Future<List<User?>> getAllByUsername(List<String> usernameValues) {
+    final values = usernameValues.map((e) => [e]).toList();
+    return getAllByIndex(r'username', values);
+  }
+
+  List<User?> getAllByUsernameSync(List<String> usernameValues) {
+    final values = usernameValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'username', values);
+  }
+
+  Future<int> deleteAllByUsername(List<String> usernameValues) {
+    final values = usernameValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'username', values);
+  }
+
+  int deleteAllByUsernameSync(List<String> usernameValues) {
+    final values = usernameValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'username', values);
+  }
+
+  Future<Id> putByUsername(User object) {
+    return putByIndex(r'username', object);
+  }
+
+  Id putByUsernameSync(User object, {bool saveLinks = true}) {
+    return putByIndexSync(r'username', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByUsername(List<User> objects) {
+    return putAllByIndex(r'username', objects);
+  }
+
+  List<Id> putAllByUsernameSync(List<User> objects, {bool saveLinks = true}) {
+    return putAllByIndexSync(r'username', objects, saveLinks: saveLinks);
+  }
 }
 
 extension UserQueryWhereSort on QueryBuilder<User, User, QWhere> {
@@ -257,6 +335,50 @@ extension UserQueryWhere on QueryBuilder<User, User, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterWhereClause> usernameEqualTo(String username) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'username',
+        value: [username],
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterWhereClause> usernameNotEqualTo(
+      String username) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'username',
+              lower: [],
+              upper: [username],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'username',
+              lower: [username],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'username',
+              lower: [username],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'username',
+              lower: [],
+              upper: [username],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -786,20 +908,20 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordEqualTo(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordGreaterThan(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -807,14 +929,14 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordLessThan(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -822,14 +944,14 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordBetween(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -838,7 +960,7 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'password',
+        property: r'passwordHash',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -848,68 +970,197 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordStartsWith(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordEndsWith(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordContains(String value,
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashContains(
+      String value,
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'password',
+        property: r'passwordHash',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordMatches(
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashMatches(
       String pattern,
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'password',
+        property: r'passwordHash',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordIsEmpty() {
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'password',
+        property: r'passwordHash',
         value: '',
       ));
     });
   }
 
-  QueryBuilder<User, User, QAfterFilterCondition> passwordIsNotEmpty() {
+  QueryBuilder<User, User, QAfterFilterCondition> passwordHashIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'password',
+        property: r'passwordHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'salt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltContains(String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'salt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltMatches(String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'salt',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'salt',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> saltIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'salt',
         value: '',
       ));
     });
@@ -1151,15 +1402,27 @@ extension UserQuerySortBy on QueryBuilder<User, User, QSortBy> {
     });
   }
 
-  QueryBuilder<User, User, QAfterSortBy> sortByPassword() {
+  QueryBuilder<User, User, QAfterSortBy> sortByPasswordHash() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'password', Sort.asc);
+      return query.addSortBy(r'passwordHash', Sort.asc);
     });
   }
 
-  QueryBuilder<User, User, QAfterSortBy> sortByPasswordDesc() {
+  QueryBuilder<User, User, QAfterSortBy> sortByPasswordHashDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'password', Sort.desc);
+      return query.addSortBy(r'passwordHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> sortBySalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'salt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> sortBySaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'salt', Sort.desc);
     });
   }
 
@@ -1249,15 +1512,27 @@ extension UserQuerySortThenBy on QueryBuilder<User, User, QSortThenBy> {
     });
   }
 
-  QueryBuilder<User, User, QAfterSortBy> thenByPassword() {
+  QueryBuilder<User, User, QAfterSortBy> thenByPasswordHash() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'password', Sort.asc);
+      return query.addSortBy(r'passwordHash', Sort.asc);
     });
   }
 
-  QueryBuilder<User, User, QAfterSortBy> thenByPasswordDesc() {
+  QueryBuilder<User, User, QAfterSortBy> thenByPasswordHashDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'password', Sort.desc);
+      return query.addSortBy(r'passwordHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> thenBySalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'salt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> thenBySaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'salt', Sort.desc);
     });
   }
 
@@ -1314,10 +1589,17 @@ extension UserQueryWhereDistinct on QueryBuilder<User, User, QDistinct> {
     });
   }
 
-  QueryBuilder<User, User, QDistinct> distinctByPassword(
+  QueryBuilder<User, User, QDistinct> distinctByPasswordHash(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'password', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'passwordHash', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<User, User, QDistinct> distinctBySalt(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'salt', caseSensitive: caseSensitive);
     });
   }
 
@@ -1366,9 +1648,15 @@ extension UserQueryProperty on QueryBuilder<User, User, QQueryProperty> {
     });
   }
 
-  QueryBuilder<User, String, QQueryOperations> passwordProperty() {
+  QueryBuilder<User, String, QQueryOperations> passwordHashProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'password');
+      return query.addPropertyName(r'passwordHash');
+    });
+  }
+
+  QueryBuilder<User, String, QQueryOperations> saltProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'salt');
     });
   }
 

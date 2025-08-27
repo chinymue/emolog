@@ -1,4 +1,5 @@
-import 'package:emolog/pages/login_register.dart';
+import 'package:emolog/pages/login_page.dart';
+import 'package:emolog/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:emolog/isar/isar_service.dart';
@@ -21,12 +22,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final isarService = IsarService();
   final userPvd = UserProvider(isarService);
-  await userPvd.fetchAllUsers();
-  if (userPvd.userList.isEmpty) {
-    userPvd.setGuestAccount();
-    userPvd.addUser();
-  }
-  await userPvd.loadUser(userId: 1);
   runApp(
     MultiProvider(
       providers: [
@@ -35,10 +30,8 @@ void main() async {
           create: (c) => LogProvider(c.read<IsarService>()),
         ),
         ChangeNotifierProvider<UserProvider>.value(value: userPvd),
-        ChangeNotifierProvider(
-          create: (_) => LanguageProvider(userPvd.languagePref),
-        ),
-        ChangeNotifierProvider(create: (_) => ThemeProvider(userPvd.themePref)),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -60,6 +53,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/login',
           routes: {
             '/login': (_) => LoginPage(),
+            '/register': (_) => RegisterPage(),
             pages[0]['route']: (_) => HomePage(),
             pages[1]['route']: (_) => ChangeNotifierProvider(
               create: (c) => LogViewProvider(),

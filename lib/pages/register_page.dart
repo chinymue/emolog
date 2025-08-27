@@ -6,49 +6,31 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/export/decor_utils.dart';
 import 'package:emolog/widgets/scaffold_template.dart';
 
-class LoginPage extends StatelessWidget {
+class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
-    return DefaultScaffold(title: "Login", child: LoginForm());
+    return DefaultScaffold(title: "Register", child: RegisterForm());
   }
 }
 
-class LoginForm extends StatefulWidget {
-  final String direct;
-  const LoginForm({super.key, this.direct = '/'});
+class RegisterForm extends StatefulWidget {
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  State<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _RegisterFormState extends State<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   String? _error;
 
-  Future<void> _handleLogin(BuildContext c) async {
+  Future<void> _handleRegister(BuildContext c) async {
     final userPvd = c.read<UserProvider>();
-    final ok = await userPvd.login(
-      c,
-      username: _usernameCtrl.text,
-      password: _passwordCtrl.text,
-    );
+    final ok = await userPvd.register(_usernameCtrl.text, _passwordCtrl.text);
     if (ok) {
-      Navigator.pushReplacementNamed(c, widget.direct);
+      Navigator.pushReplacementNamed(c, '/');
     } else {
-      setState(() => _error = "Invalid username or password");
-    }
-  }
-
-  Future<void> _handleLoginAsGuest(BuildContext c) async {
-    final userPvd = c.read<UserProvider>();
-    final ok = await userPvd.loginAsGuest(c);
-    if (ok) {
-      Navigator.pushReplacementNamed(c, widget.direct);
-    } else {
-      setState(
-        () => _error = "Can't login as guest. Please contact developer team!",
-      );
+      setState(() => _error = "This username has been used");
     }
   }
 
@@ -89,23 +71,17 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 SizedBox(height: kPaddingLarge),
                 ElevatedButton(
-                  onPressed: () => _handleLogin(c),
+                  onPressed: () => _handleRegister(c),
+                  child: Text("Register"),
+                ),
+                SizedBox(height: kPadding),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacementNamed(c, '/login'),
                   child: Text("Login"),
-                ),
-                SizedBox(height: kPadding),
-                ElevatedButton(
-                  onPressed: () => _handleLoginAsGuest(c),
-                  child: Text("Continue as guest"),
-                ),
-                SizedBox(height: kPadding),
-                ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(c, '/register'),
-                  child: Text("Create new account"),
                 ),
                 SizedBox(height: kPaddingSmall),
                 Text(
-                  "Don't have an account yet?",
+                  "Already had an account?",
                   style: TextStyle(color: Theme.of(c).colorScheme.tertiary),
                 ),
               ],
