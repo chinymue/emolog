@@ -15,22 +15,6 @@ class UserProvider extends ChangeNotifier {
   User? _currentUser;
   bool isFetchedUser = false;
   User? get user => _currentUser;
-  LanguageAvailable get languagePref => _currentUser!.language;
-  ThemeStyle get themePref => _currentUser!.theme;
-
-  /// FETCH USER
-
-  Future<void> loadUser({required int userId}) async {
-    _currentUser = await isarService.getById(User, userId);
-    isFetchedUser = true;
-    notifyListeners();
-  }
-
-  List<User> userList = [];
-  Future<void> fetchAllUsers() async {
-    userList = await isarService.getAll<User>();
-    notifyListeners();
-  }
 
   /// LOGIN, LOGOUT AND REGISTATION
   Future<bool> login(
