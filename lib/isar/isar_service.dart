@@ -90,6 +90,12 @@ class IsarService {
     throw UnsupportedError("Type $type not supported");
   }
 
+  // read one user by username
+  Future<User?> getByUsername(String username) async {
+    final isar = await db;
+    return isar.users.filter().usernameEqualTo(username).findFirst();
+  }
+
   /// DELETE SPECIFIC ITEMS
 
   // delete one item by id on collection T
@@ -126,6 +132,7 @@ class IsarService {
       return await Isar.open(
         [NoteLogSchema, UserSchema],
         directory: dir.path,
+        name: "emolog_v2",
         inspector: true,
       );
     }

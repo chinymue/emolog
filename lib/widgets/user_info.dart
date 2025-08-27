@@ -1,18 +1,18 @@
+import 'package:emolog/utils/auth_utils.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:emolog/export/decor_utils.dart';
 import 'package:emolog/isar/model/user.dart';
 import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/provider/lang_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
-import 'package:emolog/provider/user_pvd.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../widgets/default_form.dart';
+import 'form_template.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
 
 class UserInfo extends StatefulWidget {
-  UserInfo({super.key, required this.userId});
-  final int userId;
+  UserInfo({super.key});
 
   @override
   State<UserInfo> createState() => _UserInfoState();
@@ -21,18 +21,14 @@ class UserInfo extends StatefulWidget {
 class _UserInfoState extends State<UserInfo> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
-  late final TextEditingController _usernameCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _fullnameCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _avatarCtrl;
 
-  // dropdown selections
   LanguageAvailable? _selectedLanguage;
   ThemeStyle? _selectedTheme;
 
-  // state flags
   bool _initializedFromUser = false;
   bool _isSaving = false;
 
@@ -40,22 +36,16 @@ class _UserInfoState extends State<UserInfo> {
   void initState() {
     super.initState();
 
-    _usernameCtrl = TextEditingController();
     _passwordCtrl = TextEditingController();
     _fullnameCtrl = TextEditingController();
     _emailCtrl = TextEditingController();
     _avatarCtrl = TextEditingController();
 
     _setupListeners();
-
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<UserProvider>().loadUser(userId: widget.userId),
-    );
   }
 
   @override
   void dispose() {
-    _usernameCtrl.dispose();
     _passwordCtrl.dispose();
     _fullnameCtrl.dispose();
     _emailCtrl.dispose();
@@ -63,10 +53,8 @@ class _UserInfoState extends State<UserInfo> {
     super.dispose();
   }
 
-  /// Lắng nghe thay đổi của các TextEditingController để trigger rebuild
   void _setupListeners() {
     for (final ctrl in [
-      _usernameCtrl,
       _passwordCtrl,
       _fullnameCtrl,
       _emailCtrl,
@@ -79,8 +67,7 @@ class _UserInfoState extends State<UserInfo> {
   }
 
   bool _hasChanges(User user) {
-    if (_usernameCtrl.text != (user.username)) return true;
-    if (_passwordCtrl.text != (user.password)) return true;
+    if (_passwordCtrl.text != kPasswordPlaceholder) return true;
     if (_fullnameCtrl.text != (user.fullName ?? '')) return true;
     if (_emailCtrl.text != (user.email ?? '')) return true;
     if (_avatarCtrl.text != (user.avatarUrl)) return true;
@@ -100,8 +87,11 @@ class _UserInfoState extends State<UserInfo> {
 
     setState(() => _isSaving = true);
 
-    final newUsername = _usernameCtrl.text.trim();
-    final newPass = _passwordCtrl.text;
+    final rawPass = _passwordCtrl.text;
+    final String? newPass =
+        (rawPass == kPasswordPlaceholder || rawPass.trim().isEmpty)
+        ? null
+        : rawPass;
     final newFullname = _fullnameCtrl.text.trim();
     final newEmail = _emailCtrl.text.trim();
     final newAvatar = _avatarCtrl.text.trim();
@@ -110,7 +100,6 @@ class _UserInfoState extends State<UserInfo> {
 
     try {
       await context.read<UserProvider>().updateUser(
-        newUsername: newUsername,
         newPass: newPass,
         newFullname: newFullname,
         newEmail: newEmail,
@@ -133,6 +122,15 @@ class _UserInfoState extends State<UserInfo> {
     }
   }
 
+  Future<void> _handleLogout(BuildContext c) async {
+    final user = c.read<UserProvider>().user;
+    if (user!.username == 'guest') {
+      c.read<UserProvider>().resetGuest(c, isLogout: true);
+    }
+    c.read<UserProvider>().logout();
+    Navigator.pushReplacementNamed(c, '/login');
+  }
+
   @override
   Widget build(BuildContext c) {
     final isFetched = c.select<UserProvider, bool>(
@@ -145,8 +143,7 @@ class _UserInfoState extends State<UserInfo> {
 
     if (!_initializedFromUser) {
       _initializedFromUser = true;
-      _usernameCtrl.text = user.username;
-      _passwordCtrl.text = user.password;
+      _passwordCtrl.text = kPasswordPlaceholder;
       _fullnameCtrl.text = user.fullName ?? '';
       _emailCtrl.text = user.email ?? '';
       _avatarCtrl.text = user.avatarUrl;
@@ -156,6 +153,8 @@ class _UserInfoState extends State<UserInfo> {
 
     final changed = _hasChanges(user);
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(c).colorScheme;
+    final textTheme = Theme.of(c).textTheme;
     return Padding(
       padding: const EdgeInsets.only(
         left: kPaddingLarge,
@@ -173,10 +172,25 @@ class _UserInfoState extends State<UserInfo> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                buildTextField(
-                  context,
-                  label: l10n.username,
-                  controller: _usernameCtrl,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: kPadding),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.username,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.tertiary,
+                        ),
+                      ),
+                      Text(
+                        user.username,
+                        style: textTheme.labelLarge?.copyWith(
+                          color: colorScheme.tertiary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 buildTextField(
                   context,
@@ -192,11 +206,13 @@ class _UserInfoState extends State<UserInfo> {
                   context,
                   label: l10n.email,
                   controller: _emailCtrl,
+                  isValidator: false,
                 ),
                 buildTextField(
                   context,
                   label: l10n.avatarUrl,
                   controller: _avatarCtrl,
+                  isValidator: false,
                 ),
                 buildDropdownField<LanguageAvailable>(
                   label: l10n.language,
@@ -220,12 +236,24 @@ class _UserInfoState extends State<UserInfo> {
                     setState(() => _selectedTheme = value);
                   },
                 ),
-                SizedBox(height: kPaddingLarge),
-                ElevatedButton(
-                  onPressed: (!_isSaving && changed)
-                      ? () => _handleSave(user)
-                      : null,
-                  child: Text(l10n.saveChanges),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: kPadding),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: (!_isSaving && changed)
+                            ? () => _handleSave(user)
+                            : null,
+                        child: Text(l10n.saveChanges),
+                      ),
+                      SizedBox(width: kPaddingLarge),
+                      ElevatedButton(
+                        onPressed: () => _handleLogout(c),
+                        child: Text('logout'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

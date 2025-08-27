@@ -66,3 +66,44 @@ class MainScaffold extends StatelessWidget {
     );
   }
 }
+
+// Scaffold with bottom navigation bar -----------------------------
+class DefaultScaffold extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final List<Widget>? actions;
+
+  const DefaultScaffold({
+    required this.title,
+    required this.child,
+    this.actions,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext c) {
+    // final l10n = AppLocalizations.of(c)!;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          title,
+          style: Theme.of(c).textTheme.headlineLarge?.copyWith(
+            color: Theme.of(c).colorScheme.primary,
+          ),
+        ),
+        actions: actions == null
+            ? null
+            : [
+                Padding(
+                  padding: const EdgeInsets.only(right: kPaddingSmall),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: actions!,
+                  ),
+                ),
+              ],
+      ),
+      body: child,
+    );
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:emolog/provider/lang_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
+import 'package:emolog/utils/auth_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../isar/isar_service.dart';
@@ -11,130 +12,97 @@ class UserProvider extends ChangeNotifier {
   final IsarService isarService;
   UserProvider(this.isarService);
 
-  late User _currentUser;
+  User? _currentUser;
   bool isFetchedUser = false;
   User? get user => _currentUser;
-  LanguageAvailable get languagePref => _currentUser.language;
-  ThemeStyle get themePref => _currentUser.theme;
 
-  /// FETCH USER
+  /// LOGIN, LOGOUT AND REGISTATION
+  Future<bool> login(
+    BuildContext c, {
+    required String username,
+    required String password,
+  }) async {
+    final user = await isarService.getByUsername(username);
+    if (user == null) return false;
+    final hash = hashPassword(password, user.salt);
+    if (hash == user.passwordHash) {
+      _currentUser = user;
+      isFetchedUser = true;
+      notifyListeners();
+      c.read<LanguageProvider>().setLang(_currentUser!.language);
+      c.read<ThemeProvider>().setTheme(_currentUser!.theme);
+      return true;
+    }
+    return false;
+  }
 
-  Future<void> loadUser({required int userId}) async {
-    _currentUser = await isarService.getById(User, userId);
-    isFetchedUser = true;
+  void logout() {
+    _currentUser = null;
+    isFetchedUser = false;
     notifyListeners();
   }
 
-  List<User> userList = [];
-  Future<void> fetchAllUsers() async {
-    userList = await isarService.getAll<User>();
+  Future<bool> register(String username, String password) async {
+    final user = await isarService.getByUsername(username);
+    if (user != null) return false;
+    final salt = generateSalt();
+    final hash = hashPassword(password, salt);
+    final newUser = User()
+      ..username = username
+      ..passwordHash = hash
+      ..salt = salt;
+    await isarService.saveUser(newUser);
+    _currentUser = newUser;
+    isFetchedUser = true;
     notifyListeners();
+    return true;
+  }
+
+  Future<bool> loginAsGuest(BuildContext c) async {
+    final user = await isarService.getByUsername('guest');
+    if (user == null) {
+      return false;
+    } else {
+      _currentUser = user;
+      isFetchedUser = true;
+      notifyListeners();
+      c.read<LanguageProvider>().setLang(_currentUser!.language);
+      c.read<ThemeProvider>().setTheme(_currentUser!.theme);
+      return true;
+    }
   }
 
   /// RESET USER INFO INTO DEFAULT
 
-  void resetGuest(BuildContext c) {
-    _currentUser.username = "guest";
-    _currentUser.password = "default_pw";
-    _currentUser.fullName = _currentUser.username;
-    _currentUser.email = "${_currentUser.username}@emolog.com";
-    _currentUser.avatarUrl = "default_url";
-    _currentUser.language = LanguageAvailable.en;
-    _currentUser.theme = ThemeStyle.light;
-    notifyListeners();
-    c.read<LanguageProvider>().resetLang();
-    c.read<ThemeProvider>().resetTheme();
+  void resetGuest(
+    BuildContext c, {
+    bool isNotify = true,
+    bool isChange = true,
+    bool isLogout = false,
+  }) async {
+    _currentUser!.username = "guest";
+    _currentUser!.passwordHash = "default_pw";
+    _currentUser!.fullName = _currentUser!.username;
+    _currentUser!.email = "${_currentUser!.username}@emolog.com";
+    _currentUser!.avatarUrl = "default_url";
+    _currentUser!.language = LanguageAvailable.en;
+    _currentUser!.theme = ThemeStyle.light;
+    if (isNotify) notifyListeners();
+    if (isChange) {
+      c.read<LanguageProvider>().resetLang();
+      c.read<ThemeProvider>().resetTheme();
+    }
+    if (isLogout) {
+      await isarService.updateUser(_currentUser!);
+    }
   }
 
   void resetSetting(BuildContext c) {
-    _currentUser.language = LanguageAvailable.en;
-    _currentUser.theme = ThemeStyle.light;
+    _currentUser!.language = LanguageAvailable.en;
+    _currentUser!.theme = ThemeStyle.light;
     notifyListeners();
     c.read<LanguageProvider>().resetLang();
     c.read<ThemeProvider>().resetTheme();
-  }
-
-  /// CREATE NEW USER
-
-  // TODO: Tạo DraftUser riêng cho form sau đó convert về kiểu User
-  User newUser = User();
-
-  Future<int> addUser() async {
-    _currentUser = await isarService.saveUser(newUser);
-    isFetchedUser = true;
-    userList.add(_currentUser);
-    newUser = User();
-    notifyListeners();
-    return _currentUser.id;
-  }
-
-  // default guest
-  void setGuestAccount({bool notify = false}) {
-    newUser.username = "guest";
-    newUser.password = "default_pw";
-    newUser.fullName = newUser.username;
-    newUser.email = "${newUser.username}@emolog.com";
-    newUser.avatarUrl = "default_url";
-    newUser.language = LanguageAvailable.en;
-    newUser.theme = ThemeStyle.light;
-    if (notify) notifyListeners();
-  }
-
-  // set account info
-  void setAccount(
-    String newUsername,
-    String newPass,
-    String? newFullname,
-    String? newEmail,
-    String? newURL,
-    LanguageAvailable? newLanguage,
-    ThemeStyle? newTheme,
-  ) {
-    newUser.username = newUsername;
-    newUser.password = newPass;
-    newUser.fullName = newFullname ?? newUsername;
-    newUser.email = newEmail;
-    newUser.avatarUrl = newURL ?? "";
-    newUser.language = newLanguage ?? LanguageAvailable.en;
-    newUser.theme = newTheme ?? ThemeStyle.light;
-    notifyListeners();
-  }
-
-  // set each field
-
-  void setUsername(String newUsername) {
-    newUser.username = newUsername;
-    notifyListeners();
-  }
-
-  void setPassword(String newPass) {
-    newUser.password = newPass;
-    notifyListeners();
-  }
-
-  void setFullname(String newFullname) {
-    newUser.fullName = newFullname;
-    notifyListeners();
-  }
-
-  void setEmail(String newEmail) {
-    newUser.email = newEmail;
-    notifyListeners();
-  }
-
-  void setAvatar(String newURL) {
-    newUser.avatarUrl = newURL;
-    notifyListeners();
-  }
-
-  void setLanguage(LanguageAvailable newLanguage) {
-    newUser.language = newLanguage;
-    notifyListeners();
-  }
-
-  void setTheme(ThemeStyle newTheme) {
-    newUser.theme = newTheme;
-    notifyListeners();
   }
 
   /// UPDATE USER INFO
@@ -149,64 +117,65 @@ class UserProvider extends ChangeNotifier {
     ThemeStyle? newTheme,
   }) async {
     if (newUsername != null) {
-      _currentUser.username = newUsername;
+      _currentUser!.username = newUsername;
     }
     if (newPass != null) {
-      _currentUser.password = newPass;
+      final salt = generateSalt();
+      final hash = hashPassword(newPass, salt);
+      _currentUser!.passwordHash = hash;
+      _currentUser!.salt = salt;
     }
     if (newFullname != null) {
-      _currentUser.fullName = newFullname;
+      _currentUser!.fullName = newFullname;
     }
     if (newEmail != null) {
-      _currentUser.email = newEmail;
+      _currentUser!.email = newEmail;
     }
     if (newURL != null) {
-      _currentUser.avatarUrl = newURL;
+      _currentUser!.avatarUrl = newURL;
     }
     if (newLanguage != null) {
-      _currentUser.language = newLanguage;
+      _currentUser!.language = newLanguage;
     }
     if (newTheme != null) {
-      _currentUser.theme = newTheme;
+      _currentUser!.theme = newTheme;
     }
-    await isarService.updateUser(_currentUser);
+    await isarService.updateUser(_currentUser!);
     notifyListeners();
   }
 
   // update each field
 
-  void updateUsername(String newUsername) {
-    _currentUser.username = newUsername;
-    notifyListeners();
-  }
-
   void updatePassword(String newPass) {
-    _currentUser.password = newPass;
+    final salt = generateSalt();
+    final hash = hashPassword(newPass, salt);
+    _currentUser!.passwordHash = hash;
+    _currentUser!.salt = salt;
     notifyListeners();
   }
 
   void updateFullname(String newFullname) {
-    _currentUser.fullName = newFullname;
+    _currentUser!.fullName = newFullname;
     notifyListeners();
   }
 
   void updateEmail(String newEmail) {
-    _currentUser.email = newEmail;
+    _currentUser!.email = newEmail;
     notifyListeners();
   }
 
   void updateAvatar(String newURL) {
-    _currentUser.avatarUrl = newURL;
+    _currentUser!.avatarUrl = newURL;
     notifyListeners();
   }
 
   void updateLanguage(LanguageAvailable newLanguage) {
-    _currentUser.language = newLanguage;
+    _currentUser!.language = newLanguage;
     notifyListeners();
   }
 
   void updateTheme(ThemeStyle newTheme) {
-    _currentUser.theme = newTheme;
+    _currentUser!.theme = newTheme;
     notifyListeners();
   }
 }

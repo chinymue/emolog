@@ -17,13 +17,16 @@ Widget buildTextField(
   required String label,
   required TextEditingController controller,
   String? Function(String?)? validator,
+  bool isValidator = true,
 }) {
   return SizedBox(
     width: kFormMaxWidth,
     child: TextFormField(
       controller: controller,
       decoration: InputDecoration(labelText: label),
-      validator: validator ?? defaultTextValidator(context),
+      validator: isValidator
+          ? (validator ?? defaultTextValidator(context))
+          : null,
     ),
   );
 }
