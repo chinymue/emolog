@@ -15,12 +15,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Key _formKeyReset = UniqueKey();
 
   @override
-  void initState() {
-    super.initState();
-    context.read<UserProvider>().fetchAllUsers();
-  }
-
-  @override
   Widget build(BuildContext c) {
     final userPvd = c.read<UserProvider>();
     final l10n = AppLocalizations.of(context)!;
