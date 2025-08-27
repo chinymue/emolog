@@ -1,6 +1,5 @@
 import 'package:emolog/export/basic_utils.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:isar/isar.dart';
 import './model/user.dart';
 import './model/notelog.dart';
@@ -123,21 +122,12 @@ class IsarService {
 
   Future<Isar> _openDB() async {
     if (Isar.instanceNames.isEmpty) {
-      if (kIsWeb) {
-        return await Isar.open(
-          [NoteLogSchema, UserSchema],
-          directory: '',
-          name: 'default',
-          inspector: true,
-        );
-      } else {
-        final dir = await getApplicationDocumentsDirectory();
-        return await Isar.open(
-          [NoteLogSchema, UserSchema],
-          directory: dir.path,
-          inspector: true,
-        );
-      }
+      final dir = await getApplicationDocumentsDirectory();
+      return await Isar.open(
+        [NoteLogSchema, UserSchema],
+        directory: dir.path,
+        inspector: true,
+      );
     }
     return Future.value(Isar.getInstance());
   }
