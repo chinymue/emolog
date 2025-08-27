@@ -3,7 +3,7 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/default_scaffold.dart';
+import '../widgets/scaffold_template.dart';
 import '../widgets/user_info.dart';
 
 class SettingsPage extends StatefulWidget {

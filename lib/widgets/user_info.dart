@@ -1,12 +1,12 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:emolog/export/decor_utils.dart';
 import 'package:emolog/isar/model/user.dart';
 import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/provider/lang_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
-import 'package:emolog/provider/user_pvd.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../widgets/default_form.dart';
+import 'form_template.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
 

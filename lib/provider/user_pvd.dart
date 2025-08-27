@@ -31,6 +31,18 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// LOGIN AND REGISTATION
+  Future<bool> login(String username, String password) async {
+    final user = await isarService.getByUsername(username);
+    if (user == null) return false;
+    if (user.password == password) {
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
   /// RESET USER INFO INTO DEFAULT
 
   void resetGuest(BuildContext c) {

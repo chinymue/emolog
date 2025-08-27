@@ -1,3 +1,4 @@
+import 'package:emolog/pages/login_register.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:emolog/isar/isar_service.dart';
@@ -56,8 +57,9 @@ class MyApp extends StatelessWidget {
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),
           darkTheme: buildAppTheme(follyRed, isLight: false),
-          initialRoute: pages[0]['route'],
+          initialRoute: '/login',
           routes: {
+            '/login': (_) => LoginPage(),
             pages[0]['route']: (_) => HomePage(),
             pages[1]['route']: (_) => ChangeNotifierProvider(
               create: (c) => LogViewProvider(),

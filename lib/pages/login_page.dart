@@ -1,0 +1,94 @@
+import 'package:emolog/provider/user_pvd.dart';
+import 'package:emolog/widgets/form_template.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/export/decor_utils.dart';
+import 'package:emolog/widgets/scaffold_template.dart';
+
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext c) {
+    return DefaultScaffold(title: "Login", child: LoginForm());
+  }
+}
+
+class LoginForm extends StatefulWidget {
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  String? _error;
+
+  Future<void> _handleLogin(BuildContext c) async {
+    final userPvd = c.read<UserProvider>();
+    final ok = await userPvd.login(_usernameCtrl.text, _passwordCtrl.text);
+    if (ok) {
+      Navigator.pushReplacementNamed(c, '/');
+    } else {
+      setState(() => _error = "Invalid username or password");
+    }
+  }
+
+  @override
+  Widget build(BuildContext c) {
+    final l10n = AppLocalizations.of(c)!;
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: kPaddingLarge,
+        right: kPaddingLarge,
+        top: kPadding,
+        bottom: kPadding,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: kFormMaxWidth + 2 * kPaddingLarge,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_error != null)
+                  Text(
+                    _error!,
+                    style: TextStyle(color: Theme.of(c).colorScheme.error),
+                  ),
+                buildTextField(
+                  context,
+                  label: l10n.username,
+                  controller: _usernameCtrl,
+                ),
+                buildTextField(
+                  context,
+                  label: l10n.password,
+                  controller: _passwordCtrl,
+                ),
+                SizedBox(height: kPaddingLarge),
+                ElevatedButton(
+                  onPressed: () => _handleLogin(c),
+                  child: Text("Login"),
+                ),
+                SizedBox(height: kPadding),
+                ElevatedButton(
+                  onPressed: () => print("go"),
+                  child: Text("Create new account"),
+                ),
+                SizedBox(height: kPaddingSmall),
+                Text(
+                  "Don't have an account yet?",
+                  style: TextStyle(color: Theme.of(c).colorScheme.tertiary),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

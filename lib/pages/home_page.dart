@@ -2,7 +2,7 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import '../widgets/default_scaffold.dart';
+import '../widgets/scaffold_template.dart';
 import '../widgets/message.dart';
 import '../../provider/log_pvd.dart';
 import '../utils/constant.dart';
