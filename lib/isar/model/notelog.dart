@@ -1,3 +1,4 @@
+import 'package:emolog/isar/model/user.dart';
 import 'package:isar/isar.dart';
 
 part 'notelog.g.dart';
@@ -17,11 +18,13 @@ class NoteLog {
   late DateTime lastUpdated;
 
   bool isFavor = false;
+
+  final user = IsarLink<User>(); // use userId
 }
 
 extension NoteLogClone on NoteLog {
   NoteLog clone() {
-    return NoteLog()
+    final newLog = NoteLog()
       ..id = id
       ..date = date
       ..isFavor = isFavor
@@ -29,6 +32,11 @@ extension NoteLogClone on NoteLog {
       ..labelMood = labelMood
       ..moodPoint = moodPoint
       ..lastUpdated = lastUpdated;
+
+    // clone quan hệ user (chỉ copy link, không copy cả object)
+    newLog.user.value = user.value;
+
+    return newLog;
   }
 }
 
@@ -41,12 +49,17 @@ extension NoteLogCopyWith on NoteLog {
     DateTime? date,
     bool? isFavor,
   }) {
-    return NoteLog()
+    final newLog = NoteLog()
       ..id = id ?? this.id
       ..note = note ?? this.note
       ..labelMood = labelMood ?? this.labelMood
       ..moodPoint = moodPoint ?? this.moodPoint
       ..date = date ?? this.date
       ..isFavor = isFavor ?? this.isFavor;
+
+    // clone quan hệ user (chỉ copy link, không copy cả object)
+    newLog.user.value = user.value;
+
+    return newLog;
   }
 }

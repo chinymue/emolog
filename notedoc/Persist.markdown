@@ -280,6 +280,7 @@ class NoteLogDB {
 2. Annotate classes w `@collection`
 
 - lưu ý mỗi lần chỉnh sửa collection đều phải gọi build lại file ở bước 4!
+- xem thêm syntax Isar ở phần [syntax](#isar-syntax)
 
 ```
 import 'package:isar/isar.dart';
@@ -423,3 +424,116 @@ class IsarService {
     await isar.writeTxn(() => isar.clear());
   }
 ```
+
+##### Isar Syntax
+
+1. Khai báo collection
+
+   > Cơ bản:
+
+   ```
+   part 'models.g.dart';
+
+   @collection
+   class User {
+     Id id = Isar.autoIncrement;   // khóa chính (bắt buộc)
+
+     @Index(unique: true)          // index + unique
+     late String username;
+
+     int? age;
+   }
+   ```
+
+   > Quan hệ / Liên kết:
+
+   ```
+   @collection
+   class User {
+     Id id = Isar.autoIncrement;
+     late String username;
+
+     final logs = IsarLinks<NoteLog>(); // 1 user có nhiều log
+   }
+
+   @collection
+   class NoteLog {
+     Id id = Isar.autoIncrement;
+     late String content;
+
+     final user = IsarLink<User>();     // 1 log thuộc về 1 user
+   }
+   ```
+
+   > Index để tối ưu query:
+
+   ```
+   @collection
+   class Post {
+     Id id = Isar.autoIncrement;
+
+     @Index()
+     late DateTime createdAt;
+
+     @Index(caseSensitive: false)
+     late String title;
+   }
+   ```
+
+2. CRUD
+
+   > Create / Update:
+
+   ```
+   await isar.writeTxn(() async {
+     final user = User()..username = 'chi'..age = 20;
+     await isar.users.put(user);      // insert hoặc update
+   });
+   ```
+
+   > Read:
+
+   ```
+   final user = await isar.users.get(1);          // lấy theo id
+   final all = await isar.users.where().findAll();// lấy tất cả
+   final u = await isar.users
+       .filter()
+       .usernameEqualTo('chi')
+       .findFirst();                              // filter
+   ```
+
+   > Sort & filter:
+
+   ```
+   final results = await isar.users
+       .filter()
+       .ageGreaterThan(18)
+       .findAll();
+
+   final sorted = await isar.users
+       .where()
+       .sortByUsername()
+       .findAll();
+   ```
+
+   > Delete:
+
+   ```
+   await isar.writeTxn(() async {
+     await isar.users.delete(1);   // xóa theo id
+     await isar.users.clear();     // xóa hết collection
+     await isar.clear();           // xóa toàn bộ DB
+   });
+   ```
+
+   > Theo dõi thay đổi (Reactive query):
+
+   ```
+   isar.users.watchLazy().listen((_) {
+     print("User collection changed!");
+   });
+
+   isar.users.filter().ageGreaterThan(18).watch().listen((users) {
+     print("Users > 18: $users");
+   });
+   ```

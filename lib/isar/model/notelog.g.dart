@@ -54,7 +54,14 @@ const NoteLogSchema = CollectionSchema(
   deserializeProp: _noteLogDeserializeProp,
   idName: r'id',
   indexes: {},
-  links: {},
+  links: {
+    r'user': LinkSchema(
+      id: 7564208773626486160,
+      name: r'user',
+      target: r'User',
+      single: true,
+    )
+  },
   embeddedSchemas: {},
   getId: _noteLogGetId,
   getLinks: _noteLogGetLinks,
@@ -143,11 +150,12 @@ Id _noteLogGetId(NoteLog object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
-  return [];
+  return [object.user];
 }
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
+  object.user.attach(col, col.isar.collection<User>(), r'user', id);
 }
 
 extension NoteLogQueryWhereSort on QueryBuilder<NoteLog, NoteLog, QWhere> {
@@ -770,7 +778,20 @@ extension NoteLogQueryObject
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQueryLinks
-    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
+    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> user(
+      FilterQuery<User> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'user');
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'user', 0, true, 0, true);
+    });
+  }
+}
 
 extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByDate() {
