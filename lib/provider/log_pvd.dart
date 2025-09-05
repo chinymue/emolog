@@ -1,4 +1,6 @@
+import 'package:emolog/isar/model/user.dart';
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import '../../isar/isar_service.dart';
 import '../../isar/model/notelog.dart';
 import '../utils/data_utils.dart';
@@ -11,8 +13,12 @@ class LogProvider extends ChangeNotifier {
   /// CREATE A NEW LOG
   NoteLog newLog = NoteLog();
 
-  Future<int> addLog() async {
+  Future<int> addLog(Id userId) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+    final user = await isarService.getById(User, userId); // lấy User từ DB
+    if (user == null) throw Exception("User not found");
+
+    newLog.user.value = user.id;
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {

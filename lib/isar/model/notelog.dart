@@ -19,7 +19,7 @@ class NoteLog {
 
   bool isFavor = false;
 
-  final user = IsarLink<User>(); // use userId
+  late int userId;
 }
 
 extension NoteLogClone on NoteLog {
@@ -31,10 +31,8 @@ extension NoteLogClone on NoteLog {
       ..note = note
       ..labelMood = labelMood
       ..moodPoint = moodPoint
-      ..lastUpdated = lastUpdated;
-
-    // clone quan hệ user (chỉ copy link, không copy cả object)
-    newLog.user.value = user.value;
+      ..lastUpdated = lastUpdated
+      ..userId = userId;
 
     return newLog;
   }
@@ -48,6 +46,7 @@ extension NoteLogCopyWith on NoteLog {
     double? moodPoint,
     DateTime? date,
     bool? isFavor,
+    int? userId,
   }) {
     final newLog = NoteLog()
       ..id = id ?? this.id
@@ -55,10 +54,8 @@ extension NoteLogCopyWith on NoteLog {
       ..labelMood = labelMood ?? this.labelMood
       ..moodPoint = moodPoint ?? this.moodPoint
       ..date = date ?? this.date
-      ..isFavor = isFavor ?? this.isFavor;
-
-    // clone quan hệ user (chỉ copy link, không copy cả object)
-    newLog.user.value = user.value;
+      ..isFavor = isFavor ?? this.isFavor
+      ..userId = userId ?? this.userId;
 
     return newLog;
   }

@@ -46,6 +46,11 @@ const NoteLogSchema = CollectionSchema(
       id: 5,
       name: r'note',
       type: IsarType.string,
+    ),
+    r'userId': PropertySchema(
+      id: 6,
+      name: r'userId',
+      type: IsarType.long,
     )
   },
   estimateSize: _noteLogEstimateSize,
@@ -54,14 +59,7 @@ const NoteLogSchema = CollectionSchema(
   deserializeProp: _noteLogDeserializeProp,
   idName: r'id',
   indexes: {},
-  links: {
-    r'user': LinkSchema(
-      id: 7564208773626486160,
-      name: r'user',
-      target: r'User',
-      single: true,
-    )
-  },
+  links: {},
   embeddedSchemas: {},
   getId: _noteLogGetId,
   getLinks: _noteLogGetLinks,
@@ -102,6 +100,7 @@ void _noteLogSerialize(
   writer.writeDateTime(offsets[3], object.lastUpdated);
   writer.writeDouble(offsets[4], object.moodPoint);
   writer.writeString(offsets[5], object.note);
+  writer.writeLong(offsets[6], object.userId);
 }
 
 NoteLog _noteLogDeserialize(
@@ -118,6 +117,7 @@ NoteLog _noteLogDeserialize(
   object.lastUpdated = reader.readDateTime(offsets[3]);
   object.moodPoint = reader.readDoubleOrNull(offsets[4]);
   object.note = reader.readStringOrNull(offsets[5]);
+  object.userId = reader.readLong(offsets[6]);
   return object;
 }
 
@@ -140,6 +140,8 @@ P _noteLogDeserializeProp<P>(
       return (reader.readDoubleOrNull(offset)) as P;
     case 5:
       return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -150,12 +152,11 @@ Id _noteLogGetId(NoteLog object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
-  return [object.user];
+  return [];
 }
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
-  object.user.attach(col, col.isar.collection<User>(), r'user', id);
 }
 
 extension NoteLogQueryWhereSort on QueryBuilder<NoteLog, NoteLog, QWhere> {
@@ -772,26 +773,66 @@ extension NoteLogQueryFilter
       ));
     });
   }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'userId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'userId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'userId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension NoteLogQueryObject
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQueryLinks
-    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> user(
-      FilterQuery<User> q) {
-    return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'user');
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'user', 0, true, 0, true);
-    });
-  }
-}
+    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByDate() {
@@ -863,6 +904,18 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByNoteDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -952,6 +1005,18 @@ extension NoteLogQuerySortThenBy
       return query.addSortBy(r'note', Sort.desc);
     });
   }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
+    });
+  }
 }
 
 extension NoteLogQueryWhereDistinct
@@ -991,6 +1056,12 @@ extension NoteLogQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'note', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userId');
     });
   }
 }
@@ -1036,6 +1107,12 @@ extension NoteLogQueryProperty
   QueryBuilder<NoteLog, String?, QQueryOperations> noteProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'note');
+    });
+  }
+
+  QueryBuilder<NoteLog, int, QQueryOperations> userIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userId');
     });
   }
 }
