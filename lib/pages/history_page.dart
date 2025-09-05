@@ -1,3 +1,5 @@
+import 'package:emolog/provider/user_pvd.dart';
+
 import '../utils/constant.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';
@@ -122,8 +124,9 @@ class LogsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
+    final userId = c.read<UserProvider>().user?.id;
     return FutureBuilder(
-      future: c.read<LogProvider>().fetchLogs(),
+      future: c.read<LogProvider>().fetchLogs(userId),
       builder: (c, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

@@ -1,4 +1,3 @@
-import 'package:emolog/isar/model/user.dart';
 import 'package:isar/isar.dart';
 
 part 'notelog.g.dart';

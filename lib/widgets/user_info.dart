@@ -127,7 +127,7 @@ class _UserInfoState extends State<UserInfo> {
     if (user!.username == 'guest') {
       c.read<UserProvider>().resetGuest(c, isLogout: true);
     }
-    c.read<UserProvider>().logout();
+    c.read<UserProvider>().logout(c);
     Navigator.pushReplacementNamed(c, '/login');
   }
 
