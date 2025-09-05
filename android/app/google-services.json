@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "474193537658",
+    "project_id": "emolog-37614",
+    "storage_bucket": "emolog-37614.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474193537658:android:2427b4cee79e5a7ce669c3",
+        "android_client_info": {
+          "package_name": "com.example.emolog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBG5LWzvckRAIKd9ACd8INxexvTNvDXm4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
