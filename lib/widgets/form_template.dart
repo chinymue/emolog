@@ -1,6 +1,6 @@
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:emolog/export/decor_utils.dart';
+import '../utils/constant.dart';
 
 /// Validator mặc định cho text field
 FormFieldValidator<String> defaultTextValidator(BuildContext context) {

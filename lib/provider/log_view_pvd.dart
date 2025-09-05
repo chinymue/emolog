@@ -1,6 +1,6 @@
-import '../export/data/notelog_isar.dart';
 import 'package:flutter/material.dart';
-import '../export/basic_utils.dart';
+import '../../isar/model/notelog.dart';
+import '../utils/constant.dart';
 
 enum SortDateOrder { newestFirst, oldestFirst }
 

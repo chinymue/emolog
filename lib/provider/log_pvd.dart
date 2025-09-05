@@ -1,6 +1,8 @@
-import '../export/data/notelog_isar.dart';
 import 'package:flutter/material.dart';
-import '../export/basic_utils.dart';
+import '../../isar/isar_service.dart';
+import '../../isar/model/notelog.dart';
+import '../utils/data_utils.dart';
+import '../utils/constant.dart';
 
 class LogProvider extends ChangeNotifier {
   final IsarService isarService;

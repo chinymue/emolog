@@ -3,7 +3,7 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart'
     as quill; // Để dùng quill.Document
 import 'package:flutter/material.dart';
-import '../../export/basic_utils.dart';
+import '../../utils/constant.dart';
 
 /// === CONSTANTS ===
 

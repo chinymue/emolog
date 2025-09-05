@@ -1,4 +1,4 @@
-import 'package:emolog/export/decor_utils.dart';
+import '../utils/constant.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';
 import 'package:emolog/widgets/detail_log/mood_picker.dart';
