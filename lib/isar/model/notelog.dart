@@ -17,18 +17,23 @@ class NoteLog {
   late DateTime lastUpdated;
 
   bool isFavor = false;
+
+  late int userId;
 }
 
 extension NoteLogClone on NoteLog {
   NoteLog clone() {
-    return NoteLog()
+    final newLog = NoteLog()
       ..id = id
       ..date = date
       ..isFavor = isFavor
       ..note = note
       ..labelMood = labelMood
       ..moodPoint = moodPoint
-      ..lastUpdated = lastUpdated;
+      ..lastUpdated = lastUpdated
+      ..userId = userId;
+
+    return newLog;
   }
 }
 
@@ -40,13 +45,17 @@ extension NoteLogCopyWith on NoteLog {
     double? moodPoint,
     DateTime? date,
     bool? isFavor,
+    int? userId,
   }) {
-    return NoteLog()
+    final newLog = NoteLog()
       ..id = id ?? this.id
       ..note = note ?? this.note
       ..labelMood = labelMood ?? this.labelMood
       ..moodPoint = moodPoint ?? this.moodPoint
       ..date = date ?? this.date
-      ..isFavor = isFavor ?? this.isFavor;
+      ..isFavor = isFavor ?? this.isFavor
+      ..userId = userId ?? this.userId;
+
+    return newLog;
   }
 }

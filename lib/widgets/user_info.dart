@@ -1,7 +1,7 @@
 import 'package:emolog/utils/auth_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:emolog/export/decor_utils.dart';
+import '../utils/constant.dart';
 import 'package:emolog/isar/model/user.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
@@ -127,7 +127,7 @@ class _UserInfoState extends State<UserInfo> {
     if (user!.username == 'guest') {
       c.read<UserProvider>().resetGuest(c, isLogout: true);
     }
-    c.read<UserProvider>().logout();
+    c.read<UserProvider>().logout(c);
     Navigator.pushReplacementNamed(c, '/login');
   }
 

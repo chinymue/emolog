@@ -1,4 +1,4 @@
-import 'package:emolog/export/basic_utils.dart';
+import '../utils/constant.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:isar/isar.dart';
 import './model/user.dart';
@@ -70,11 +70,17 @@ class IsarService {
     }
   }
 
-  // READ ALL ITEMS IN COLLECTION
+  /// READ ALL ITEMS IN COLLECTION
 
   Future<List<T>> getAll<T>() async {
     final isar = await db;
     return await isar.collection<T>().where().findAll();
+  }
+
+  // read all logs of one uer
+  Future<List<NoteLog>> getAllLogs(int userId) async {
+    final isar = await db;
+    return await isar.noteLogs.filter().userIdEqualTo(userId).findAll();
   }
 
   /// READ SPECIFIC ITEMS

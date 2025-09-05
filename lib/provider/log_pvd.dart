@@ -1,6 +1,8 @@
-import '../export/data/notelog_isar.dart';
 import 'package:flutter/material.dart';
-import '../export/basic_utils.dart';
+import '../../isar/isar_service.dart';
+import '../../isar/model/notelog.dart';
+import '../utils/data_utils.dart';
+import '../utils/constant.dart';
 
 class LogProvider extends ChangeNotifier {
   final IsarService isarService;
@@ -9,8 +11,9 @@ class LogProvider extends ChangeNotifier {
   /// CREATE A NEW LOG
   NoteLog newLog = NoteLog();
 
-  Future<int> addLog() async {
+  Future<int> addLog(int userId) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+    newLog.userId = userId;
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -55,12 +58,22 @@ class LogProvider extends ChangeNotifier {
   List<NoteLog> logs = [];
   bool isFetchedLogs = false;
 
-  Future<void> fetchLogs() async {
+  Future<void> fetchLogs(int? userId) async {
     if (!isFetchedLogs) {
-      logs = await isarService.getAll<NoteLog>();
+      if (userId == null) {
+        logs = await isarService.getAll<NoteLog>();
+      } else {
+        logs = await isarService.getAllLogs(userId);
+      }
       isFetchedLogs = true;
       notifyListeners();
     }
+  }
+
+  void reset() {
+    logs = [];
+    isFetchedLogs = false;
+    notifyListeners();
   }
 
   Future<void> deleteLog({required int id}) async {

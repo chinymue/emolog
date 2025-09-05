@@ -1,4 +1,5 @@
 import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -23,8 +24,12 @@ class EmologForm extends StatelessWidget {
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
+    final userId = c.read<UserProvider>().user?.id;
+    if (userId == null) {
+      throw Exception("No user logged in");
+    }
     try {
-      final savedLogId = await logProvider.addLog();
+      final savedLogId = await logProvider.addLog(userId);
 
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)

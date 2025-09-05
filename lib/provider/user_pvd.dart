@@ -1,4 +1,5 @@
 import 'package:emolog/provider/lang_pvd.dart';
+import 'package:emolog/provider/log_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
 import 'package:emolog/utils/auth_utils.dart';
 import 'package:flutter/material.dart';
@@ -36,10 +37,11 @@ class UserProvider extends ChangeNotifier {
     return false;
   }
 
-  void logout() {
+  void logout(BuildContext c) {
     _currentUser = null;
     isFetchedUser = false;
     notifyListeners();
+    c.read<LogProvider>().reset();
   }
 
   Future<bool> register(String username, String password) async {
