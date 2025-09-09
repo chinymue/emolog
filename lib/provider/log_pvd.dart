@@ -14,6 +14,22 @@ class LogProvider extends ChangeNotifier {
   Future<int> addLog(int userId) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
     newLog.userId = userId;
+    newLog.date = DateTime.now();
+    newLog.lastUpdated = DateTime.now();
+    newLog.labelMood ??= initialMood;
+    if (newLog.moodPoint == null) {
+      if (newLog.labelMood == 'terrible') {
+        newLog.moodPoint = 0;
+      } else if (newLog.labelMood == 'not good') {
+        newLog.moodPoint = 0.25;
+      } else if (newLog.labelMood == 'chill') {
+        newLog.moodPoint = 0.5;
+      } else if (newLog.labelMood == 'good') {
+        newLog.moodPoint = 0.75;
+      } else if (newLog.labelMood == 'awesome') {
+        newLog.moodPoint = 1.0;
+      }
+    }
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -88,12 +104,14 @@ class LogProvider extends ChangeNotifier {
     if (isFetchedLogs) {
       final index = logs.indexWhere((log) => log.id == id);
       if (index != -1) {
+        logs[index].lastUpdated = DateTime.now();
         await isarService.updateLog(logs[index]);
       }
     }
   }
 
   Future<void> updateLog({required NoteLog updatedLog}) async {
+    updatedLog.lastUpdated = DateTime.now();
     await isarService.updateLog(updatedLog);
     if (isFetchedLogs) {
       final index = logs.indexWhere((log) => log.id == updatedLog.id);
@@ -152,6 +170,7 @@ class LogProvider extends ChangeNotifier {
   }
 
   Future<void> saveEditableLog() async {
+    editableLog.lastUpdated = DateTime.now();
     await isarService.updateLog(editableLog);
     if (isFetchedLogs) {
       final index = logs.indexWhere((log) => log.id == editableLog.id);

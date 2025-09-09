@@ -3,6 +3,7 @@ Using cloud DB to store & sync with local database.
 ## Cloud Firestore
 
 - dùng flutterfire cli để xử lý hầu hết các bước để thêm Firebase vào Flutter project:
+
   1. `flutter doctor` kiểm tra flutter
   2. `npm i -g firebase-tools` để install
   3. `firebase login` để đăng nhập vào tài khoản sử dụng và cho phép cli quyền thực hiện
@@ -14,6 +15,7 @@ Using cloud DB to store & sync with local database.
      - hoặc tạo mới project
   8. Chọn các OS mà Flutter app muốn hỗ trợ với Firebase để tạo file **lib\firebase_options.dart**
   9. Thay đổi `main` để chạy tương thích với Firebase:
+
   ```
   import 'package:emolog/firebase_options.dart';
   import 'package:firebase_core/firebase_core.dart';
@@ -23,3 +25,7 @@ Using cloud DB to store & sync with local database.
       runApp(const myApp())
   }
   ```
+
+- thêm cloud firestore vào project:
+  1. `flutter pub add cloud_firestore` để thêm package
+  2. Tạo logic kết nối firestore_service với Cloud Firestore:

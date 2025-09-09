@@ -52,7 +52,9 @@ class UserProvider extends ChangeNotifier {
     final newUser = User()
       ..username = username
       ..passwordHash = hash
-      ..salt = salt;
+      ..salt = salt
+      ..avatarUrl = ""
+      ..fullName = username;
     await isarService.saveUser(newUser);
     _currentUser = newUser;
     isFetchedUser = true;
