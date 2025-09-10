@@ -63,6 +63,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<bool> loginAsGuest(BuildContext c) async {
+    // TODO: create guest account if not exist
     final user = await isarService.getByUsername('guest');
     if (user == null) {
       return false;

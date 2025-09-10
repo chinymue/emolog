@@ -14,8 +14,8 @@ class LoginPage extends StatelessWidget {
 }
 
 class LoginForm extends StatefulWidget {
-  final String direct;
-  const LoginForm({super.key, this.direct = '/'});
+  final String redirect;
+  const LoginForm({super.key, this.redirect = '/'});
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
@@ -34,7 +34,7 @@ class _LoginFormState extends State<LoginForm> {
       password: _passwordCtrl.text,
     );
     if (ok) {
-      Navigator.pushReplacementNamed(c, widget.direct);
+      Navigator.pushReplacementNamed(c, widget.redirect);
     } else {
       setState(() => _error = "Invalid username or password");
     }
@@ -44,7 +44,7 @@ class _LoginFormState extends State<LoginForm> {
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.loginAsGuest(c);
     if (ok) {
-      Navigator.pushReplacementNamed(c, widget.direct);
+      Navigator.pushReplacementNamed(c, widget.redirect);
     } else {
       setState(
         () => _error = "Can't login as guest. Please contact developer team!",
@@ -55,6 +55,8 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext c) {
     final l10n = AppLocalizations.of(c)!;
+    // TODO: add toggle change language
+    // TODO: add remember me checkbox & this feature
     return Padding(
       padding: const EdgeInsets.only(
         left: kPaddingLarge,
