@@ -57,8 +57,6 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext c) {
     final l10n = AppLocalizations.of(c)!;
-    // TODO: add toggle change language
-    // TODO: add remember me checkbox & this feature
     return Padding(
       padding: const EdgeInsets.only(
         left: kPaddingLarge,

@@ -8,7 +8,7 @@ class User {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true)
-  late String username; // TODO: loại bỏ late và tạo constructor
+  late String username;
   late String passwordHash;
   late String salt;
 

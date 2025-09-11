@@ -93,7 +93,19 @@ class IsarService {
     });
   }
 
-  // TODO: delete all items match id-ref
+  // delete all notelog items match user id-ref
+  Future<void> deleteLogOfUser(int userId) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      final items = await isar.noteLogs
+          .filter()
+          .userIdEqualTo(userId)
+          .findAll();
+      for (var item in items) {
+        await isar.noteLogs.delete(item.id);
+      }
+    });
+  }
 
   /// DELETE COLLECTIONS
 

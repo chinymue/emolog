@@ -64,19 +64,26 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<bool> loginAsGuest(BuildContext c) async {
-    // TODO: create guest account if not exist
+    // create guest account if not exist
     final user = await isarService.getByUsername('guest');
     if (user == null) {
-      return false;
+      final newUser = User()
+        ..username = "guest"
+        ..passwordHash = "default_pw"
+        ..salt = "default_salt"
+        ..avatarUrl = "default_url"
+        ..fullName = "guest";
+      await isarService.saveUser(newUser);
+      _currentUser = newUser;
     } else {
       _currentUser = user;
-      isFetchedUser = true;
-      notifyListeners();
-      if (!c.mounted) return false;
-      c.read<LanguageProvider>().setLang(_currentUser!.language);
-      c.read<ThemeProvider>().setTheme(_currentUser!.theme);
-      return true;
     }
+    isFetchedUser = true;
+    notifyListeners();
+    if (!c.mounted) return false;
+    c.read<LanguageProvider>().setLang(_currentUser!.language);
+    c.read<ThemeProvider>().setTheme(_currentUser!.theme);
+    return true;
   }
 
   /// RESET USER INFO INTO DEFAULT
