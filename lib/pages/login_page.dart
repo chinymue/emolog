@@ -34,6 +34,7 @@ class _LoginFormState extends State<LoginForm> {
       password: _passwordCtrl.text,
     );
     if (ok) {
+      if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, widget.redirect);
     } else {
       setState(() => _error = "Invalid username or password");
@@ -44,6 +45,7 @@ class _LoginFormState extends State<LoginForm> {
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.loginAsGuest(c);
     if (ok) {
+      if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, widget.redirect);
     } else {
       setState(

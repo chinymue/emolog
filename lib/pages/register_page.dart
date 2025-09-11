@@ -28,6 +28,7 @@ class _RegisterFormState extends State<RegisterForm> {
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.register(_usernameCtrl.text, _passwordCtrl.text);
     if (ok) {
+      if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, '/');
     } else {
       setState(() => _error = "This username has been used");

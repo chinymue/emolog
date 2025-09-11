@@ -30,6 +30,7 @@ class UserProvider extends ChangeNotifier {
       _currentUser = user;
       isFetchedUser = true;
       notifyListeners();
+      if (!c.mounted) return false;
       c.read<LanguageProvider>().setLang(_currentUser!.language);
       c.read<ThemeProvider>().setTheme(_currentUser!.theme);
       return true;
@@ -71,6 +72,7 @@ class UserProvider extends ChangeNotifier {
       _currentUser = user;
       isFetchedUser = true;
       notifyListeners();
+      if (!c.mounted) return false;
       c.read<LanguageProvider>().setLang(_currentUser!.language);
       c.read<ThemeProvider>().setTheme(_currentUser!.theme);
       return true;
