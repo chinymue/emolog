@@ -29,6 +29,8 @@ class UserProvider extends ChangeNotifier {
     if (hash == user.passwordHash) {
       _currentUser = user;
       isFetchedUser = true;
+      _currentUser!.lastLogin = DateTime.now();
+      await isarService.updateUser(_currentUser!);
       notifyListeners();
       if (!c.mounted) return false;
       c.read<LanguageProvider>().setLang(_currentUser!.language);
@@ -55,6 +57,7 @@ class UserProvider extends ChangeNotifier {
       ..passwordHash = hash
       ..salt = salt
       ..avatarUrl = ""
+      ..createdAt = DateTime.now()
       ..fullName = username;
     await isarService.saveUser(newUser);
     _currentUser = newUser;
@@ -72,12 +75,15 @@ class UserProvider extends ChangeNotifier {
         ..passwordHash = "default_pw"
         ..salt = "default_salt"
         ..avatarUrl = "default_url"
-        ..fullName = "guest";
+        ..fullName = "guest"
+        ..createdAt = DateTime.now();
       await isarService.saveUser(newUser);
       _currentUser = newUser;
     } else {
       _currentUser = user;
     }
+    _currentUser!.lastLogin = DateTime.now();
+    await isarService.updateUser(_currentUser!);
     isFetchedUser = true;
     notifyListeners();
     if (!c.mounted) return false;
@@ -155,41 +161,6 @@ class UserProvider extends ChangeNotifier {
       _currentUser!.theme = newTheme;
     }
     await isarService.updateUser(_currentUser!);
-    notifyListeners();
-  }
-
-  // update each field
-
-  void updatePassword(String newPass) {
-    final salt = generateSalt();
-    final hash = hashPassword(newPass, salt);
-    _currentUser!.passwordHash = hash;
-    _currentUser!.salt = salt;
-    notifyListeners();
-  }
-
-  void updateFullname(String newFullname) {
-    _currentUser!.fullName = newFullname;
-    notifyListeners();
-  }
-
-  void updateEmail(String newEmail) {
-    _currentUser!.email = newEmail;
-    notifyListeners();
-  }
-
-  void updateAvatar(String newURL) {
-    _currentUser!.avatarUrl = newURL;
-    notifyListeners();
-  }
-
-  void updateLanguage(LanguageAvailable newLanguage) {
-    _currentUser!.language = newLanguage;
-    notifyListeners();
-  }
-
-  void updateTheme(ThemeStyle newTheme) {
-    _currentUser!.theme = newTheme;
     notifyListeners();
   }
 }
