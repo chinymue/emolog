@@ -50,9 +50,12 @@ class HistoryPage extends StatelessWidget {
       context: c,
       builder: (_) => Padding(
         padding: const EdgeInsets.all(kPaddingSmall),
-        child: MoodRangePicker(
-          onChangedRange: (values) =>
-              c.read<LogViewProvider>().setMoodRangeFilter(values),
+        child: SizedBox(
+          height: kSingleRowScrollMaxHeight,
+          child: MoodRangePicker(
+            onChangedRange: (values) =>
+                c.read<LogViewProvider>().setMoodRangeFilter(values),
+          ),
         ),
       ),
     );

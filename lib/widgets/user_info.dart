@@ -156,20 +156,27 @@ class UsernameRow extends StatelessWidget {
     final username = c.select<UserProvider, String>(
       (provider) => provider.user?.username ?? '',
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: kPadding),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            l10n.username,
-            style: textTheme.bodyMedium?.copyWith(color: colorScheme.tertiary),
-          ),
-          Text(
-            username,
-            style: textTheme.labelLarge?.copyWith(color: colorScheme.tertiary),
-          ),
-        ],
+    return SizedBox(
+      width: kFormMaxWidth,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: kPaddingSmall),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.username,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.tertiary,
+              ),
+            ),
+            Text(
+              username,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.tertiary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

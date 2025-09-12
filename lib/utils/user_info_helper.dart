@@ -93,9 +93,6 @@ Future<void> handleSave(
 }
 
 Future<void> handleLogout(BuildContext c) async {
-  final user = c.read<UserProvider>().user;
-  user!.username == 'guest'
-      ? c.read<UserProvider>().logoutGuest(c)
-      : c.read<UserProvider>().logout(c);
+  c.read<UserProvider>().logout(c);
   Navigator.pushReplacementNamed(c, '/login');
 }
