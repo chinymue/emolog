@@ -22,6 +22,7 @@ class IsarService {
 
   Future<User> saveUser(User user) async {
     final isar = await db;
+    user.updatedAt = DateTime.now();
     await isar.writeTxn(() async {
       await isar.users.put(user);
     });
@@ -44,6 +45,7 @@ class IsarService {
   Future<void> updateUser(User user) async {
     final isar = await db;
     final existedUser = await isar.users.get(user.id);
+    user.updatedAt = DateTime.now();
     if (existedUser != null) {
       await isar.writeTxn(() async {
         await isar.users.put(user);
@@ -131,7 +133,7 @@ class IsarService {
       return await Isar.open(
         [NoteLogSchema, UserSchema],
         directory: dir.path,
-        name: "emolog_v3",
+        name: "emolog_v3.1",
         inspector: true,
       );
     }

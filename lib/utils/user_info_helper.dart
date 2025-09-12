@@ -69,7 +69,7 @@ Future<void> handleSave(
     final rawPass = ctrls[0].text;
     final newPass = (rawPass == '********' || rawPass.trim().isEmpty)
         ? null
-        : rawPass;
+        : rawPass; // hash at update function in user_pvd.dart
 
     await c.read<UserProvider>().updateUser(
       newPass: newPass,

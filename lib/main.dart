@@ -25,7 +25,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final isarService = IsarService();
   final userPvd = UserProvider(isarService);
-  await userPvd.syncAllUsersToFirestore();
+  // await userPvd.syncAllUsersToFirestore(); // Debug only
   runApp(
     MultiProvider(
       providers: [
