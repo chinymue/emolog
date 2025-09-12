@@ -195,7 +195,6 @@ class UserProvider extends ChangeNotifier {
     final users = await isarService.getAll<User>();
 
     for (var user in users) {
-      // TODO: change into FirebaseAuth UID after implemented auth
       if (user.uid.isEmpty) {
         user.uid = const Uuid().v4();
         await isarService.updateUser(user);

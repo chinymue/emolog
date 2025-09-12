@@ -60,18 +60,17 @@ class DetailsLog extends StatelessWidget {
           MoodPicker(
             selectedMood: editable.labelMood,
             onMoodSelected: (mood) =>
-                c.read<LogProvider>().updateLabelMood(mood: mood),
+                c.read<LogProvider>().updateLabelMood(mood),
           ),
           MoodPointPicker(
             selectedMoodPoint: editable.moodPoint,
             onChangedMoodPoint: (moodPoint) =>
-                c.read<LogProvider>().updateMoodPoint(moodPoint: moodPoint),
+                c.read<LogProvider>().updateMoodPoint(moodPoint),
           ),
           Expanded(
             child: DefaultQuillEditor(
               initialContent: editable.note ?? '',
-              onContentChanged: (doc) =>
-                  c.read<LogProvider>().updateNote(note: doc),
+              onContentChanged: (doc) => c.read<LogProvider>().updateNote(doc),
             ),
           ),
         ],
@@ -88,17 +87,15 @@ class DetailsLogContent extends StatelessWidget {
     final logProvider = c.read<LogProvider>();
     return Column(
       children: [
-        MoodPicker(
-          onMoodSelected: (mood) => logProvider.setLabelMood(mood: mood),
-        ),
+        MoodPicker(onMoodSelected: (mood) => logProvider.setLabelMood(mood)),
         MoodPointPicker(
           onChangedMoodPoint: (moodPoint) {
-            logProvider.setMoodPoint(moodPoint: moodPoint);
+            logProvider.setMoodPoint(moodPoint);
           },
         ),
         Expanded(
           child: DefaultQuillEditor(
-            onContentChanged: (doc) => logProvider.setNote(note: doc),
+            onContentChanged: (doc) => logProvider.setNote(doc),
           ),
         ),
       ],

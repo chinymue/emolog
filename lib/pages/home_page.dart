@@ -24,12 +24,12 @@ class EmologForm extends StatelessWidget {
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
-    final userId = c.read<UserProvider>().user?.id;
-    if (userId == null) {
+    final userUid = c.read<UserProvider>().user?.uid;
+    if (userUid == null) {
       throw Exception("No user logged in");
     }
     try {
-      final savedLogId = await logProvider.addLog(userId);
+      final savedLogId = await logProvider.addLog(userUid);
 
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)

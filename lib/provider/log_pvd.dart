@@ -8,28 +8,18 @@ class LogProvider extends ChangeNotifier {
   final IsarService isarService;
   LogProvider(this.isarService);
 
+  /// CRUD OPERATIONS ========================================
   /// CREATE A NEW LOG
   NoteLog newLog = NoteLog();
 
-  Future<int> addLog(int userId) async {
+  Future<int> addLog(String userUid, {DateTime? date}) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
-    newLog.userId = userId;
-    newLog.date = DateTime.now();
-    newLog.lastUpdated = DateTime.now();
-    newLog.labelMood ??= initialMood;
-    if (newLog.moodPoint == null) {
-      if (newLog.labelMood == 'terrible') {
-        newLog.moodPoint = 0;
-      } else if (newLog.labelMood == 'not good') {
-        newLog.moodPoint = 0.25;
-      } else if (newLog.labelMood == 'chill') {
-        newLog.moodPoint = 0.5;
-      } else if (newLog.labelMood == 'good') {
-        newLog.moodPoint = 0.75;
-      } else if (newLog.labelMood == 'awesome') {
-        newLog.moodPoint = 1.0;
-      }
-    }
+
+    newLog
+      ..userUid = userUid
+      ..date = date ?? DateTime.now()
+      ..labelMood ??= initialMood
+      ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -42,45 +32,15 @@ class LogProvider extends ChangeNotifier {
     return savedLog.id;
   }
 
-  // set each field
-
-  void setLabelMood({required String mood, bool notify = false}) {
-    if (moods.containsKey(mood)) {
-      newLog.labelMood = mood;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void setMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
-      newLog.moodPoint = moodPoint;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void setNote({String? note, bool notify = false}) {
-    if (note != null) {
-      newLog.note = note;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void setFavor({bool notify = false}) {
-    newLog.isFavor = !newLog.isFavor;
-    if (notify) notifyListeners();
-  }
-
   /// FETCH LOGS FROM ISAR
   List<NoteLog> logs = [];
   bool isFetchedLogs = false;
 
-  Future<void> fetchLogs(int? userId) async {
+  Future<void> fetchLogs(String? userUid) async {
     if (!isFetchedLogs) {
-      if (userId == null) {
-        logs = await isarService.getAll<NoteLog>();
-      } else {
-        logs = await isarService.getAllLogs(userId);
-      }
+      logs = userUid == null
+          ? await isarService.getAll<NoteLog>()
+          : await isarService.getAllLogs(userUid);
       isFetchedLogs = true;
       notifyListeners();
     }
@@ -100,88 +60,87 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> saveUpdatedLog({required int id}) async {
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == id);
-      if (index != -1) {
-        logs[index].lastUpdated = DateTime.now();
-        await isarService.updateLog(logs[index]);
-      }
-    }
-  }
-
   Future<void> updateLog({required NoteLog updatedLog}) async {
-    updatedLog.lastUpdated = DateTime.now();
     await isarService.updateLog(updatedLog);
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == updatedLog.id);
-      if (index != -1) {
-        logs[index] = updatedLog;
-        notifyListeners();
-      }
+    _updateLogInList(updatedLog.id, (_) => updatedLog);
+  }
+
+  /// TOGGLE FAVORITE STATUS
+  void updateLogFavor({required int id, bool isSaved = false}) async {
+    _updateLogInList(id, (log) => log.copyWith(isFavor: !log.isFavor));
+    if (isSaved) {
+      final log = logs.firstWhere((log) => log.id == id);
+      await isarService.updateLog(log);
     }
   }
 
-  // only if logs is fetched
-  void updateLogFavor({required int id}) {
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((l) => l.id == id);
-      if (index != -1) {
-        logs[index] = logs[index].copyWith(isFavor: !logs[index].isFavor);
-        notifyListeners();
-      }
-    }
-  }
-
-  /// UPDATE IN DETAILS LOG
+  /// UPDATE IN DETAILS LOG ===================================
   late NoteLog editableLog;
   bool hasEditableLog = false;
 
   void setEditableLog({required NoteLog log, bool notify = true}) {
-    editableLog = log.clone();
+    editableLog = log.copyWith();
     hasEditableLog = true;
     if (notify) notifyListeners();
   }
 
-  void updateLabelMood({required String mood, bool notify = false}) {
-    if (moods.containsKey(mood)) {
-      editableLog.labelMood = mood;
-      if (notify) notifyListeners();
-    }
+  Future<void> saveEditableLog() async {
+    await isarService.updateLog(editableLog);
+    _updateLogInList(
+      editableLog.id,
+      (log) => isNoteLogChanged(log, editableLog) ? editableLog : log,
+    );
+    editableLog = NoteLog();
+    hasEditableLog = false;
   }
 
-  void updateMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
-      editableLog.moodPoint = moodPoint;
-      if (notify) notifyListeners();
-    }
-  }
+  /// COMMON FIELD UPDATERS =================================
+  void setLabelMood(String mood, {bool notify = false}) =>
+      _updateLogField(newLog, (log) => log.labelMood = mood, notify);
 
-  void updateNote({String? note, bool notify = false}) {
-    if (note != null) {
-      editableLog.note = note;
-      if (notify) notifyListeners();
-    }
-  }
+  void setMoodPoint(double point, {bool notify = false}) =>
+      _updateLogField(newLog, (log) => log.moodPoint = point, notify);
 
-  void updateFavor({bool notify = false}) {
-    editableLog.isFavor = !editableLog.isFavor;
+  void setNote(String? note, {bool notify = false}) =>
+      _updateLogField(newLog, (log) => log.note = note, notify);
+
+  void setFavor({bool notify = false}) =>
+      _updateLogField(newLog, (log) => log.isFavor = !log.isFavor, notify);
+
+  void updateLabelMood(String mood, {bool notify = false}) =>
+      _updateLogField(editableLog, (log) => log.labelMood = mood, notify);
+
+  void updateMoodPoint(double point, {bool notify = false}) =>
+      _updateLogField(editableLog, (log) => log.moodPoint = point, notify);
+
+  void updateNote(String? note, {bool notify = false}) =>
+      _updateLogField(editableLog, (log) => log.note = note, notify);
+
+  void updateFavor({bool notify = false}) =>
+      _updateLogField(editableLog, (log) => log.isFavor = !log.isFavor, notify);
+
+  /// HELPER METHODS ===================================
+
+  void _updateLogField(
+    NoteLog target,
+    void Function(NoteLog) updater,
+    bool notify,
+  ) {
+    updater(target);
     if (notify) notifyListeners();
   }
 
-  Future<void> saveEditableLog() async {
-    editableLog.lastUpdated = DateTime.now();
-    await isarService.updateLog(editableLog);
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == editableLog.id);
-      if (isNoteLogChanged(logs[index], editableLog)) {
-        if (index != -1) {
-          logs[index] = editableLog;
-          editableLog = NoteLog();
-          hasEditableLog = false;
-          notifyListeners();
-        }
-      }
-    }
+  void _updateLogInList(
+    int id,
+    NoteLog Function(NoteLog) transform, {
+    bool notify = true,
+  }) {
+    if (!isFetchedLogs) return;
+
+    final index = logs.indexWhere((l) => l.id == id);
+    if (index == -1) return;
+
+    logs[index] = transform(logs[index]);
+    if (notify) notifyListeners();
   }
 }

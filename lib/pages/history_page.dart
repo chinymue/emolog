@@ -124,9 +124,9 @@ class LogsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final userId = c.read<UserProvider>().user?.id;
+    final userUid = c.read<UserProvider>().user?.uid;
     return FutureBuilder(
-      future: c.read<LogProvider>().fetchLogs(userId),
+      future: c.read<LogProvider>().fetchLogs(userUid),
       builder: (c, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

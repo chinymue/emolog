@@ -17,40 +17,50 @@ const NoteLogSchema = CollectionSchema(
   name: r'NoteLog',
   id: 1643800332374341291,
   properties: {
-    r'date': PropertySchema(
+    r'createdAt': PropertySchema(
       id: 0,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'date': PropertySchema(
+      id: 1,
       name: r'date',
       type: IsarType.dateTime,
     ),
     r'isFavor': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'isFavor',
       type: IsarType.bool,
     ),
     r'labelMood': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'labelMood',
       type: IsarType.string,
     ),
     r'lastUpdated': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'lastUpdated',
       type: IsarType.dateTime,
     ),
+    r'logId': PropertySchema(
+      id: 5,
+      name: r'logId',
+      type: IsarType.string,
+    ),
     r'moodPoint': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'moodPoint',
       type: IsarType.double,
     ),
     r'note': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'note',
       type: IsarType.string,
     ),
-    r'userId': PropertySchema(
-      id: 6,
-      name: r'userId',
-      type: IsarType.long,
+    r'userUid': PropertySchema(
+      id: 8,
+      name: r'userUid',
+      type: IsarType.string,
     )
   },
   estimateSize: _noteLogEstimateSize,
@@ -58,7 +68,34 @@ const NoteLogSchema = CollectionSchema(
   deserialize: _noteLogDeserialize,
   deserializeProp: _noteLogDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'logId': IndexSchema(
+      id: 3089637606214822530,
+      name: r'logId',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'logId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'userUid': IndexSchema(
+      id: 7924673654387171457,
+      name: r'userUid',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'userUid',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _noteLogGetId,
@@ -79,12 +116,14 @@ int _noteLogEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.logId.length * 3;
   {
     final value = object.note;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.userUid.length * 3;
   return bytesCount;
 }
 
@@ -94,13 +133,15 @@ void _noteLogSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.date);
-  writer.writeBool(offsets[1], object.isFavor);
-  writer.writeString(offsets[2], object.labelMood);
-  writer.writeDateTime(offsets[3], object.lastUpdated);
-  writer.writeDouble(offsets[4], object.moodPoint);
-  writer.writeString(offsets[5], object.note);
-  writer.writeLong(offsets[6], object.userId);
+  writer.writeDateTime(offsets[0], object.createdAt);
+  writer.writeDateTime(offsets[1], object.date);
+  writer.writeBool(offsets[2], object.isFavor);
+  writer.writeString(offsets[3], object.labelMood);
+  writer.writeDateTime(offsets[4], object.lastUpdated);
+  writer.writeString(offsets[5], object.logId);
+  writer.writeDouble(offsets[6], object.moodPoint);
+  writer.writeString(offsets[7], object.note);
+  writer.writeString(offsets[8], object.userUid);
 }
 
 NoteLog _noteLogDeserialize(
@@ -110,14 +151,16 @@ NoteLog _noteLogDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = NoteLog();
-  object.date = reader.readDateTime(offsets[0]);
+  object.createdAt = reader.readDateTime(offsets[0]);
+  object.date = reader.readDateTime(offsets[1]);
   object.id = id;
-  object.isFavor = reader.readBool(offsets[1]);
-  object.labelMood = reader.readStringOrNull(offsets[2]);
-  object.lastUpdated = reader.readDateTime(offsets[3]);
-  object.moodPoint = reader.readDoubleOrNull(offsets[4]);
-  object.note = reader.readStringOrNull(offsets[5]);
-  object.userId = reader.readLong(offsets[6]);
+  object.isFavor = reader.readBool(offsets[2]);
+  object.labelMood = reader.readStringOrNull(offsets[3]);
+  object.lastUpdated = reader.readDateTime(offsets[4]);
+  object.logId = reader.readString(offsets[5]);
+  object.moodPoint = reader.readDoubleOrNull(offsets[6]);
+  object.note = reader.readStringOrNull(offsets[7]);
+  object.userUid = reader.readString(offsets[8]);
   return object;
 }
 
@@ -131,17 +174,21 @@ P _noteLogDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
-    case 2:
-      return (reader.readStringOrNull(offset)) as P;
-    case 3:
       return (reader.readDateTime(offset)) as P;
-    case 4:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 5:
+    case 2:
+      return (reader.readBool(offset)) as P;
+    case 3:
       return (reader.readStringOrNull(offset)) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
+    case 5:
+      return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -157,6 +204,60 @@ List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
+}
+
+extension NoteLogByIndex on IsarCollection<NoteLog> {
+  Future<NoteLog?> getByLogId(String logId) {
+    return getByIndex(r'logId', [logId]);
+  }
+
+  NoteLog? getByLogIdSync(String logId) {
+    return getByIndexSync(r'logId', [logId]);
+  }
+
+  Future<bool> deleteByLogId(String logId) {
+    return deleteByIndex(r'logId', [logId]);
+  }
+
+  bool deleteByLogIdSync(String logId) {
+    return deleteByIndexSync(r'logId', [logId]);
+  }
+
+  Future<List<NoteLog?>> getAllByLogId(List<String> logIdValues) {
+    final values = logIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'logId', values);
+  }
+
+  List<NoteLog?> getAllByLogIdSync(List<String> logIdValues) {
+    final values = logIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'logId', values);
+  }
+
+  Future<int> deleteAllByLogId(List<String> logIdValues) {
+    final values = logIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'logId', values);
+  }
+
+  int deleteAllByLogIdSync(List<String> logIdValues) {
+    final values = logIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'logId', values);
+  }
+
+  Future<Id> putByLogId(NoteLog object) {
+    return putByIndex(r'logId', object);
+  }
+
+  Id putByLogIdSync(NoteLog object, {bool saveLinks = true}) {
+    return putByIndexSync(r'logId', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByLogId(List<NoteLog> objects) {
+    return putAllByIndex(r'logId', objects);
+  }
+
+  List<Id> putAllByLogIdSync(List<NoteLog> objects, {bool saveLinks = true}) {
+    return putAllByIndexSync(r'logId', objects, saveLinks: saveLinks);
+  }
 }
 
 extension NoteLogQueryWhereSort on QueryBuilder<NoteLog, NoteLog, QWhere> {
@@ -232,10 +333,152 @@ extension NoteLogQueryWhere on QueryBuilder<NoteLog, NoteLog, QWhereClause> {
       ));
     });
   }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterWhereClause> logIdEqualTo(String logId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'logId',
+        value: [logId],
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterWhereClause> logIdNotEqualTo(
+      String logId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'logId',
+              lower: [],
+              upper: [logId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'logId',
+              lower: [logId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'logId',
+              lower: [logId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'logId',
+              lower: [],
+              upper: [logId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterWhereClause> userUidEqualTo(
+      String userUid) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userUid',
+        value: [userUid],
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterWhereClause> userUidNotEqualTo(
+      String userUid) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userUid',
+              lower: [],
+              upper: [userUid],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userUid',
+              lower: [userUid],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userUid',
+              lower: [userUid],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userUid',
+              lower: [],
+              upper: [userUid],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension NoteLogQueryFilter
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> createdAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> createdAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> createdAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> createdAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> dateEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -550,6 +793,136 @@ extension NoteLogQueryFilter
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'logId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'logId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'logId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> logIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'logId',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -774,55 +1147,132 @@ extension NoteLogQueryFilter
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdEqualTo(
-      int value) {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
+        property: r'userUid',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdGreaterThan(
-    int value, {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidGreaterThan(
+    String value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'userId',
+        property: r'userUid',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdLessThan(
-    int value, {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidLessThan(
+    String value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'userId',
+        property: r'userUid',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userIdBetween(
-    int lower,
-    int upper, {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidBetween(
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'userId',
+        property: r'userUid',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'userUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'userUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'userUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'userUid',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userUid',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> userUidIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'userUid',
+        value: '',
       ));
     });
   }
@@ -835,6 +1285,18 @@ extension NoteLogQueryLinks
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.asc);
@@ -883,6 +1345,18 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByLogId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByLogIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logId', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByMoodPoint() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'moodPoint', Sort.asc);
@@ -907,21 +1381,33 @@ extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserId() {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserUid() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
+      return query.addSortBy(r'userUid', Sort.asc);
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserIdDesc() {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByUserUidDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
+      return query.addSortBy(r'userUid', Sort.desc);
     });
   }
 }
 
 extension NoteLogQuerySortThenBy
     on QueryBuilder<NoteLog, NoteLog, QSortThenBy> {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.asc);
@@ -982,6 +1468,18 @@ extension NoteLogQuerySortThenBy
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByLogId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByLogIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logId', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByMoodPoint() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'moodPoint', Sort.asc);
@@ -1006,21 +1504,27 @@ extension NoteLogQuerySortThenBy
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserId() {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserUid() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
+      return query.addSortBy(r'userUid', Sort.asc);
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserIdDesc() {
+  QueryBuilder<NoteLog, NoteLog, QAfterSortBy> thenByUserUidDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
+      return query.addSortBy(r'userUid', Sort.desc);
     });
   }
 }
 
 extension NoteLogQueryWhereDistinct
     on QueryBuilder<NoteLog, NoteLog, QDistinct> {
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'date');
@@ -1046,6 +1550,13 @@ extension NoteLogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByLogId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'logId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByMoodPoint() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'moodPoint');
@@ -1059,9 +1570,10 @@ extension NoteLogQueryWhereDistinct
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByUserId() {
+  QueryBuilder<NoteLog, NoteLog, QDistinct> distinctByUserUid(
+      {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'userId');
+      return query.addDistinctBy(r'userUid', caseSensitive: caseSensitive);
     });
   }
 }
@@ -1071,6 +1583,12 @@ extension NoteLogQueryProperty
   QueryBuilder<NoteLog, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<NoteLog, DateTime, QQueryOperations> createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
     });
   }
 
@@ -1098,6 +1616,12 @@ extension NoteLogQueryProperty
     });
   }
 
+  QueryBuilder<NoteLog, String, QQueryOperations> logIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'logId');
+    });
+  }
+
   QueryBuilder<NoteLog, double?, QQueryOperations> moodPointProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'moodPoint');
@@ -1110,9 +1634,9 @@ extension NoteLogQueryProperty
     });
   }
 
-  QueryBuilder<NoteLog, int, QQueryOperations> userIdProperty() {
+  QueryBuilder<NoteLog, String, QQueryOperations> userUidProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'userId');
+      return query.addPropertyName(r'userUid');
     });
   }
 }
