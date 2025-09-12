@@ -52,6 +52,17 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteAllLog({
+    required String userUid,
+    bool notify = false,
+  }) async {
+    await isarService.deleteLogOfUser(userUid);
+    if (isFetchedLogs) {
+      logs = [];
+      if (notify) notifyListeners();
+    }
+  }
+
   Future<void> deleteLog({required int id}) async {
     await isarService.deleteById<NoteLog>(id);
     if (isFetchedLogs) {

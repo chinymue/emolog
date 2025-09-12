@@ -20,6 +20,29 @@ class UserProvider extends ChangeNotifier {
   User? get user => _currentUser;
 
   /// LOGIN, LOGOUT AND REGISTATION
+  Future<bool> register(String username, String password) async {
+    final user = await isarService.getByUsername(username);
+    if (user != null) return false;
+    final salt = generateSalt();
+    final hash = hashPassword(password, salt);
+    final newUser = User()
+      ..uid = const Uuid().v4()
+      ..username = username
+      ..passwordHash = hash
+      ..salt = salt
+      ..avatarUrl = ""
+      ..createdAt = DateTime.now()
+      ..fullName = username;
+    await isarService.saveUser(newUser);
+    _currentUser = newUser;
+    isFetchedUser = true;
+    if (_currentUser != null) {
+      await _syncUserToFirestore(_currentUser!);
+    }
+    notifyListeners();
+    return true;
+  }
+
   Future<bool> login(
     BuildContext c, {
     required String username,
@@ -61,29 +84,6 @@ class UserProvider extends ChangeNotifier {
     c.read<LogProvider>().reset();
   }
 
-  Future<bool> register(String username, String password) async {
-    final user = await isarService.getByUsername(username);
-    if (user != null) return false;
-    final salt = generateSalt();
-    final hash = hashPassword(password, salt);
-    final newUser = User()
-      ..uid = const Uuid().v4()
-      ..username = username
-      ..passwordHash = hash
-      ..salt = salt
-      ..avatarUrl = ""
-      ..createdAt = DateTime.now()
-      ..fullName = username;
-    await isarService.saveUser(newUser);
-    _currentUser = newUser;
-    isFetchedUser = true;
-    if (_currentUser != null) {
-      await _syncUserToFirestore(_currentUser!);
-    }
-    notifyListeners();
-    return true;
-  }
-
   Future<bool> loginAsGuest(BuildContext c) async {
     // create guest account if not exist
     final user = await isarService.getByUsername('guest');
@@ -109,6 +109,13 @@ class UserProvider extends ChangeNotifier {
     c.read<LanguageProvider>().setLang(_currentUser!.language);
     c.read<ThemeProvider>().setTheme(_currentUser!.theme);
     return true;
+  }
+
+  void logoutGuest(BuildContext c) {
+    if (_currentUser != null && _currentUser!.username == "guest") {
+      logout(c);
+      resetGuest(c, isLogout: true);
+    }
   }
 
   /// CLOUD FIRESTORE SYNC
@@ -313,9 +320,10 @@ class UserProvider extends ChangeNotifier {
     _currentUser!.language = LanguageAvailable.en;
     _currentUser!.theme = ThemeStyle.light;
     if (isNotify) notifyListeners();
-    if (isChange) {
+    if (isChange && c.mounted) {
       c.read<LanguageProvider>().resetLang();
       c.read<ThemeProvider>().resetTheme();
+      c.read<LogProvider>().deleteAllLog(userUid: _currentUser!.uid);
     }
     if (isLogout) {
       await isarService.updateUser(_currentUser!);
