@@ -8,6 +8,8 @@ import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class UserProvider extends ChangeNotifier {
   final IsarService isarService;
@@ -29,8 +31,8 @@ class UserProvider extends ChangeNotifier {
     if (hash == user.passwordHash) {
       _currentUser = user;
       isFetchedUser = true;
-      _currentUser!.lastLogin = DateTime.now();
-      await isarService.updateUser(_currentUser!);
+      updateUser(newLastLogin: DateTime.now(), isNotify: false);
+      _syncUserToFirestore(user);
       notifyListeners();
       if (!c.mounted) return false;
       c.read<LanguageProvider>().setLang(_currentUser!.language);
@@ -53,6 +55,7 @@ class UserProvider extends ChangeNotifier {
     final salt = generateSalt();
     final hash = hashPassword(password, salt);
     final newUser = User()
+      ..uid = const Uuid().v4()
       ..username = username
       ..passwordHash = hash
       ..salt = salt
@@ -62,6 +65,9 @@ class UserProvider extends ChangeNotifier {
     await isarService.saveUser(newUser);
     _currentUser = newUser;
     isFetchedUser = true;
+    if (_currentUser != null) {
+      await _syncUserToFirestore(_currentUser!);
+    }
     notifyListeners();
     return true;
   }
@@ -71,6 +77,7 @@ class UserProvider extends ChangeNotifier {
     final user = await isarService.getByUsername('guest');
     if (user == null) {
       final newUser = User()
+        ..uid = const Uuid().v4()
         ..username = "guest"
         ..passwordHash = "default_pw"
         ..salt = "default_salt"
@@ -90,6 +97,58 @@ class UserProvider extends ChangeNotifier {
     c.read<LanguageProvider>().setLang(_currentUser!.language);
     c.read<ThemeProvider>().setTheme(_currentUser!.theme);
     return true;
+  }
+
+  /// CLOUD FIRESTORE SYNC
+
+  Future<void> syncAllUsersToFirestore() async {
+    final users = await isarService.getAll<User>();
+
+    for (var user in users) {
+      // TODO: change into FirebaseAuth UID after implemented auth
+      if (user.uid.isEmpty) {
+        user.uid = const Uuid().v4();
+        await isarService.updateUser(user);
+      }
+
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+
+      await docRef.set({
+        'username': user.username,
+        'passwordHash': user.passwordHash,
+        'salt': user.salt,
+        'fullName': user.fullName,
+        'email': user.email,
+        'avatarUrl': user.avatarUrl,
+        'createdAt': user.createdAt.toIso8601String(),
+        'lastLogin': user.lastLogin?.toIso8601String(),
+        'language': user.language.name,
+        'theme': user.theme.name,
+      }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
+    }
+  }
+
+  Future<void> _syncUserToFirestore(User user) async {
+    if (user.uid.isEmpty) {
+      user.uid = const Uuid().v4();
+      await isarService.updateUser(user);
+    }
+    final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    await docRef.set({
+      'username': user.username,
+      'passwordHash': user.passwordHash,
+      'salt': user.salt,
+      'fullName': user.fullName,
+      'email': user.email,
+      'avatarUrl': user.avatarUrl,
+      'createdAt': user.createdAt.toIso8601String(),
+      'lastLogin': user.lastLogin?.toIso8601String(),
+      'language': user.language.name,
+      'theme': user.theme.name,
+    }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
   }
 
   /// RESET USER INFO INTO DEFAULT
@@ -133,8 +192,10 @@ class UserProvider extends ChangeNotifier {
     String? newFullname,
     String? newEmail,
     String? newURL,
+    DateTime? newLastLogin,
     LanguageAvailable? newLanguage,
     ThemeStyle? newTheme,
+    bool isNotify = true,
   }) async {
     if (newUsername != null) {
       _currentUser!.username = newUsername;
@@ -154,6 +215,9 @@ class UserProvider extends ChangeNotifier {
     if (newURL != null) {
       _currentUser!.avatarUrl = newURL;
     }
+    if (newLastLogin != null) {
+      _currentUser!.lastLogin = newLastLogin;
+    }
     if (newLanguage != null) {
       _currentUser!.language = newLanguage;
     }
@@ -161,6 +225,6 @@ class UserProvider extends ChangeNotifier {
       _currentUser!.theme = newTheme;
     }
     await isarService.updateUser(_currentUser!);
-    notifyListeners();
+    if (isNotify) notifyListeners();
   }
 }

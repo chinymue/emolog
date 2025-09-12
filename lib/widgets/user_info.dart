@@ -272,36 +272,3 @@ class ActionButtons extends StatelessWidget {
     );
   }
 }
-
-class FormWrapper extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final List<Widget> children;
-
-  const FormWrapper({super.key, required this.formKey, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: kPaddingLarge,
-        right: kPaddingLarge,
-        top: kPadding,
-        bottom: kPadding,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: kFormMaxWidth + 2 * kPaddingLarge,
-          ),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: children,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

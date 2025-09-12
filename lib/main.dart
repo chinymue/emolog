@@ -22,9 +22,10 @@ import './utils/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final isarService = IsarService();
   final userPvd = UserProvider(isarService);
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await userPvd.syncAllUsersToFirestore();
   runApp(
     MultiProvider(
       providers: [
