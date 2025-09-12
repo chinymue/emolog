@@ -12,7 +12,12 @@
           "package_name": "com.example.emolog"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "474193537658-eucdgg88m574pfih7tqm56a47am2c7ck.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBG5LWzvckRAIKd9ACd8INxexvTNvDXm4c"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474193537658-eucdgg88m574pfih7tqm56a47am2c7ck.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474193537658-o6j74jetg17o9e52hu55vn5ta5l8olou.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.emolog"
+              }
+            }
+          ]
         }
       }
     }
