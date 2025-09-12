@@ -19,6 +19,7 @@ class User {
   late String avatarUrl;
   DateTime createdAt = DateTime.now();
   DateTime? lastLogin;
+  late DateTime updatedAt;
 
   @enumerated
   LanguageAvailable language = LanguageAvailable.en;

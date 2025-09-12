@@ -26,20 +26,32 @@ class UserProvider extends ChangeNotifier {
     required String password,
   }) async {
     final user = await isarService.getByUsername(username);
-    if (user == null) return false;
-    final hash = hashPassword(password, user.salt);
-    if (hash == user.passwordHash) {
+    User? firestoreUser;
+    if (user == null) {
+      firestoreUser = await _fetchLatestUserFromFirestore(username);
+      if (firestoreUser == null) return false;
+
+      final hash = hashPassword(password, firestoreUser.salt);
+      if (hash != firestoreUser.passwordHash) return false;
+      _currentUser = firestoreUser;
+    } else {
+      final hash = hashPassword(password, user.salt);
+      if (hash != user.passwordHash) return false;
       _currentUser = user;
-      isFetchedUser = true;
-      updateUser(newLastLogin: DateTime.now(), isNotify: false);
-      _syncUserToFirestore(user);
-      notifyListeners();
-      if (!c.mounted) return false;
+    }
+
+    isFetchedUser = true;
+    _currentUser!.lastLogin = DateTime.now();
+
+    await _fetchAndSyncUser(_currentUser!);
+
+    if (c.mounted) {
       c.read<LanguageProvider>().setLang(_currentUser!.language);
       c.read<ThemeProvider>().setTheme(_currentUser!.theme);
-      return true;
     }
-    return false;
+
+    notifyListeners();
+    return true;
   }
 
   void logout(BuildContext c) {
@@ -101,6 +113,84 @@ class UserProvider extends ChangeNotifier {
 
   /// CLOUD FIRESTORE SYNC
 
+  Future<void> _fetchAndSyncUser(User user) async {
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        final cloudData = doc.data()!;
+        final cloudUpdatedAt = DateTime.parse(cloudData['updatedAt']);
+
+        if (user.updatedAt.isAfter(cloudUpdatedAt)) {
+          await isarService.updateUser(user);
+          await _syncUserToFirestore(user);
+        } else if (cloudUpdatedAt.isAfter(user.updatedAt)) {
+          await _checkAndSyncUserFromFirestore(user);
+        }
+      } else {
+        await isarService.updateUser(user);
+        await _syncUserToFirestore(user);
+      }
+    } catch (e) {
+      print("Error during user sync: $e");
+    }
+  }
+
+  Future<User?> _fetchLatestUserFromFirestore(String username) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .get(); // lấy tất cả phiên bản cùng username
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      // Chọn doc có updatedAt mới nhất
+      querySnapshot.docs.sort((a, b) {
+        final aUpdated = a.data()['updatedAt'] != null
+            ? DateTime.parse(a.data()['updatedAt'])
+            : DateTime.fromMillisecondsSinceEpoch(0);
+        final bUpdated = b.data()['updatedAt'] != null
+            ? DateTime.parse(b.data()['updatedAt'])
+            : DateTime.fromMillisecondsSinceEpoch(0);
+        return bUpdated.compareTo(aUpdated); // giảm dần
+      });
+
+      final doc = querySnapshot.docs.first;
+      final data = doc.data();
+
+      return User()
+        ..uid = doc.id
+        ..username = data['username'] ?? ''
+        ..passwordHash = data['passwordHash'] ?? ''
+        ..salt = data['salt'] ?? ''
+        ..fullName = data['fullName']
+        ..email = data['email']
+        ..avatarUrl = data['avatarUrl'] ?? ''
+        ..createdAt = DateTime.parse(data['createdAt'])
+        ..lastLogin = data['lastLogin'] != null
+            ? DateTime.parse(data['lastLogin'])
+            : null
+        ..language = LanguageAvailable.values.firstWhere(
+          (e) => e.name == data['language'],
+          orElse: () => LanguageAvailable.en,
+        )
+        ..theme = ThemeStyle.values.firstWhere(
+          (e) => e.name == data['theme'],
+          orElse: () => ThemeStyle.light,
+        )
+        ..updatedAt = data['updatedAt'] != null
+            ? DateTime.parse(data['updatedAt'])
+            : DateTime.now();
+    } catch (e) {
+      debugPrint('Error fetching user from Firestore: $e');
+      return null;
+    }
+  }
+
   Future<void> syncAllUsersToFirestore() async {
     final users = await isarService.getAll<User>();
 
@@ -126,6 +216,7 @@ class UserProvider extends ChangeNotifier {
         'lastLogin': user.lastLogin?.toIso8601String(),
         'language': user.language.name,
         'theme': user.theme.name,
+        'updatedAt': user.updatedAt.toIso8601String(),
       }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
     }
   }
@@ -148,7 +239,63 @@ class UserProvider extends ChangeNotifier {
       'lastLogin': user.lastLogin?.toIso8601String(),
       'language': user.language.name,
       'theme': user.theme.name,
+      'updatedAt': user.updatedAt.toIso8601String(),
     }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
+  }
+
+  Future<void> _checkAndSyncUserFromFirestore(User localUser) async {
+    if (localUser.uid.isEmpty) return; // chưa có Firestore docId → không sync
+
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(localUser.uid);
+    final doc = await docRef.get();
+
+    if (!doc.exists) return; // user chưa có trên Firestore
+
+    final data = doc.data()!;
+    bool updated = false;
+
+    // Kiểm tra từng field, nếu khác thì cập nhật
+    final userToUpdate = localUser;
+
+    if ((data['fullName'] ?? '') != (localUser.fullName ?? '')) {
+      userToUpdate.fullName = data['fullName'];
+      updated = true;
+    }
+    if ((data['email'] ?? '') != (localUser.email ?? '')) {
+      userToUpdate.email = data['email'];
+      updated = true;
+    }
+    if ((data['avatarUrl'] ?? '') != localUser.avatarUrl) {
+      userToUpdate.avatarUrl = data['avatarUrl'];
+      updated = true;
+    }
+    if (data['lastLogin'] != null) {
+      final firestoreLastLogin = DateTime.parse(data['lastLogin']);
+      if (localUser.lastLogin == null ||
+          firestoreLastLogin.isAfter(localUser.lastLogin!)) {
+        userToUpdate.lastLogin = firestoreLastLogin;
+        updated = true;
+      }
+    }
+    if (data['language'] != null &&
+        data['language'] != localUser.language.name) {
+      userToUpdate.language = LanguageAvailable.values.firstWhere(
+        (e) => e.name == data['language'],
+      );
+      updated = true;
+    }
+    if (data['theme'] != null && data['theme'] != localUser.theme.name) {
+      userToUpdate.theme = ThemeStyle.values.firstWhere(
+        (e) => e.name == data['theme'],
+      );
+      updated = true;
+    }
+
+    if (updated) {
+      await isarService.updateUser(userToUpdate);
+    }
   }
 
   /// RESET USER INFO INTO DEFAULT
