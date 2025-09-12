@@ -1,3 +1,5 @@
+import 'package:emolog/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:emolog/pages/login_page.dart';
 import 'package:emolog/pages/register_page.dart';
 import 'package:flutter/material.dart';
@@ -18,10 +20,12 @@ import './utils/color_utils.dart';
 import './utils/constant.dart';
 import './utils/theme.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final isarService = IsarService();
   final userPvd = UserProvider(isarService);
+  await userPvd.syncAllUsersToFirestore();
   runApp(
     MultiProvider(
       providers: [

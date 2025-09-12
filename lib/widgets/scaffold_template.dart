@@ -82,7 +82,6 @@ class DefaultScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    // final l10n = AppLocalizations.of(c)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(

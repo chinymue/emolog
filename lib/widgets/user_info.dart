@@ -1,4 +1,3 @@
-import 'package:emolog/utils/auth_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constant.dart';
@@ -10,6 +9,7 @@ import 'package:emolog/provider/theme_pvd.dart';
 import 'form_template.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
+import '../utils/user_info_helper.dart';
 
 class UserInfo extends StatefulWidget {
   UserInfo({super.key});
@@ -18,117 +18,22 @@ class UserInfo extends StatefulWidget {
   State<UserInfo> createState() => _UserInfoState();
 }
 
-class _UserInfoState extends State<UserInfo> {
+class _UserInfoState extends State<UserInfo> with UserInfoControllers {
   final _formKey = GlobalKey<FormState>();
-
-  late final TextEditingController _passwordCtrl;
-  late final TextEditingController _fullnameCtrl;
-  late final TextEditingController _emailCtrl;
-  late final TextEditingController _avatarCtrl;
-
   LanguageAvailable? _selectedLanguage;
   ThemeStyle? _selectedTheme;
-
   bool _initializedFromUser = false;
-  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-
-    _passwordCtrl = TextEditingController();
-    _fullnameCtrl = TextEditingController();
-    _emailCtrl = TextEditingController();
-    _avatarCtrl = TextEditingController();
-
-    _setupListeners();
+    initControllers(setState, mounted);
   }
 
   @override
   void dispose() {
-    _passwordCtrl.dispose();
-    _fullnameCtrl.dispose();
-    _emailCtrl.dispose();
-    _avatarCtrl.dispose();
+    disposeControllers();
     super.dispose();
-  }
-
-  void _setupListeners() {
-    for (final ctrl in [
-      _passwordCtrl,
-      _fullnameCtrl,
-      _emailCtrl,
-      _avatarCtrl,
-    ]) {
-      ctrl.addListener(() {
-        if (mounted) setState(() {});
-      });
-    }
-  }
-
-  bool _hasChanges(User user) {
-    if (_passwordCtrl.text != kPasswordPlaceholder) return true;
-    if (_fullnameCtrl.text != (user.fullName ?? '')) return true;
-    if (_emailCtrl.text != (user.email ?? '')) return true;
-    if (_avatarCtrl.text != (user.avatarUrl)) return true;
-    if (_selectedLanguage != (user.language)) return true;
-    if (_selectedTheme != (user.theme)) return true;
-    return false;
-  }
-
-  Future<void> _handleSave(User user) async {
-    final l10n = AppLocalizations.of(context)!;
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.saveChangesNotVaid)));
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    final rawPass = _passwordCtrl.text;
-    final String? newPass =
-        (rawPass == kPasswordPlaceholder || rawPass.trim().isEmpty)
-        ? null
-        : rawPass;
-    final newFullname = _fullnameCtrl.text.trim();
-    final newEmail = _emailCtrl.text.trim();
-    final newAvatar = _avatarCtrl.text.trim();
-    final newLang = _selectedLanguage ?? user.language;
-    final newTheme = _selectedTheme ?? user.theme;
-
-    try {
-      await context.read<UserProvider>().updateUser(
-        newPass: newPass,
-        newFullname: newFullname,
-        newEmail: newEmail,
-        newURL: newAvatar,
-        newLanguage: newLang,
-        newTheme: newTheme,
-      );
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.saveSuccess)));
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.saveFailed)));
-      print(e);
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  Future<void> _handleLogout(BuildContext c) async {
-    final user = c.read<UserProvider>().user;
-    if (user!.username == 'guest') {
-      c.read<UserProvider>().resetGuest(c, isLogout: true);
-    }
-    c.read<UserProvider>().logout(c);
-    Navigator.pushReplacementNamed(c, '/login');
   }
 
   @override
@@ -139,126 +44,230 @@ class _UserInfoState extends State<UserInfo> {
     if (!isFetched) {
       return const Center(child: CircularProgressIndicator());
     }
-    final user = c.select<UserProvider, User>((provider) => provider.user!);
 
+    final user = c.select<UserProvider, User>((provider) => provider.user!);
     if (!_initializedFromUser) {
       _initializedFromUser = true;
-      _passwordCtrl.text = kPasswordPlaceholder;
-      _fullnameCtrl.text = user.fullName ?? '';
-      _emailCtrl.text = user.email ?? '';
-      _avatarCtrl.text = user.avatarUrl;
-      _selectedLanguage = user.language;
-      _selectedTheme = user.theme;
+      initFormFromUser(
+        user,
+        controllers,
+        (lang) => _selectedLanguage = lang,
+        (theme) => _selectedTheme = theme,
+      );
     }
-
-    final changed = _hasChanges(user);
+    final changed = hasChanges(
+      user,
+      controllers,
+      _selectedLanguage,
+      _selectedTheme,
+    );
     final l10n = AppLocalizations.of(context)!;
+
+    return FormWrapper(
+      formKey: _formKey,
+      children: [
+        UsernameRow(),
+        UserFields(ctrls: controllers),
+        PreferencesFields(
+          selectedLanguage: _selectedLanguage,
+          selectedTheme: _selectedTheme,
+          onLangChanged: (value) {
+            if (value != null) {
+              context.read<LanguageProvider>().setLang(value);
+            }
+            setState(() => _selectedLanguage = value);
+          },
+          onThemeChanged: (value) {
+            if (value != null) {
+              context.read<ThemeProvider>().setTheme(value);
+            }
+            setState(() => _selectedTheme = value);
+          },
+        ),
+        ActionButtons(
+          changed: changed,
+          onSave: () async {
+            await handleSave(
+              c,
+              _formKey,
+              controllers,
+              _selectedLanguage,
+              _selectedTheme,
+              user,
+              () {
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+              () {
+                if (mounted) {
+                  setState(() {
+                    _initializedFromUser = false;
+                  });
+                }
+              },
+            );
+          },
+          onLogout: () => handleLogout(c),
+          saveLabel: l10n.saveChanges,
+        ),
+      ],
+    );
+  }
+}
+
+mixin UserInfoControllers<T extends StatefulWidget> on State<T> {
+  late final TextEditingController passwordCtrl;
+  late final TextEditingController fullnameCtrl;
+  late final TextEditingController emailCtrl;
+  late final TextEditingController avatarCtrl;
+
+  List<TextEditingController> get controllers => [
+    passwordCtrl,
+    fullnameCtrl,
+    emailCtrl,
+    avatarCtrl,
+  ];
+
+  void initControllers(Function(void Function()) setState, bool mounted) {
+    passwordCtrl = TextEditingController();
+    fullnameCtrl = TextEditingController();
+    emailCtrl = TextEditingController();
+    avatarCtrl = TextEditingController();
+
+    setupListeners(controllers, mounted, setState);
+  }
+
+  void disposeControllers() {
+    for (final ctrl in controllers) {
+      ctrl.dispose();
+    }
+  }
+}
+
+class UsernameRow extends StatelessWidget {
+  const UsernameRow({super.key});
+
+  @override
+  Widget build(BuildContext c) {
+    final l10n = AppLocalizations.of(c)!;
     final colorScheme = Theme.of(c).colorScheme;
     final textTheme = Theme.of(c).textTheme;
+    final username = c.select<UserProvider, String>(
+      (provider) => provider.user?.username ?? '',
+    );
     return Padding(
-      padding: const EdgeInsets.only(
-        left: kPaddingLarge,
-        right: kPaddingLarge,
-        top: kPadding,
-        bottom: kPadding,
+      padding: const EdgeInsets.symmetric(vertical: kPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            l10n.username,
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.tertiary),
+          ),
+          Text(
+            username,
+            style: textTheme.labelLarge?.copyWith(color: colorScheme.tertiary),
+          ),
+        ],
       ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: kFormMaxWidth + 2 * kPaddingLarge,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: kPadding),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        l10n.username,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.tertiary,
-                        ),
-                      ),
-                      Text(
-                        user.username,
-                        style: textTheme.labelLarge?.copyWith(
-                          color: colorScheme.tertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                buildTextField(
-                  context,
-                  label: l10n.password,
-                  controller: _passwordCtrl,
-                ),
-                buildTextField(
-                  context,
-                  label: l10n.fullname,
-                  controller: _fullnameCtrl,
-                ),
-                buildTextField(
-                  context,
-                  label: l10n.email,
-                  controller: _emailCtrl,
-                  isValidator: false,
-                ),
-                buildTextField(
-                  context,
-                  label: l10n.avatarUrl,
-                  controller: _avatarCtrl,
-                  isValidator: false,
-                ),
-                buildDropdownField<LanguageAvailable>(
-                  label: l10n.language,
-                  value: _selectedLanguage,
-                  values: LanguageAvailable.values,
-                  onChanged: (value) {
-                    if (value != null) {
-                      c.read<LanguageProvider>().setLang(value);
-                    }
-                    setState(() => _selectedLanguage = value);
-                  },
-                ),
-                buildDropdownField<ThemeStyle>(
-                  label: l10n.theme,
-                  value: _selectedTheme,
-                  values: ThemeStyle.values,
-                  onChanged: (value) {
-                    if (value != null) {
-                      c.read<ThemeProvider>().setTheme(value);
-                    }
-                    setState(() => _selectedTheme = value);
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: kPadding),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: (!_isSaving && changed)
-                            ? () => _handleSave(user)
-                            : null,
-                        child: Text(l10n.saveChanges),
-                      ),
-                      SizedBox(width: kPaddingLarge),
-                      ElevatedButton(
-                        onPressed: () => _handleLogout(c),
-                        child: Text('logout'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+    );
+  }
+}
+
+class UserFields extends StatelessWidget {
+  final List<TextEditingController> ctrls;
+
+  const UserFields({super.key, required this.ctrls});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        buildTextField(context, label: l10n.password, controller: ctrls[0]),
+        buildTextField(context, label: l10n.fullname, controller: ctrls[1]),
+        buildTextField(
+          context,
+          label: l10n.email,
+          controller: ctrls[2],
+          isValidator: false,
         ),
+        buildTextField(
+          context,
+          label: l10n.avatarUrl,
+          controller: ctrls[3],
+          isValidator: false,
+        ),
+      ],
+    );
+  }
+}
+
+class PreferencesFields extends StatelessWidget {
+  final LanguageAvailable? selectedLanguage;
+  final ThemeStyle? selectedTheme;
+  final ValueChanged<LanguageAvailable?> onLangChanged;
+  final ValueChanged<ThemeStyle?> onThemeChanged;
+
+  const PreferencesFields({
+    super.key,
+    required this.selectedLanguage,
+    required this.selectedTheme,
+    required this.onLangChanged,
+    required this.onThemeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        buildDropdownField<LanguageAvailable>(
+          label: l10n.language,
+          value: selectedLanguage,
+          values: LanguageAvailable.values,
+          onChanged: onLangChanged,
+        ),
+        buildDropdownField<ThemeStyle>(
+          label: l10n.theme,
+          value: selectedTheme,
+          values: ThemeStyle.values,
+          onChanged: onThemeChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class ActionButtons extends StatelessWidget {
+  final bool changed;
+  final VoidCallback onSave;
+  final VoidCallback onLogout;
+  final String saveLabel;
+
+  const ActionButtons({
+    super.key,
+    required this.changed,
+    required this.onSave,
+    required this.onLogout,
+    required this.saveLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: kPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: changed ? onSave : null,
+            child: Text(saveLabel),
+          ),
+          SizedBox(width: kPaddingLarge),
+          ElevatedButton(onPressed: onLogout, child: const Text('logout')),
+        ],
       ),
     );
   }

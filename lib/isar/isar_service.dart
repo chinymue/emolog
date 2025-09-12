@@ -1,4 +1,3 @@
-import '../utils/constant.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:isar/isar.dart';
 import './model/user.dart';
@@ -15,22 +14,6 @@ class IsarService {
 
   Future<NoteLog> saveLog(NoteLog log) async {
     final isar = await db;
-    log.date = DateTime.now();
-    log.lastUpdated = DateTime.now();
-    log.labelMood ??= initialMood;
-    if (log.moodPoint == null) {
-      if (log.labelMood == 'terrible') {
-        log.moodPoint = 0;
-      } else if (log.labelMood == 'not good') {
-        log.moodPoint = 0.25;
-      } else if (log.labelMood == 'chill') {
-        log.moodPoint = 0.5;
-      } else if (log.labelMood == 'good') {
-        log.moodPoint = 0.75;
-      } else if (log.labelMood == 'awesome') {
-        log.moodPoint = 1.0;
-      }
-    }
     await isar.writeTxn(() async {
       await isar.noteLogs.put(log);
     });
@@ -39,8 +22,6 @@ class IsarService {
 
   Future<User> saveUser(User user) async {
     final isar = await db;
-    user.avatarUrl = "";
-    user.fullName = user.fullName ?? user.username;
     await isar.writeTxn(() async {
       await isar.users.put(user);
     });
@@ -112,7 +93,19 @@ class IsarService {
     });
   }
 
-  // TODO: delete all items match id-ref
+  // delete all notelog items match user id-ref
+  Future<void> deleteLogOfUser(int userId) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      final items = await isar.noteLogs
+          .filter()
+          .userIdEqualTo(userId)
+          .findAll();
+      for (var item in items) {
+        await isar.noteLogs.delete(item.id);
+      }
+    });
+  }
 
   /// DELETE COLLECTIONS
 
@@ -138,7 +131,7 @@ class IsarService {
       return await Isar.open(
         [NoteLogSchema, UserSchema],
         directory: dir.path,
-        name: "emolog_v2",
+        name: "emolog_v3",
         inspector: true,
       );
     }

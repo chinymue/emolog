@@ -48,7 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: Theme.of(c).colorScheme.error,
                   ),
                 ),
-                LoginForm(direct: '/settings'),
+                LoginForm(redirect: '/settings'),
               ],
             )
           : UserInfo(key: _formKeyReset),
