@@ -60,7 +60,7 @@ class EmologForm extends StatelessWidget {
         HelloLog(),
         const SizedBox(height: kPadding),
         SizedBox(
-          height: kFormMaxHeight + kSingleRowScrollMaxHeight,
+          height: kFormMaxHeight + kSingleRowScrollHeight,
           width: kFormMaxWidth,
           child: DetailsLogContent(),
         ),

@@ -3,12 +3,15 @@ import '../../isar/isar_service.dart';
 import '../../isar/model/notelog.dart';
 import '../utils/data_utils.dart';
 import '../utils/constant.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class LogProvider extends ChangeNotifier
     with
         ServiceAccess,
         LogStateMixin,
         LogCRUDMixin,
+        LogSyncMixin,
         EditableLogMixin,
         FieldUpdaterMixin,
         ToggleMixin {
@@ -67,6 +70,8 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
 
     newLog
+      ..logId = const Uuid().v4()
+      ..createdAt = DateTime.now()
       ..userUid = userUid
       ..date = date ?? DateTime.now()
       ..labelMood ??= initialMood
@@ -120,6 +125,72 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
   }
 }
 
+mixin LogSyncMixin on ServiceAccess, LogStateMixin {
+  final _firestore = FirebaseFirestore.instance;
+  Future<void> syncLogs(String userUid) async {
+    final isarLogs = await isarService.getAllLogs(userUid);
+    final firestoreLogs = await _fetchLogsFromFirestore(userUid);
+
+    // Map để dễ so sánh
+    final isarMap = {for (var log in isarLogs) log.logId: log};
+    final firestoreMap = {for (var log in firestoreLogs) log.logId: log};
+
+    // Đồng bộ Isar -> Firestore
+    for (var log in isarLogs) {
+      final cloudLog = firestoreMap[log.logId];
+      if (cloudLog == null) {
+        await _uploadLogToFirestore(log);
+      } else if (log.lastUpdated.isAfter(cloudLog.lastUpdated)) {
+        await _uploadLogToFirestore(log); // overwrite cloud
+      }
+    }
+
+    // Đồng bộ Firestore -> Isar
+    for (var log in firestoreLogs) {
+      final localLog = isarMap[log.logId];
+      if (localLog == null) {
+        await isarService.saveLog(log);
+      } else if (log.lastUpdated.isAfter(localLog.lastUpdated)) {
+        await isarService.updateLog(log);
+      }
+    }
+  }
+
+  Future<List<NoteLog>> _fetchLogsFromFirestore(String userUid) async {
+    final snap = await _firestore
+        .collection('notelogs')
+        .where('userUid', isEqualTo: userUid)
+        .get();
+
+    return snap.docs.map((doc) {
+      final data = doc.data();
+      return NoteLog()
+        ..logId = doc.id
+        ..note = data['note']
+        ..labelMood = data['labelMood']
+        ..moodPoint = (data['moodPoint'] as num?)?.toDouble()
+        ..date = DateTime.parse(data['date'])
+        ..createdAt = DateTime.parse(data['createdAt'])
+        ..lastUpdated = DateTime.parse(data['lastUpdated'])
+        ..isFavor = data['isFavor'] ?? false
+        ..userUid = data['userUid'];
+    }).toList();
+  }
+
+  Future<void> _uploadLogToFirestore(NoteLog log) async {
+    await _firestore.collection('notelogs').doc(log.logId).set({
+      'note': log.note,
+      'labelMood': log.labelMood,
+      'moodPoint': log.moodPoint,
+      'date': log.date.toIso8601String(),
+      'createdAt': log.createdAt.toIso8601String(),
+      'lastUpdated': log.lastUpdated.toIso8601String(),
+      'isFavor': log.isFavor,
+      'userUid': log.userUid,
+    });
+  }
+}
+
 mixin EditableLogMixin on ServiceAccess, LogStateMixin {
   void setEditableLog({required NoteLog log, bool notify = true}) {
     editableLog = log.copyWith();
@@ -152,13 +223,21 @@ mixin FieldUpdaterMixin on LogStateMixin {
       updateLogField(target ?? newLog, (log) => log.isFavor = !log.isFavor);
 }
 
-mixin ToggleMixin on ServiceAccess, LogStateMixin {
+mixin ToggleMixin on ServiceAccess, LogStateMixin, LogSyncMixin {
   /// TOGGLE FAVORITE STATUS
   Future<void> updateLogFavor({required int id, bool isSaved = false}) async {
     updateLogInList(id, (log) => log.copyWith(isFavor: !log.isFavor));
     if (isSaved) {
       final log = logs.firstWhere((log) => log.id == id);
       await isarService.updateLog(log);
+    }
+  }
+
+  Future<void> toggleSync(String userUid) async {
+    await syncLogs(userUid);
+    if (isFetchedLogs) {
+      logs = await isarService.getAllLogs(userUid);
+      notifyListeners();
     }
   }
 }

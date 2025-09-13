@@ -36,7 +36,7 @@ class UserProvider extends ChangeNotifier {
     await isarService.saveUser(newUser);
     _currentUser = newUser;
     isFetchedUser = true;
-    if (_currentUser != null) {
+    if (_currentUser != null && !(_currentUser!.isGuest)) {
       await _syncUserToFirestore(_currentUser!);
     }
     notifyListeners();
@@ -66,7 +66,7 @@ class UserProvider extends ChangeNotifier {
     isFetchedUser = true;
     _currentUser!.lastLogin = DateTime.now();
 
-    await _fetchAndSyncUser(_currentUser!);
+    if (!_currentUser!.isGuest) await _fetchAndSyncUser(_currentUser!);
 
     if (c.mounted) {
       c.read<LanguageProvider>().setLang(_currentUser!.language);
@@ -77,14 +77,14 @@ class UserProvider extends ChangeNotifier {
     return true;
   }
 
-  void logout(BuildContext c) {
+  Future<void> logout(BuildContext c) async {
     if (_currentUser!.isGuest) {
-      resetGuest(c, isLogout: true);
+      await resetGuest(c, isLogout: true);
     }
     _currentUser = null;
     isFetchedUser = false;
     notifyListeners();
-    c.read<LogProvider>().reset();
+    if (c.mounted) c.read<LogProvider>().reset();
   }
 
   Future<bool> loginAsGuest(BuildContext c) async {
@@ -296,7 +296,7 @@ class UserProvider extends ChangeNotifier {
 
   /// RESET USER INFO INTO DEFAULT
 
-  void resetGuest(
+  Future<void> resetGuest(
     BuildContext c, {
     bool isNotify = true,
     bool isChange = true,
@@ -316,7 +316,7 @@ class UserProvider extends ChangeNotifier {
       c.read<LogProvider>().deleteAllLog(userUid: _currentUser!.uid);
     }
     if (isLogout) {
-      await isarService.updateUser(_currentUser!);
+      await isarService.deleteById<User>(_currentUser!.id);
     }
   }
 

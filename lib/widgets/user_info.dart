@@ -1,3 +1,4 @@
+import 'package:emolog/provider/log_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constant.dart';
@@ -61,7 +62,6 @@ class _UserInfoState extends State<UserInfo> with UserInfoControllers {
       _selectedLanguage,
       _selectedTheme,
     );
-    final l10n = AppLocalizations.of(context)!;
 
     return FormWrapper(
       formKey: _formKey,
@@ -86,6 +86,7 @@ class _UserInfoState extends State<UserInfo> with UserInfoControllers {
         ),
         ActionButtons(
           changed: changed,
+          isGuest: user.isGuest,
           onSave: () async {
             await handleSave(
               c,
@@ -109,8 +110,9 @@ class _UserInfoState extends State<UserInfo> with UserInfoControllers {
             );
           },
           onLogout: () => handleLogout(c),
-          saveLabel: l10n.saveChanges,
+          onSync: () async => await c.read<LogProvider>().toggleSync(user.uid),
         ),
+        if (user.isGuest) const WarningLine(),
       ],
     );
   }
@@ -249,20 +251,23 @@ class PreferencesFields extends StatelessWidget {
 
 class ActionButtons extends StatelessWidget {
   final bool changed;
+  final bool isGuest;
   final VoidCallback onSave;
   final VoidCallback onLogout;
-  final String saveLabel;
+  final VoidCallback onSync;
 
   const ActionButtons({
     super.key,
     required this.changed,
+    required this.isGuest,
     required this.onSave,
     required this.onLogout,
-    required this.saveLabel,
+    required this.onSync,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: kPadding),
       child: Row(
@@ -270,11 +275,33 @@ class ActionButtons extends StatelessWidget {
         children: [
           ElevatedButton(
             onPressed: changed ? onSave : null,
-            child: Text(saveLabel),
+            child: Text(l10n.saveChanges),
           ),
           SizedBox(width: kPaddingLarge),
           ElevatedButton(onPressed: onLogout, child: const Text('logout')),
+          SizedBox(width: kPaddingLarge),
+          ElevatedButton(
+            onPressed: isGuest ? null : onSync,
+            child: const Text('sync'),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class WarningLine extends StatelessWidget {
+  const WarningLine({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: kPadding),
+      child: Text(
+        "Your're using a guest account. Data will be lost when you log out, including your account. Please register or log in to save your data.",
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.error,
+        ),
       ),
     );
   }

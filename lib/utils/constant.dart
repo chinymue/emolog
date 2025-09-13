@@ -20,6 +20,7 @@ const double kButtonMinWidth = 50.0;
 const double kButtonWidth = 120.0;
 const double kFormMaxWidth = 600.0;
 const double kFormMaxHeight = 300.0;
+const double kSingleRowScrollHeight = 100;
 const double kSingleRowScrollMaxHeight = 150;
 
 /// Font Size -----------------------------------------
