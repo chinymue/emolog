@@ -72,3 +72,20 @@ bool isNoteLogChanged(NoteLog a, NoteLog b) {
       a.isFavor != b.isFavor ||
       a.date != b.date;
 }
+
+double moodPointFromLabel(String label) {
+  switch (label) {
+    case 'terrible':
+      return 0;
+    case 'not good':
+      return 0.25;
+    case 'chill':
+      return 0.5;
+    case 'good':
+      return 0.75;
+    case 'awesome':
+      return 1.0;
+    default:
+      return 0.5;
+  }
+}

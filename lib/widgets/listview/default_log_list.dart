@@ -72,10 +72,8 @@ class DefaultLogTile extends StatelessWidget {
       (provider) => provider.logs.firstWhere((l) => l.id == logId),
     );
 
-    void handleFavor() {
-      c.read<LogProvider>().updateLogFavor(id: logId);
-      c.read<LogProvider>().saveUpdatedLog(id: logId);
-    }
+    void handleFavor() async =>
+        await c.read<LogProvider>().updateLogFavor(id: logId, isSaved: true);
 
     Future<void> handleTap() async => await Navigator.push(
       c,

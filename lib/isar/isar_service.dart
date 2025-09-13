@@ -14,6 +14,7 @@ class IsarService {
 
   Future<NoteLog> saveLog(NoteLog log) async {
     final isar = await db;
+    log.lastUpdated = DateTime.now();
     await isar.writeTxn(() async {
       await isar.noteLogs.put(log);
     });
@@ -60,10 +61,10 @@ class IsarService {
     return await isar.collection<T>().where().findAll();
   }
 
-  // read all logs of one uer
-  Future<List<NoteLog>> getAllLogs(int userId) async {
+  // read all logs of one user
+  Future<List<NoteLog>> getAllLogs(String userUid) async {
     final isar = await db;
-    return await isar.noteLogs.filter().userIdEqualTo(userId).findAll();
+    return await isar.noteLogs.filter().userUidEqualTo(userUid).findAll();
   }
 
   /// READ SPECIFIC ITEMS
@@ -96,12 +97,12 @@ class IsarService {
   }
 
   // delete all notelog items match user id-ref
-  Future<void> deleteLogOfUser(int userId) async {
+  Future<void> deleteLogOfUser(String userUid) async {
     final isar = await db;
     await isar.writeTxn(() async {
       final items = await isar.noteLogs
           .filter()
-          .userIdEqualTo(userId)
+          .userUidEqualTo(userUid)
           .findAll();
       for (var item in items) {
         await isar.noteLogs.delete(item.id);
@@ -133,7 +134,7 @@ class IsarService {
       return await Isar.open(
         [NoteLogSchema, UserSchema],
         directory: dir.path,
-        name: "emolog_v3.1",
+        name: "emolog_v3.2",
         inspector: true,
       );
     }

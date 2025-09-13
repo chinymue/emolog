@@ -50,9 +50,12 @@ class HistoryPage extends StatelessWidget {
       context: c,
       builder: (_) => Padding(
         padding: const EdgeInsets.all(kPaddingSmall),
-        child: MoodRangePicker(
-          onChangedRange: (values) =>
-              c.read<LogViewProvider>().setMoodRangeFilter(values),
+        child: SizedBox(
+          height: kSingleRowScrollMaxHeight,
+          child: MoodRangePicker(
+            onChangedRange: (values) =>
+                c.read<LogViewProvider>().setMoodRangeFilter(values),
+          ),
         ),
       ),
     );
@@ -124,9 +127,9 @@ class LogsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    final userId = c.read<UserProvider>().user?.id;
+    final userUid = c.read<UserProvider>().user?.uid;
     return FutureBuilder(
-      future: c.read<LogProvider>().fetchLogs(userId),
+      future: c.read<LogProvider>().fetchLogs(userUid),
       builder: (c, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

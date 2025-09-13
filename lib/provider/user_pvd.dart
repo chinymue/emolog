@@ -20,6 +20,29 @@ class UserProvider extends ChangeNotifier {
   User? get user => _currentUser;
 
   /// LOGIN, LOGOUT AND REGISTATION
+  Future<bool> register(String username, String password) async {
+    final user = await isarService.getByUsername(username);
+    if (user != null) return false;
+    final salt = generateSalt();
+    final hash = hashPassword(password, salt);
+    final newUser = User()
+      ..uid = const Uuid().v4()
+      ..username = username
+      ..passwordHash = hash
+      ..salt = salt
+      ..avatarUrl = ""
+      ..createdAt = DateTime.now()
+      ..fullName = username;
+    await isarService.saveUser(newUser);
+    _currentUser = newUser;
+    isFetchedUser = true;
+    if (_currentUser != null && !(_currentUser!.isGuest)) {
+      await _syncUserToFirestore(_currentUser!);
+    }
+    notifyListeners();
+    return true;
+  }
+
   Future<bool> login(
     BuildContext c, {
     required String username,
@@ -43,7 +66,7 @@ class UserProvider extends ChangeNotifier {
     isFetchedUser = true;
     _currentUser!.lastLogin = DateTime.now();
 
-    await _fetchAndSyncUser(_currentUser!);
+    if (!_currentUser!.isGuest) await _fetchAndSyncUser(_currentUser!);
 
     if (c.mounted) {
       c.read<LanguageProvider>().setLang(_currentUser!.language);
@@ -54,55 +77,29 @@ class UserProvider extends ChangeNotifier {
     return true;
   }
 
-  void logout(BuildContext c) {
+  Future<void> logout(BuildContext c) async {
+    if (_currentUser!.isGuest) {
+      await resetGuest(c, isLogout: true);
+    }
     _currentUser = null;
     isFetchedUser = false;
     notifyListeners();
-    c.read<LogProvider>().reset();
-  }
-
-  Future<bool> register(String username, String password) async {
-    final user = await isarService.getByUsername(username);
-    if (user != null) return false;
-    final salt = generateSalt();
-    final hash = hashPassword(password, salt);
-    final newUser = User()
-      ..uid = const Uuid().v4()
-      ..username = username
-      ..passwordHash = hash
-      ..salt = salt
-      ..avatarUrl = ""
-      ..createdAt = DateTime.now()
-      ..fullName = username;
-    await isarService.saveUser(newUser);
-    _currentUser = newUser;
-    isFetchedUser = true;
-    if (_currentUser != null) {
-      await _syncUserToFirestore(_currentUser!);
-    }
-    notifyListeners();
-    return true;
+    if (c.mounted) c.read<LogProvider>().reset();
   }
 
   Future<bool> loginAsGuest(BuildContext c) async {
-    // create guest account if not exist
-    final user = await isarService.getByUsername('guest');
-    if (user == null) {
-      final newUser = User()
-        ..uid = const Uuid().v4()
-        ..username = "guest"
-        ..passwordHash = "default_pw"
-        ..salt = "default_salt"
-        ..avatarUrl = "default_url"
-        ..fullName = "guest"
-        ..createdAt = DateTime.now();
-      await isarService.saveUser(newUser);
-      _currentUser = newUser;
-    } else {
-      _currentUser = user;
-    }
-    _currentUser!.lastLogin = DateTime.now();
-    await isarService.updateUser(_currentUser!);
+    final newUser = User()
+      ..uid = const Uuid().v4()
+      ..username = "guest${DateTime.now().millisecondsSinceEpoch}"
+      ..passwordHash = "default_pw"
+      ..salt = "default_salt"
+      ..isGuest = true
+      ..fullName = "guest"
+      ..avatarUrl = "default_url"
+      ..createdAt = DateTime.now()
+      ..lastLogin = DateTime.now();
+    await isarService.saveUser(newUser);
+    _currentUser = newUser;
     isFetchedUser = true;
     notifyListeners();
     if (!c.mounted) return false;
@@ -195,7 +192,6 @@ class UserProvider extends ChangeNotifier {
     final users = await isarService.getAll<User>();
 
     for (var user in users) {
-      // TODO: change into FirebaseAuth UID after implemented auth
       if (user.uid.isEmpty) {
         user.uid = const Uuid().v4();
         await isarService.updateUser(user);
@@ -300,7 +296,7 @@ class UserProvider extends ChangeNotifier {
 
   /// RESET USER INFO INTO DEFAULT
 
-  void resetGuest(
+  Future<void> resetGuest(
     BuildContext c, {
     bool isNotify = true,
     bool isChange = true,
@@ -314,12 +310,13 @@ class UserProvider extends ChangeNotifier {
     _currentUser!.language = LanguageAvailable.en;
     _currentUser!.theme = ThemeStyle.light;
     if (isNotify) notifyListeners();
-    if (isChange) {
+    if (isChange && c.mounted) {
       c.read<LanguageProvider>().resetLang();
       c.read<ThemeProvider>().resetTheme();
+      c.read<LogProvider>().deleteAllLog(userUid: _currentUser!.uid);
     }
     if (isLogout) {
-      await isarService.updateUser(_currentUser!);
+      await isarService.deleteById<User>(_currentUser!.id);
     }
   }
 

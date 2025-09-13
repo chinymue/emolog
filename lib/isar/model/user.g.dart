@@ -37,45 +37,50 @@ const UserSchema = CollectionSchema(
       name: r'fullName',
       type: IsarType.string,
     ),
-    r'language': PropertySchema(
+    r'isGuest': PropertySchema(
       id: 4,
+      name: r'isGuest',
+      type: IsarType.bool,
+    ),
+    r'language': PropertySchema(
+      id: 5,
       name: r'language',
       type: IsarType.byte,
       enumMap: _UserlanguageEnumValueMap,
     ),
     r'lastLogin': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'lastLogin',
       type: IsarType.dateTime,
     ),
     r'passwordHash': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'passwordHash',
       type: IsarType.string,
     ),
     r'salt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'salt',
       type: IsarType.string,
     ),
     r'theme': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'theme',
       type: IsarType.byte,
       enumMap: _UserthemeEnumValueMap,
     ),
     r'uid': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'uid',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'username': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'username',
       type: IsarType.string,
     )
@@ -157,14 +162,15 @@ void _userSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.email);
   writer.writeString(offsets[3], object.fullName);
-  writer.writeByte(offsets[4], object.language.index);
-  writer.writeDateTime(offsets[5], object.lastLogin);
-  writer.writeString(offsets[6], object.passwordHash);
-  writer.writeString(offsets[7], object.salt);
-  writer.writeByte(offsets[8], object.theme.index);
-  writer.writeString(offsets[9], object.uid);
-  writer.writeDateTime(offsets[10], object.updatedAt);
-  writer.writeString(offsets[11], object.username);
+  writer.writeBool(offsets[4], object.isGuest);
+  writer.writeByte(offsets[5], object.language.index);
+  writer.writeDateTime(offsets[6], object.lastLogin);
+  writer.writeString(offsets[7], object.passwordHash);
+  writer.writeString(offsets[8], object.salt);
+  writer.writeByte(offsets[9], object.theme.index);
+  writer.writeString(offsets[10], object.uid);
+  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeString(offsets[12], object.username);
 }
 
 User _userDeserialize(
@@ -179,17 +185,18 @@ User _userDeserialize(
   object.email = reader.readStringOrNull(offsets[2]);
   object.fullName = reader.readStringOrNull(offsets[3]);
   object.id = id;
+  object.isGuest = reader.readBool(offsets[4]);
   object.language =
-      _UserlanguageValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _UserlanguageValueEnumMap[reader.readByteOrNull(offsets[5])] ??
           LanguageAvailable.en;
-  object.lastLogin = reader.readDateTimeOrNull(offsets[5]);
-  object.passwordHash = reader.readString(offsets[6]);
-  object.salt = reader.readString(offsets[7]);
-  object.theme = _UserthemeValueEnumMap[reader.readByteOrNull(offsets[8])] ??
+  object.lastLogin = reader.readDateTimeOrNull(offsets[6]);
+  object.passwordHash = reader.readString(offsets[7]);
+  object.salt = reader.readString(offsets[8]);
+  object.theme = _UserthemeValueEnumMap[reader.readByteOrNull(offsets[9])] ??
       ThemeStyle.light;
-  object.uid = reader.readString(offsets[9]);
-  object.updatedAt = reader.readDateTime(offsets[10]);
-  object.username = reader.readString(offsets[11]);
+  object.uid = reader.readString(offsets[10]);
+  object.updatedAt = reader.readDateTime(offsets[11]);
+  object.username = reader.readString(offsets[12]);
   return object;
 }
 
@@ -209,22 +216,24 @@ P _userDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
+      return (reader.readBool(offset)) as P;
+    case 5:
       return (_UserlanguageValueEnumMap[reader.readByteOrNull(offset)] ??
           LanguageAvailable.en) as P;
-    case 5:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (_UserthemeValueEnumMap[reader.readByteOrNull(offset)] ??
           ThemeStyle.light) as P;
-    case 9:
-      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 11:
+      return (reader.readDateTime(offset)) as P;
+    case 12:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1053,6 +1062,15 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     });
   }
 
+  QueryBuilder<User, User, QAfterFilterCondition> isGuestEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isGuest',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<User, User, QAfterFilterCondition> languageEqualTo(
       LanguageAvailable value) {
     return QueryBuilder.apply(this, (query) {
@@ -1850,6 +1868,18 @@ extension UserQuerySortBy on QueryBuilder<User, User, QSortBy> {
     });
   }
 
+  QueryBuilder<User, User, QAfterSortBy> sortByIsGuest() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuest', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> sortByIsGuestDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuest', Sort.desc);
+    });
+  }
+
   QueryBuilder<User, User, QAfterSortBy> sortByLanguage() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'language', Sort.asc);
@@ -2008,6 +2038,18 @@ extension UserQuerySortThenBy on QueryBuilder<User, User, QSortThenBy> {
     });
   }
 
+  QueryBuilder<User, User, QAfterSortBy> thenByIsGuest() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuest', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> thenByIsGuestDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuest', Sort.desc);
+    });
+  }
+
   QueryBuilder<User, User, QAfterSortBy> thenByLanguage() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'language', Sort.asc);
@@ -2133,6 +2175,12 @@ extension UserQueryWhereDistinct on QueryBuilder<User, User, QDistinct> {
     });
   }
 
+  QueryBuilder<User, User, QDistinct> distinctByIsGuest() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isGuest');
+    });
+  }
+
   QueryBuilder<User, User, QDistinct> distinctByLanguage() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'language');
@@ -2214,6 +2262,12 @@ extension UserQueryProperty on QueryBuilder<User, User, QQueryProperty> {
   QueryBuilder<User, String?, QQueryOperations> fullNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fullName');
+    });
+  }
+
+  QueryBuilder<User, bool, QQueryOperations> isGuestProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isGuest');
     });
   }
 

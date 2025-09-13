@@ -13,6 +13,7 @@ class User {
   late String username;
   late String passwordHash;
   late String salt;
+  bool isGuest = false;
 
   String? fullName;
   String? email;
