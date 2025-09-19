@@ -7,7 +7,7 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/provider/lang_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
-import 'form_template.dart';
+import 'template/form_template.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
 import '../utils/user_info_helper.dart';

@@ -7,7 +7,7 @@ import 'package:emolog/widgets/detail_log/mood_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/log_pvd.dart';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/listview/default_log_list.dart';
 
 class HistoryPage extends StatelessWidget with HistoryPagePickers {

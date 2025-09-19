@@ -3,7 +3,7 @@ import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/message.dart';
 import '../../provider/log_pvd.dart';
 import '../utils/constant.dart';

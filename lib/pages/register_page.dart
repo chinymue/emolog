@@ -1,10 +1,10 @@
 import 'package:emolog/provider/user_pvd.dart';
-import 'package:emolog/widgets/form_template.dart';
+import 'package:emolog/widgets/template/form_template.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import '../utils/constant.dart';
-import 'package:emolog/widgets/scaffold_template.dart';
+import 'package:emolog/widgets/template/scaffold_template.dart';
 
 class RegisterPage extends StatelessWidget {
   @override

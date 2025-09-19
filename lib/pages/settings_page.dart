@@ -3,7 +3,7 @@ import 'package:emolog/pages/login_page.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/user_info.dart';
 
 class SettingsPage extends StatefulWidget {

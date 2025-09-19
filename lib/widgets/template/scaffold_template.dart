@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../utils/constant.dart';
-import '../l10n/app_localizations.dart';
+import '../../utils/constant.dart';
+import '../../l10n/app_localizations.dart';
 
 String localizedLabel(AppLocalizations l10n, String key) {
   switch (key) {
