@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import './note_image.dart';
 
 part 'notelog.g.dart';
 
@@ -20,6 +21,8 @@ class NoteLog {
 
   @Index()
   late String userUid; // user uid from User collection for linking with Firestore user collection
+
+  final images = IsarLinks<NoteImage>();
 }
 
 extension NoteLogCopyWith on NoteLog {
