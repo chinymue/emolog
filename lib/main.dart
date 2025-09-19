@@ -19,6 +19,7 @@ import './l10n/app_localizations.dart';
 import './utils/color_utils.dart';
 import './utils/constant.dart';
 import './utils/theme.dart';
+import './widgets/template/image_picker_template.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,8 +55,9 @@ class MyApp extends StatelessWidget {
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),
           darkTheme: buildAppTheme(follyRed, isLight: false),
-          initialRoute: '/login',
+          initialRoute: '/test',
           routes: {
+            '/test': (_) => ImagePickerTemplate(),
             '/login': (_) => LoginPage(),
             '/register': (_) => RegisterPage(),
             pages[0]['route']: (_) => HomePage(),

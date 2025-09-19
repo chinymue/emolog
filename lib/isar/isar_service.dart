@@ -2,6 +2,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:isar/isar.dart';
 import './model/user.dart';
 import './model/notelog.dart';
+import './model/note_image.dart';
 
 class IsarService {
   late Future<Isar> db;
@@ -132,7 +133,7 @@ class IsarService {
     if (Isar.instanceNames.isEmpty) {
       final dir = await getApplicationDocumentsDirectory();
       return await Isar.open(
-        [NoteLogSchema, UserSchema],
+        [NoteLogSchema, UserSchema, NoteImageSchema],
         directory: dir.path,
         name: "emolog_v3.2",
         inspector: true,
