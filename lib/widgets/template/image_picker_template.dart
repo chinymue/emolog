@@ -26,6 +26,8 @@ class _ImagePickerTemplateState extends State<ImagePickerTemplate>
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        // TODO: Cho phép hiển thị minimal kiểu vùng chọn một ảnh (vùng này scrollable), khi muốn chỉnh sửa thì nhấn vào vùng chọn ảnh để hiện các nút chỉnh sửa.
+        // TODO: Lưu ảnh thumbnail khi xác nhận (crop lại, có thể cho phép resize bằng tùy chọn trong vùng chọn ảnh)
         children: [
           ImagePreviewArea(
             imageBytes: _displayImageBytes,
