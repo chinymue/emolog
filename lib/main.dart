@@ -55,9 +55,12 @@ class MyApp extends StatelessWidget {
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),
           darkTheme: buildAppTheme(follyRed, isLight: false),
-          initialRoute: '/test',
+          initialRoute: '/login',
           routes: {
-            '/test': (_) => ImagePickerTemplate(),
+            '/test': (_) => ImagePickerTemplate(
+              maxHeight: kFormMaxHeight,
+              maxWidth: kFormMaxWidth,
+            ),
             '/login': (_) => LoginPage(),
             '/register': (_) => RegisterPage(),
             pages[0]['route']: (_) => HomePage(),

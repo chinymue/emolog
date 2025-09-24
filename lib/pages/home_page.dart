@@ -1,5 +1,6 @@
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
+import 'package:emolog/widgets/template/image_picker_template.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -54,22 +55,29 @@ class EmologForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        HelloLog(),
-        const SizedBox(height: kPadding),
-        SizedBox(
-          height: kFormMaxHeight + kSingleRowScrollHeight,
-          width: kFormMaxWidth,
-          child: DetailsLogContent(),
+    child: SizedBox(
+      height: MediaQuery.of(c).size.height,
+      width: MediaQuery.of(c).size.width,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            HelloLog(),
+            const SizedBox(height: kPadding),
+            ImagePickerTemplate(maxHeight: 200, maxWidth: 400),
+            SizedBox(
+              height: kFormMaxHeight + kSingleRowScrollHeight,
+              width: kFormMaxWidth,
+              child: DetailsLogContent(),
+            ),
+            const SizedBox(height: kPaddingLarge),
+            ElevatedButton(
+              onPressed: () => _saveLog(c),
+              child: Text(AppLocalizations.of(c)!.submit),
+            ),
+          ],
         ),
-        const SizedBox(height: kPaddingLarge),
-        ElevatedButton(
-          onPressed: () => _saveLog(c),
-          child: Text(AppLocalizations.of(c)!.submit),
-        ),
-      ],
+      ),
     ),
   );
 }
