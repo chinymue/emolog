@@ -7,15 +7,11 @@ part 'note_image.g.dart';
 class NoteImage {
   Id id = Isar.autoIncrement;
 
-  // Link ngược về NoteLog
-  final parent = IsarLink<NoteLog>();
+  int usedCount = 0;
 
-  // Lưu path file cục bộ
   late String localPath;
 
-  // Lưu thumbnail (dữ liệu nhỏ để load nhanh)
   List<int>? thumbnail;
 
-  // Lưu thời gian tạo, cập nhật
   late DateTime createdAt;
 }

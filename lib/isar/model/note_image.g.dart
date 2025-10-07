@@ -31,6 +31,11 @@ const NoteImageSchema = CollectionSchema(
       id: 2,
       name: r'thumbnail',
       type: IsarType.longList,
+    ),
+    r'usedCount': PropertySchema(
+      id: 3,
+      name: r'usedCount',
+      type: IsarType.long,
     )
   },
   estimateSize: _noteImageEstimateSize,
@@ -39,14 +44,7 @@ const NoteImageSchema = CollectionSchema(
   deserializeProp: _noteImageDeserializeProp,
   idName: r'id',
   indexes: {},
-  links: {
-    r'parent': LinkSchema(
-      id: 683868747611675840,
-      name: r'parent',
-      target: r'NoteLog',
-      single: true,
-    )
-  },
+  links: {},
   embeddedSchemas: {},
   getId: _noteImageGetId,
   getLinks: _noteImageGetLinks,
@@ -79,6 +77,7 @@ void _noteImageSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.localPath);
   writer.writeLongList(offsets[2], object.thumbnail);
+  writer.writeLong(offsets[3], object.usedCount);
 }
 
 NoteImage _noteImageDeserialize(
@@ -92,6 +91,7 @@ NoteImage _noteImageDeserialize(
   object.id = id;
   object.localPath = reader.readString(offsets[1]);
   object.thumbnail = reader.readLongList(offsets[2]);
+  object.usedCount = reader.readLong(offsets[3]);
   return object;
 }
 
@@ -108,6 +108,8 @@ P _noteImageDeserializeProp<P>(
       return (reader.readString(offset)) as P;
     case 2:
       return (reader.readLongList(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -118,12 +120,11 @@ Id _noteImageGetId(NoteImage object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteImageGetLinks(NoteImage object) {
-  return [object.parent];
+  return [];
 }
 
 void _noteImageAttach(IsarCollection<dynamic> col, Id id, NoteImage object) {
   object.id = id;
-  object.parent.attach(col, col.isar.collection<NoteLog>(), r'parent', id);
 }
 
 extension NoteImageQueryWhereSort
@@ -604,26 +605,67 @@ extension NoteImageQueryFilter
       );
     });
   }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> usedCountEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'usedCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition>
+      usedCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'usedCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> usedCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'usedCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> usedCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'usedCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension NoteImageQueryObject
     on QueryBuilder<NoteImage, NoteImage, QFilterCondition> {}
 
 extension NoteImageQueryLinks
-    on QueryBuilder<NoteImage, NoteImage, QFilterCondition> {
-  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> parent(
-      FilterQuery<NoteLog> q) {
-    return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'parent');
-    });
-  }
-
-  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> parentIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'parent', 0, true, 0, true);
-    });
-  }
-}
+    on QueryBuilder<NoteImage, NoteImage, QFilterCondition> {}
 
 extension NoteImageQuerySortBy on QueryBuilder<NoteImage, NoteImage, QSortBy> {
   QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByCreatedAt() {
@@ -647,6 +689,18 @@ extension NoteImageQuerySortBy on QueryBuilder<NoteImage, NoteImage, QSortBy> {
   QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByLocalPathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'localPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByUsedCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usedCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByUsedCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usedCount', Sort.desc);
     });
   }
 }
@@ -688,6 +742,18 @@ extension NoteImageQuerySortThenBy
       return query.addSortBy(r'localPath', Sort.desc);
     });
   }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> thenByUsedCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usedCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> thenByUsedCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usedCount', Sort.desc);
+    });
+  }
 }
 
 extension NoteImageQueryWhereDistinct
@@ -708,6 +774,12 @@ extension NoteImageQueryWhereDistinct
   QueryBuilder<NoteImage, NoteImage, QDistinct> distinctByThumbnail() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'thumbnail');
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QDistinct> distinctByUsedCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'usedCount');
     });
   }
 }
@@ -735,6 +807,12 @@ extension NoteImageQueryProperty
   QueryBuilder<NoteImage, List<int>?, QQueryOperations> thumbnailProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'thumbnail');
+    });
+  }
+
+  QueryBuilder<NoteImage, int, QQueryOperations> usedCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'usedCount');
     });
   }
 }

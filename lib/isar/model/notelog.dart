@@ -22,7 +22,7 @@ class NoteLog {
   @Index()
   late String userUid; // user uid from User collection for linking with Firestore user collection
 
-  final images = IsarLinks<NoteImage>();
+  final image = IsarLink<NoteImage>();
 }
 
 extension NoteLogCopyWith on NoteLog {

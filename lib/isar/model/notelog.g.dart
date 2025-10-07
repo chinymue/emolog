@@ -97,11 +97,11 @@ const NoteLogSchema = CollectionSchema(
     )
   },
   links: {
-    r'images': LinkSchema(
-      id: 4293640704014302265,
-      name: r'images',
+    r'image': LinkSchema(
+      id: 6434347415372258438,
+      name: r'image',
       target: r'NoteImage',
-      single: false,
+      single: true,
     )
   },
   embeddedSchemas: {},
@@ -206,12 +206,12 @@ Id _noteLogGetId(NoteLog object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
-  return [object.images];
+  return [object.image];
 }
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
-  object.images.attach(col, col.isar.collection<NoteImage>(), r'images', id);
+  object.image.attach(col, col.isar.collection<NoteImage>(), r'image', id);
 }
 
 extension NoteLogByIndex on IsarCollection<NoteLog> {
@@ -1291,59 +1291,16 @@ extension NoteLogQueryObject
 
 extension NoteLogQueryLinks
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> images(
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> image(
       FilterQuery<NoteImage> q) {
     return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'images');
+      return query.link(q, r'image');
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesLengthEqualTo(
-      int length) {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imageIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'images', length, true, length, true);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'images', 0, true, 0, true);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'images', 0, false, 999999, true);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesLengthLessThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'images', 0, true, length, include);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesLengthGreaterThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'images', length, include, 999999, true);
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imagesLengthBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(
-          r'images', lower, includeLower, upper, includeUpper);
+      return query.linkLength(r'image', 0, true, 0, true);
     });
   }
 }
