@@ -425,6 +425,10 @@ class IsarService {
   }
 ```
 
+6. Xem dữ liệu của isar qua **isar_inspector**:
+
+- khi chạy debug / `flutter run` có mở db isar sẽ có hiện ở console đường link để inspector.
+
 ##### Isar Syntax
 
 1. Khai báo collection

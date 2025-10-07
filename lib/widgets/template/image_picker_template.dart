@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:emolog/isar/model/note_image.dart';
 import 'package:emolog/utils/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,14 +7,35 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image/image.dart' as img;
 
+class TestPage extends StatelessWidget {
+  const TestPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Test Page")),
+      body: ImagePickerTemplate(
+        maxHeight: kFormMaxHeight,
+        maxWidth: kFormMaxWidth,
+        onImageConfirmed: (noteImage) {
+          // Xử lý ảnh đã chọn ở đây
+          debugPrint("Image confirmed with path: ${noteImage.localPath}");
+        },
+      ),
+    );
+  }
+}
+
 class ImagePickerTemplate extends StatefulWidget {
   final double maxHeight;
   final double maxWidth;
+  final void Function(NoteImage)? onImageConfirmed;
 
   const ImagePickerTemplate({
     super.key,
     required this.maxHeight,
     required this.maxWidth,
+    this.onImageConfirmed,
   });
   @override
   State<ImagePickerTemplate> createState() => _ImagePickerTemplateState();
@@ -39,7 +61,19 @@ class _ImagePickerTemplateState extends State<ImagePickerTemplate>
             onPickImage: pickImage,
             onRotateLeft: () => rotateToggle(false),
             onRotateRight: () => rotateToggle(true),
-            onConfirm: () => print("Confirmed"),
+            onConfirm: () {
+              if (_displayImageBytes == null) return;
+              // TODO: Sửa thành provider sau này
+              final noteImage = NoteImage()
+                ..createdAt = DateTime.now()
+                ..localPath =
+                    "default_path" // TODO: sửa lại lưu đường dẫn thật
+                ..thumbnail =
+                    _displayImageBytes; // TODO: sửa lại lưu thumbnail là ảnh đã crop, resize
+              if (widget.onImageConfirmed != null) {
+                widget.onImageConfirmed!(noteImage);
+              }
+            },
           ),
         ],
       ),

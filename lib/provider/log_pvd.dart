@@ -1,3 +1,4 @@
+import 'package:emolog/isar/model/note_image.dart';
 import 'package:flutter/material.dart';
 import '../../isar/isar_service.dart';
 import '../../isar/model/notelog.dart';
@@ -65,8 +66,11 @@ mixin LogStateMixin on ChangeNotifier {
 
 mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
   /// CREATE A NEW LOG
-
-  Future<int> addLog(String userUid, {DateTime? date}) async {
+  Future<int> addLog(
+    String userUid, {
+    DateTime? date,
+    List<int>? imageIds,
+  }) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
 
     newLog
@@ -76,6 +80,11 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
       ..date = date ?? DateTime.now()
       ..labelMood ??= initialMood
       ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+
+    if (imageIds != null && imageIds.isNotEmpty) {
+      final imgs = await isarService.getAll<NoteImage>();
+      newLog.images.addAll(imgs);
+    }
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -86,6 +95,12 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
     final savedLog = newLog;
     newLog = NoteLog();
     return savedLog.id;
+  }
+
+  Future<List<int>> addImages(List<NoteImage>? imgs) async {
+    if (imgs == null || imgs.isEmpty) return [];
+    final savedImgs = await isarService.saveImages(imgs);
+    return savedImgs.map((e) => e.id).toList();
   }
 
   /// FETCH LOGS FROM ISAR

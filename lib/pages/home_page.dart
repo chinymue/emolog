@@ -1,3 +1,4 @@
+import 'package:emolog/isar/model/note_image.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/widgets/template/image_picker_template.dart';
@@ -20,8 +21,14 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class EmologForm extends StatelessWidget {
-  const EmologForm({super.key});
+class EmologForm extends StatefulWidget {
+  @override
+  State<EmologForm> createState() => _EmologFormState();
+}
+
+class _EmologFormState extends State<EmologForm> {
+  final List<NoteImage> images = [];
+
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
@@ -30,8 +37,14 @@ class EmologForm extends StatelessWidget {
       throw Exception("No user logged in");
     }
     try {
-      final savedLogId = await logProvider.addLog(userUid);
-
+      List<int> savedImgIds = [];
+      if (images.isNotEmpty) {
+        savedImgIds = await logProvider.addImages(images);
+      }
+      final savedLogId = await logProvider.addLog(
+        userUid,
+        imageIds: savedImgIds,
+      );
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
@@ -44,6 +57,8 @@ class EmologForm extends StatelessWidget {
             ),
           ),
         );
+
+      setState(() => images.clear());
     } catch (e) {
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
@@ -64,7 +79,14 @@ class EmologForm extends StatelessWidget {
           children: [
             HelloLog(),
             const SizedBox(height: kPadding),
-            ImagePickerTemplate(maxHeight: 200, maxWidth: 400),
+            ImagePickerTemplate(
+              maxHeight: 200,
+              maxWidth: 400,
+              onImageConfirmed: (noteImg) {
+                setState(() => images.add(noteImg));
+                print("Image added, total images: ${images.length}");
+              },
+            ),
             SizedBox(
               height: kFormMaxHeight + kSingleRowScrollHeight,
               width: kFormMaxWidth,

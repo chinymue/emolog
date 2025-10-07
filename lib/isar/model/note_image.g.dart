@@ -17,13 +17,18 @@ const NoteImageSchema = CollectionSchema(
   name: r'NoteImage',
   id: -8691542284560196852,
   properties: {
-    r'localPath': PropertySchema(
+    r'createdAt': PropertySchema(
       id: 0,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'localPath': PropertySchema(
+      id: 1,
       name: r'localPath',
       type: IsarType.string,
     ),
     r'thumbnail': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'thumbnail',
       type: IsarType.longList,
     )
@@ -71,8 +76,9 @@ void _noteImageSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.localPath);
-  writer.writeLongList(offsets[1], object.thumbnail);
+  writer.writeDateTime(offsets[0], object.createdAt);
+  writer.writeString(offsets[1], object.localPath);
+  writer.writeLongList(offsets[2], object.thumbnail);
 }
 
 NoteImage _noteImageDeserialize(
@@ -82,9 +88,10 @@ NoteImage _noteImageDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = NoteImage();
+  object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
-  object.localPath = reader.readString(offsets[0]);
-  object.thumbnail = reader.readLongList(offsets[1]);
+  object.localPath = reader.readString(offsets[1]);
+  object.thumbnail = reader.readLongList(offsets[2]);
   return object;
 }
 
@@ -96,8 +103,10 @@ P _noteImageDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 1:
+      return (reader.readString(offset)) as P;
+    case 2:
       return (reader.readLongList(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -196,6 +205,60 @@ extension NoteImageQueryWhere
 
 extension NoteImageQueryFilter
     on QueryBuilder<NoteImage, NoteImage, QFilterCondition> {
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> createdAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition>
+      createdAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> createdAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> createdAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<NoteImage, NoteImage, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -563,6 +626,18 @@ extension NoteImageQueryLinks
 }
 
 extension NoteImageQuerySortBy on QueryBuilder<NoteImage, NoteImage, QSortBy> {
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteImage, NoteImage, QAfterSortBy> sortByLocalPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'localPath', Sort.asc);
@@ -578,6 +653,18 @@ extension NoteImageQuerySortBy on QueryBuilder<NoteImage, NoteImage, QSortBy> {
 
 extension NoteImageQuerySortThenBy
     on QueryBuilder<NoteImage, NoteImage, QSortThenBy> {
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NoteImage, NoteImage, QAfterSortBy> thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<NoteImage, NoteImage, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -605,6 +692,12 @@ extension NoteImageQuerySortThenBy
 
 extension NoteImageQueryWhereDistinct
     on QueryBuilder<NoteImage, NoteImage, QDistinct> {
+  QueryBuilder<NoteImage, NoteImage, QDistinct> distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
+    });
+  }
+
   QueryBuilder<NoteImage, NoteImage, QDistinct> distinctByLocalPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -624,6 +717,12 @@ extension NoteImageQueryProperty
   QueryBuilder<NoteImage, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<NoteImage, DateTime, QQueryOperations> createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
     });
   }
 

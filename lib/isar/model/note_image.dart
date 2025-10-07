@@ -15,4 +15,7 @@ class NoteImage {
 
   // Lưu thumbnail (dữ liệu nhỏ để load nhanh)
   List<int>? thumbnail;
+
+  // Lưu thời gian tạo, cập nhật
+  late DateTime createdAt;
 }
