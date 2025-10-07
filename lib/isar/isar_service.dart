@@ -18,7 +18,20 @@ class IsarService {
     log.lastUpdated = DateTime.now();
     await isar.writeTxn(() async {
       await isar.noteLogs.put(log);
-      if (log.images.isNotEmpty) await log.images.save();
+    });
+    return log;
+  }
+
+  Future<NoteLog> saveLogWithImage(NoteLog log, NoteImage img) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      final imgId = await isar.noteImages.put(img);
+      log
+        ..images.add(img..id = imgId)
+        ..lastUpdated = DateTime.now();
+
+      await isar.noteLogs.put(log);
+      await log.images.save();
     });
     return log;
   }

@@ -27,7 +27,7 @@ class EmologForm extends StatefulWidget {
 }
 
 class _EmologFormState extends State<EmologForm> {
-  final List<NoteImage> images = [];
+  late NoteImage image;
 
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
@@ -37,14 +37,7 @@ class _EmologFormState extends State<EmologForm> {
       throw Exception("No user logged in");
     }
     try {
-      List<int> savedImgIds = [];
-      if (images.isNotEmpty) {
-        savedImgIds = await logProvider.addImages(images);
-      }
-      final savedLogId = await logProvider.addLog(
-        userUid,
-        imageIds: savedImgIds,
-      );
+      final savedLogId = await logProvider.addLogWithImage(userUid, image);
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
@@ -58,7 +51,7 @@ class _EmologFormState extends State<EmologForm> {
           ),
         );
 
-      setState(() => images.clear());
+      setState(() => image = NoteImage());
     } catch (e) {
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
@@ -83,8 +76,7 @@ class _EmologFormState extends State<EmologForm> {
               maxHeight: 200,
               maxWidth: 400,
               onImageConfirmed: (noteImg) {
-                setState(() => images.add(noteImg));
-                print("Image added, total images: ${images.length}");
+                setState(() => image = noteImg);
               },
             ),
             SizedBox(

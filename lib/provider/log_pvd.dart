@@ -66,11 +66,7 @@ mixin LogStateMixin on ChangeNotifier {
 
 mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
   /// CREATE A NEW LOG
-  Future<int> addLog(
-    String userUid, {
-    DateTime? date,
-    List<int>? imageIds,
-  }) async {
+  Future<int> addLog(String userUid, {DateTime? date}) async {
     if (logs.any((l) => l.id == newLog.id)) return newLog.id;
 
     newLog
@@ -81,10 +77,6 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
       ..labelMood ??= initialMood
       ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
 
-    if (imageIds != null && imageIds.isNotEmpty) {
-      final imgs = await isarService.getAll<NoteImage>();
-      newLog.images.addAll(imgs);
-    }
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -101,6 +93,32 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
     if (imgs == null || imgs.isEmpty) return [];
     final savedImgs = await isarService.saveImages(imgs);
     return savedImgs.map((e) => e.id).toList();
+  }
+
+  Future<int> addLogWithImage(
+    String userUid,
+    NoteImage img, {
+    DateTime? date,
+  }) async {
+    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+
+    newLog
+      ..logId = const Uuid().v4()
+      ..createdAt = DateTime.now()
+      ..userUid = userUid
+      ..date = date ?? DateTime.now()
+      ..labelMood ??= initialMood
+      ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+    await isarService.saveLogWithImage(newLog, img);
+
+    if (isFetchedLogs) {
+      logs.add(newLog);
+      notifyListeners();
+    }
+
+    final savedLog = newLog;
+    newLog = NoteLog();
+    return savedLog.id;
   }
 
   /// FETCH LOGS FROM ISAR

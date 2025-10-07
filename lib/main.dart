@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),
           darkTheme: buildAppTheme(follyRed, isLight: false),
-          initialRoute: '/test',
+          initialRoute: '/login',
           routes: {
             '/test': (_) => TestPage(),
             '/login': (_) => LoginPage(),
