@@ -76,6 +76,7 @@ class _EmologFormState extends State<EmologForm> {
               maxHeight: 200,
               maxWidth: 400,
               onImageConfirmed: (noteImg) {
+                // TODO: save cropped / edited image
                 setState(() => image = noteImg);
               },
             ),
