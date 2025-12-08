@@ -1,5 +1,4 @@
 import 'package:emolog/provider/user_pvd.dart';
-
 import '../utils/constant.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';

@@ -1,5 +1,4 @@
 import 'package:isar/isar.dart';
-import './notelog.dart';
 
 part 'note_image.g.dart';
 

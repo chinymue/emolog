@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import './model/user.dart';
 import './model/notelog.dart';
 import './model/note_image.dart';
+import './model/relax.dart';
 
 class IsarService {
   late Future<Isar> db;
@@ -46,6 +47,14 @@ class IsarService {
     return user;
   }
 
+  Future<Relax> saveRelax(Relax relax) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.relaxs.put(relax);
+    });
+    return relax;
+  }
+
   Future<NoteImage> saveImage(NoteImage img) async {
     final isar = await db;
     await isar.writeTxn(() async {
@@ -86,6 +95,16 @@ class IsarService {
     }
   }
 
+  Future<void> updateRelax(Relax relax) async {
+    final isar = await db;
+    final existedRelax = await isar.relaxs.get(relax.id);
+    if (existedRelax != null) {
+      await isar.writeTxn(() async {
+        await isar.relaxs.put(relax);
+      });
+    }
+  }
+
   /// READ ALL ITEMS IN COLLECTION
 
   Future<List<T>> getAll<T>() async {
@@ -97,6 +116,12 @@ class IsarService {
   Future<List<NoteLog>> getAllLogs(String userUid) async {
     final isar = await db;
     return await isar.noteLogs.filter().userUidEqualTo(userUid).findAll();
+  }
+
+  // read all relax items of one user
+  Future<List<Relax>> getAllRelaxs(String userUid) async {
+    final isar = await db;
+    return await isar.relaxs.filter().userUidEqualTo(userUid).findAll();
   }
 
   /// READ SPECIFIC ITEMS
@@ -142,6 +167,20 @@ class IsarService {
     });
   }
 
+  // delete all relax items match user id-ref
+  Future<void> deleteRelaxOfUser(String userUid) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      final items = await isar.relaxs
+          .filter()
+          .userUidEqualTo(userUid)
+          .findAll();
+      for (var item in items) {
+        await isar.relaxs.delete(item.id);
+      }
+    });
+  }
+
   /// DELETE COLLECTIONS
 
   // delete all colections
@@ -164,7 +203,7 @@ class IsarService {
     if (Isar.instanceNames.isEmpty) {
       final dir = await getApplicationDocumentsDirectory();
       return await Isar.open(
-        [NoteLogSchema, UserSchema, NoteImageSchema],
+        [NoteLogSchema, UserSchema, NoteImageSchema, RelaxSchema],
         directory: dir.path,
         name: "emolog_v3.2",
         inspector: true,
