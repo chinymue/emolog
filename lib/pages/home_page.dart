@@ -72,14 +72,14 @@ class _EmologFormState extends State<EmologForm> {
           children: [
             HelloLog(),
             const SizedBox(height: kPadding),
-            ImagePickerTemplate(
-              maxHeight: 200,
-              maxWidth: 400,
-              onImageConfirmed: (noteImg) {
-                // TODO: save cropped / edited image
-                setState(() => image = noteImg);
-              },
-            ),
+            // ImagePickerTemplate(
+            //   maxHeight: 200,
+            //   maxWidth: 400,
+            //   onImageConfirmed: (noteImg) {
+            //     // TODO: save cropped / edited image
+            //     setState(() => image = noteImg);
+            //   },
+            // ),
             SizedBox(
               height: kFormMaxHeight + kSingleRowScrollHeight,
               width: kFormMaxWidth,
