@@ -58,6 +58,7 @@ class MainScaffold extends StatelessWidget {
         items: [
           for (var i in pages)
             BottomNavigationBarItem(
+              backgroundColor: Theme.of(c).colorScheme.primary,
               icon: Icon(i['icon']),
               label: localizedLabel(l10n, i['label']),
             ),
@@ -67,7 +68,7 @@ class MainScaffold extends StatelessWidget {
   }
 }
 
-// Scaffold with bottom navigation bar -----------------------------
+// Scaffold without bottom navigation bar -----------------------------
 class DefaultScaffold extends StatelessWidget {
   final String title;
   final Widget child;

@@ -69,6 +69,7 @@ const Duration kAnimationDurationLong = Duration(milliseconds: 600);
 const List<Map<String, dynamic>> pages = [
   {'route': '/', 'label': 'pageHome', 'icon': Icons.home},
   {'route': '/logs', 'label': 'pageHistory', 'icon': Icons.history},
+  {'route': '/relaxes', 'label': 'pageRelax', 'icon': Icons.self_improvement},
   {'route': '/settings', 'label': 'pageSettings', 'icon': Icons.settings},
 ];
 

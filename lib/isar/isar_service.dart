@@ -127,14 +127,18 @@ class IsarService {
   /// READ SPECIFIC ITEMS
 
   // read one item by id
-  Future<dynamic> getById(Type type, int id) async {
+  Future<T> getById<T>(int id) async {
     final isar = await db;
-    if (type == User) {
-      return await isar.users.get(id);
-    } else if (type == NoteLog) {
-      return await isar.noteLogs.get(id);
+    if (T == User) {
+      return await isar.users.get(id) as T;
+    } else if (T == NoteLog) {
+      return await isar.noteLogs.get(id) as T;
+    } else if (T == NoteImage) {
+      return await isar.noteImages.get(id) as T;
+    } else if (T == Relax) {
+      return await isar.relaxs.get(id) as T;
     }
-    throw UnsupportedError("Type $type not supported");
+    throw UnsupportedError("Type $T not supported");
   }
 
   // read one user by username

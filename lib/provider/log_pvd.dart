@@ -133,6 +133,15 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
     }
   }
 
+  void deleteAllLogs() async {
+    await isarService.clearCollection<NoteLog>();
+    if (isFetchedLogs) {
+      logs = [];
+      isFetchedLogs = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> deleteAllLog({
     required String userUid,
     bool notify = false,

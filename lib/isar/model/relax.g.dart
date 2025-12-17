@@ -126,14 +126,15 @@ Relax _relaxDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = Relax();
-  object.durationMiliseconds = reader.readLong(offsets[0]);
-  object.endTime = reader.readDateTime(offsets[1]);
+  final object = Relax(
+    durationMiliseconds: reader.readLong(offsets[0]),
+    endTime: reader.readDateTime(offsets[1]),
+    note: reader.readStringOrNull(offsets[2]),
+    relaxId: reader.readString(offsets[3]),
+    startTime: reader.readDateTime(offsets[4]),
+    userUid: reader.readString(offsets[5]),
+  );
   object.id = id;
-  object.note = reader.readStringOrNull(offsets[2]);
-  object.relaxId = reader.readString(offsets[3]);
-  object.startTime = reader.readDateTime(offsets[4]);
-  object.userUid = reader.readString(offsets[5]);
   return object;
 }
 

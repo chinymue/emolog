@@ -19,7 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final userPvd = c.read<UserProvider>();
     final l10n = AppLocalizations.of(context)!;
     return MainScaffold(
-      currentIndex: 2,
+      currentIndex: 3,
       actions: [
         IconButton(
           onPressed: () {
@@ -36,6 +36,14 @@ class _SettingsPageState extends State<SettingsPage> {
           },
           icon: Icon(Icons.restore),
           tooltip: l10n.restoreSettings,
+        ),
+        IconButton(
+          onPressed: () {
+            userPvd.deleteAllUsers();
+            setState(() => _formKeyReset = UniqueKey());
+          },
+          icon: Icon(Icons.dangerous),
+          tooltip: "Xóa toàn bộ người dùng trong cơ sở dữ liệu",
         ),
       ],
       child: userPvd.user == null

@@ -328,6 +328,13 @@ class UserProvider extends ChangeNotifier {
     c.read<ThemeProvider>().resetTheme();
   }
 
+  void deleteAllUsers() async {
+    await isarService.clearCollection<User>();
+    _currentUser = null;
+    isFetchedUser = false;
+    notifyListeners();
+  }
+
   /// UPDATE USER INFO
 
   Future<void> updateUser({

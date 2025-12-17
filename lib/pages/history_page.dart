@@ -131,6 +131,13 @@ class HistoryPageActions extends StatelessWidget {
           icon: Icon(Icons.date_range),
           tooltip: l10n.filterDateRange,
         ),
+        IconButton(
+          onPressed: () {
+            c.read<LogProvider>().deleteAllLogs();
+          },
+          icon: Icon(Icons.dangerous),
+          tooltip: "Xóa toàn bộ log trong cơ sở dữ liệu",
+        ),
       ],
     );
   }
