@@ -1,11 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import '../../isar/isar_service.dart';
 import '../../isar/model/relax.dart';
-import '../utils/data_utils.dart';
-import '../utils/constant.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
 class RelaxProvider extends ChangeNotifier
@@ -121,7 +116,7 @@ mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
     }
   }
 
-  Future<void> deleteRelax(int id) async {
+  Future<void> deleteRelax({required id}) async {
     await isarService.deleteById<Relax>(id);
     if (isFetchedRelaxs) {
       relaxs.removeWhere((relax) => relax.id == id);

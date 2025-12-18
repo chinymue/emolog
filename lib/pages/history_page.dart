@@ -200,7 +200,7 @@ class LogsList extends StatelessWidget {
             c.read<LogViewProvider>().updateLogs(logs);
           });
         }
-        return DefaultList();
+        return DefaultList(type: "log");
       },
     );
   }

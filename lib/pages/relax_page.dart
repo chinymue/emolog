@@ -1,9 +1,11 @@
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/widgets/listview/default_log_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/template/scaffold_template.dart';
 import '../provider/relax_pvd.dart';
+import '../provider/relax_view_pvd.dart';
 
 class RelaxPage extends StatelessWidget with RelaxPagePickers {
   RelaxPage({super.key});
@@ -50,7 +52,7 @@ class RelaxPage extends StatelessWidget with RelaxPagePickers {
                 child: Icon(Icons.delete),
                 onPressed: () async {
                   final id = 36025389;
-                  await c.read<RelaxProvider>().deleteRelax(id);
+                  await c.read<RelaxProvider>().deleteRelax(id: id);
                   // print("Đã xóa relax $id");
                 },
               ),
@@ -70,7 +72,7 @@ class RelaxPage extends StatelessWidget with RelaxPagePickers {
               ),
             ],
           ),
-          RelaxesList(),
+          Expanded(child: RelaxesList()),
         ],
       ),
     );
@@ -192,12 +194,11 @@ class RelaxesList extends StatelessWidget {
         if (snap.connectionState == ConnectionState.done) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final relaxs = c.read<RelaxProvider>().relaxs;
+            c.read<RelaxViewProvider>().updateRelaxs(relaxs);
             print("Số lượng relaxs: ${relaxs.length}");
           });
         }
-        return c.read<RelaxProvider>().relaxs.isEmpty
-            ? Text("$userUid khong co du lieu")
-            : Text("Danh sách relax của $userUid sẽ hiển thị ở đây");
+        return DefaultList(type: "relax");
       },
     );
   }

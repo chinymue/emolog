@@ -11,6 +11,7 @@ import './provider/log_pvd.dart';
 import './provider/log_view_pvd.dart';
 import './provider/user_pvd.dart';
 import './provider/relax_pvd.dart';
+import './provider/relax_view_pvd.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import './pages/home_page.dart';
@@ -35,6 +36,9 @@ Future<void> main() async {
         Provider<IsarService>.value(value: isarService),
         ChangeNotifierProvider(
           create: (c) => LogProvider(c.read<IsarService>()),
+        ),
+        ChangeNotifierProvider(
+          create: (c) => RelaxProvider(c.read<IsarService>()),
         ),
         ChangeNotifierProvider<UserProvider>.value(value: userPvd),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
@@ -68,7 +72,7 @@ class MyApp extends StatelessWidget {
               child: HistoryPage(),
             ),
             pages[2]['route']: (_) => ChangeNotifierProvider(
-              create: (c) => RelaxProvider(c.read<IsarService>()),
+              create: (c) => RelaxViewProvider(),
               child: RelaxPage(),
             ),
             pages[3]['route']: (_) => SettingsPage(),

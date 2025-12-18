@@ -37,7 +37,7 @@ class _EmologFormState extends State<EmologForm> {
       throw Exception("No user logged in");
     }
     try {
-      final savedLogId = await logProvider.addLogWithImage(userUid, image);
+      final savedLogId = await logProvider.addLog(userUid);
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)
         ..removeCurrentSnackBar()
