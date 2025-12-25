@@ -72,11 +72,12 @@ mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
     return savedRelax;
   }
 
-  Future<void> updateRelax(
-    int id, {
+  Future<void> updateRelax({
+    required int id,
     DateTime? start,
     DateTime? end,
     int? durationSeconds,
+    String? newNote,
   }) async {
     final existedRelax = await isarService.getById<Relax>(id);
     if (existedRelax.id != id) return;
@@ -100,6 +101,7 @@ mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
       startTime: newStart,
       endTime: newEnd,
       durationMiliseconds: newEnd.difference(newStart).inMilliseconds,
+      note: newNote ?? existedRelax.note,
     );
 
     await isarService.updateRelax(updatedRelax);

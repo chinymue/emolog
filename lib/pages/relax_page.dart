@@ -1,5 +1,6 @@
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/l10n/app_localizations.dart';
+import 'package:emolog/utils/constant.dart';
 import 'package:emolog/widgets/listview/default_log_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,8 +8,16 @@ import '../widgets/template/scaffold_template.dart';
 import '../provider/relax_pvd.dart';
 import '../provider/relax_view_pvd.dart';
 
-class RelaxPage extends StatelessWidget with RelaxPagePickers {
+class RelaxPage extends StatefulWidget {
   RelaxPage({super.key});
+
+  @override
+  State<RelaxPage> createState() => _RelaxPageState();
+}
+
+class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
+  bool isInit = false;
+  DateTime? startTime;
 
   @override
   Widget build(BuildContext c) {
@@ -22,55 +31,97 @@ class RelaxPage extends StatelessWidget with RelaxPagePickers {
       ],
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                child: Icon(Icons.add),
-                onPressed: () async {
-                  final newRelax = await c.read<RelaxProvider>().saveRelax(
-                    userUid ?? "",
-                    DateTime.now().subtract(Duration(minutes: 5)),
-                    DateTime.now(),
-                  );
-                  print("Đã thêm relax ${newRelax.id} mới");
-                },
-              ),
-              ElevatedButton(
-                child: Icon(Icons.update),
-                onPressed: () async {
-                  final id = 36025389;
-                  await c.read<RelaxProvider>().updateRelax(
-                    id,
-                    start: DateTime.now().subtract(Duration(minutes: 15)),
-                    end: DateTime.now(),
-                  );
-                  // print("Đã sửa relax $id");
-                },
-              ),
-              ElevatedButton(
-                child: Icon(Icons.delete),
-                onPressed: () async {
-                  final id = 36025389;
-                  await c.read<RelaxProvider>().deleteRelax(id: id);
-                  // print("Đã xóa relax $id");
-                },
-              ),
-              ElevatedButton(
-                child: Icon(Icons.delete_forever),
-                onPressed: () async {
-                  await c.read<RelaxProvider>().deleteAllRelax(userUid);
-                  print("Đã xóa toàn bộ relax của user $userUid");
-                },
-              ),
-              ElevatedButton(
-                child: Icon(Icons.delete_sweep),
-                onPressed: () async {
-                  await c.read<RelaxProvider>().deleteAllRelaxs();
-                  print("Đã xóa toàn bộ relax trong database");
-                },
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.all(kPaddingSmall),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text("Debug Actions:"), // delete later
+                ElevatedButton(
+                  child: Icon(Icons.add),
+                  onPressed: () async {
+                    final newRelax = await c.read<RelaxProvider>().saveRelax(
+                      userUid ?? "",
+                      DateTime.now().subtract(Duration(minutes: 5)),
+                      DateTime.now(),
+                    );
+                    setState(() {});
+                    print("Đã thêm relax ${newRelax.id} mới");
+                  },
+                ),
+                // ElevatedButton(
+                //   child: Icon(Icons.update),
+                //   onPressed: () async {
+                //     final id = 36025389;
+                //     await c.read<RelaxProvider>().updateRelax(
+                //       id,
+                //       start: DateTime.now().subtract(Duration(minutes: 15)),
+                //       end: DateTime.now(),
+                //     );
+                //     // print("Đã sửa relax $id");
+                //   },
+                // ),
+                // ElevatedButton(
+                //   child: Icon(Icons.delete),
+                //   onPressed: () async {
+                //     final id = 36025389;
+                //     await c.read<RelaxProvider>().deleteRelax(id: id);
+                //     // print("Đã xóa relax $id");
+                //   },
+                // ),
+                ElevatedButton(
+                  child: Icon(Icons.delete_forever),
+                  onPressed: () async {
+                    await c.read<RelaxProvider>().deleteAllRelax(userUid);
+                    setState(() {});
+                    print("Đã xóa toàn bộ relax của user $userUid");
+                  },
+                ),
+                ElevatedButton(
+                  child: Icon(Icons.delete_sweep),
+                  onPressed: () async {
+                    await c.read<RelaxProvider>().deleteAllRelaxs();
+                    setState(() {});
+                    print("Đã xóa toàn bộ relax trong database");
+                  },
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(kPaddingSmall),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  child: isInit ? Icon(Icons.stop) : Icon(Icons.play_arrow),
+                  onPressed: () async {
+                    if (!isInit) {
+                      final startTime = DateTime.now();
+                      print("Start at $startTime");
+                      setState(() {
+                        this.startTime = startTime;
+                        isInit = true;
+                      });
+                    } else {
+                      final endTime = DateTime.now();
+                      print("End at $endTime");
+                      final newRelax = await c.read<RelaxProvider>().saveRelax(
+                        userUid ?? "",
+                        startTime!,
+                        endTime,
+                      );
+                      print("Đã thêm relax ${newRelax.id} mới");
+                      setState(() {
+                        isInit = false;
+                        startTime = null;
+                      });
+                      print("reset lai trang thai");
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           Expanded(child: RelaxesList()),
         ],

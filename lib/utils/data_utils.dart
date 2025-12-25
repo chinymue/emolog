@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../isar/model/notelog.dart';
 import 'dart:convert'; // Để dùng jsonDecode
@@ -7,6 +8,9 @@ import 'dart:convert'; // Để dùng jsonDecode
 String formatDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
 String formatTime(DateTime date) => DateFormat('HH:mm:ss').format(date);
+
+String formatShortTime(TimeOfDay time) =>
+    '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 
 String formatFullDateTime(DateTime date) =>
     DateFormat('EEEE yyyy-MM-dd HH:mm:ss').format(date);
@@ -28,6 +32,30 @@ String formatShortWeekday(DateTime date, {String locale = 'vi_VN'}) {
 String formatFullWeekday(DateTime date, {String locale = 'vi_VN'}) {
   Intl.defaultLocale = locale;
   return DateFormat('EEEE').format(date); // Thứ Bảy
+}
+
+String formatDuration(int miliseconds) {
+  final hour = miliseconds ~/ (1000 * 60 * 60);
+  final minute = (miliseconds % (1000 * 60 * 60)) ~/ (1000 * 60);
+  final second = (miliseconds % (1000 * 60)) ~/ 1000;
+  return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:${second.toString().padLeft(2, '0')}';
+}
+
+String formatFullDuration(int miliseconds) {
+  final hour = miliseconds ~/ (1000 * 60 * 60);
+  final minute = (miliseconds % (1000 * 60 * 60)) ~/ (1000 * 60);
+  final second = (miliseconds % (1000 * 60)) ~/ 1000;
+  final buffer = StringBuffer();
+  if (hour > 0) {
+    buffer.write('$hour giờ ');
+  }
+  if (minute > 0) {
+    buffer.write('$minute phút ');
+  }
+  if (second > 0 || buffer.isEmpty) {
+    buffer.write('$second giây');
+  }
+  return buffer.toString().trim();
 }
 
 /// === STRING & JSON UTILS ===
