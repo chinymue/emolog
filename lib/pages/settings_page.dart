@@ -19,7 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final userPvd = c.read<UserProvider>();
     final l10n = AppLocalizations.of(context)!;
     return MainScaffold(
-      currentIndex: 3,
+      currentIndex: 4,
       actions: [
         IconButton(
           onPressed: () {

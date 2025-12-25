@@ -6,8 +6,12 @@ String localizedLabel(AppLocalizations l10n, String key) {
   switch (key) {
     case 'pageHome':
       return l10n.pageHome;
-    case 'pageHistory':
-      return l10n.pageHistory;
+    case 'pageLog':
+      return "Mood Logs";
+    case 'pageRelax':
+      return "Relax";
+    case 'pageStats':
+      return "Statistics";
     case 'pageSettings':
       return l10n.pageSettings;
     default:

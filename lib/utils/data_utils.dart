@@ -5,7 +5,14 @@ import 'dart:convert'; // Để dùng jsonDecode
 
 /// === DATE UTILS ===
 
+bool isSameDate(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
 String formatDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+String formatFullDate(DateTime date) =>
+    DateFormat('EEEE yyyy-MM-dd').format(date);
 
 String formatTime(DateTime date) => DateFormat('HH:mm:ss').format(date);
 

@@ -17,6 +17,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import './pages/home_page.dart';
 import './pages/history_page.dart';
 import './pages/relax_page.dart';
+import './pages/statistic_page.dart';
 import './pages/settings_page.dart';
 import './l10n/app_localizations.dart';
 import './utils/color_utils.dart';
@@ -75,7 +76,8 @@ class MyApp extends StatelessWidget {
               create: (c) => RelaxViewProvider(),
               child: RelaxPage(),
             ),
-            pages[3]['route']: (_) => SettingsPage(),
+            pages[3]['route']: (_) => StatisticPage(),
+            pages[4]['route']: (_) => SettingsPage(),
           },
           locale: lang.locale,
           supportedLocales: AppLocalizations.supportedLocales,
