@@ -76,7 +76,13 @@ class MyApp extends StatelessWidget {
               create: (c) => RelaxViewProvider(),
               child: RelaxPage(),
             ),
-            pages[3]['route']: (_) => StatisticPage(),
+            pages[3]['route']: (_) => MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (c) => LogViewProvider()),
+                ChangeNotifierProvider(create: (c) => RelaxViewProvider()),
+              ],
+              child: StatisticPage(),
+            ),
             pages[4]['route']: (_) => SettingsPage(),
           },
           locale: lang.locale,

@@ -90,11 +90,6 @@ class DetailsLogContent extends StatelessWidget {
     return Column(
       children: [
         MoodPicker(onMoodSelected: (mood) => logProvider.updateLabelMood(mood)),
-        MoodPointPicker(
-          onChangedMoodPoint: (moodPoint) {
-            logProvider.updateMoodPoint(moodPoint);
-          },
-        ),
         Expanded(
           child: DefaultQuillEditor(
             onContentChanged: (doc) => logProvider.updateNote(doc),

@@ -9,6 +9,59 @@ bool isSameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
+bool isInDateTimeRange(DateTimeRange a, DateTime start, DateTime end) {
+  final aStart = a.start;
+  final aEnd = a.end;
+  return (start.isAtSameMomentAs(aStart) ||
+          start.isAfter(aStart) && end.isBefore(aEnd)) &&
+      (end.isAtSameMomentAs(aEnd) ||
+          start.isAfter(aStart) && end.isBefore(aEnd));
+}
+
+bool inDateRange(DateTimeRange a, DateTime b) {
+  final aStart = a.start;
+  final aEnd = a.end;
+  return (b.isAtSameMomentAs(aStart) ||
+          b.isAfter(aStart) && b.isBefore(aEnd)) ||
+      (b.isAtSameMomentAs(aEnd));
+}
+
+DateTimeRange getDefaultDateRangeFromDateTime({DateTime? date}) {
+  if (date != null) {
+    final start = DateTime(date.year, date.month, date.day, 0, 0, 0);
+    final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    return DateTimeRange(start: start, end: end);
+  } else {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateTimeRange(start: start, end: end);
+  }
+}
+
+DateTime getDateTimeFromDateRange({DateTimeRange? range}) {
+  if (range == null) {
+    final now = DateTime.now();
+    return DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+      now.second,
+    );
+  } else {
+    return DateTime(
+      range.start.year,
+      range.start.month,
+      range.start.day,
+      range.start.hour,
+      range.start.minute,
+      range.start.second,
+    );
+  }
+}
+
 String formatDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
 String formatFullDate(DateTime date) =>

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../widgets/template/scaffold_template.dart';
 import 'package:provider/provider.dart';
 import '../provider/log_pvd.dart';
+import '../provider/user_pvd.dart';
+import '../provider/log_view_pvd.dart';
 import '../provider/relax_pvd.dart';
 import '../utils/data_utils.dart';
 
@@ -11,10 +13,32 @@ class StatisticPage extends StatelessWidget {
   Widget build(BuildContext c) {
     return MainScaffold(
       currentIndex: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: StatisticFields(),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: StatsData()),
+    );
+  }
+}
+
+class StatsData extends StatelessWidget {
+  const StatsData({super.key});
+
+  @override
+  Widget build(BuildContext c) {
+    final userUid = c.read<UserProvider>().user?.uid;
+    return FutureBuilder(
+      future: c.read<LogProvider>().fetchLogs(userUid),
+      builder: (c, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snap.connectionState == ConnectionState.done) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final logs = c.read<LogProvider>().logs;
+            c.read<LogViewProvider>().updateLogs(logs);
+          });
+        }
+        return StatisticFields();
+      },
     );
   }
 }
@@ -28,177 +52,148 @@ mixin StatisticUtils {
       lastDate: DateTime(2100),
     );
   }
+
+  Future<DateTimeRange?> selectDateRange(
+    BuildContext c,
+    DateTimeRange initialDateRange,
+  ) async {
+    return await showDateRangePicker(
+      context: c,
+      initialDateRange: initialDateRange,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+  }
 }
 
-class StatisticFields extends StatefulWidget {
+class StatisticFields extends StatelessWidget with StatisticUtils {
   const StatisticFields({super.key});
 
   @override
-  State<StatisticFields> createState() => _StatisticFieldsState();
-}
-
-class _StatisticFieldsState extends State<StatisticFields> with StatisticUtils {
-  DateTime? selectedDate;
-
-  @override
   Widget build(BuildContext c) {
+    final selectedDateRange = c.select<LogViewProvider, DateTimeRange?>(
+      (p) => p.filterDateRange,
+    );
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextButton(
           onPressed: () async {
-            final picked = await selectDate(c, selectedDate ?? DateTime.now());
+            final picked = await selectDate(
+              c,
+              getDateTimeFromDateRange(range: selectedDateRange),
+            );
             if (picked != null) {
-              setState(() {
-                selectedDate = picked;
-              });
+              if (!c.mounted) return;
+
+              c.read<LogViewProvider>().updateRange(
+                getDefaultDateRangeFromDateTime(date: picked),
+              );
             }
           },
-          child: Text(formatFullDate(selectedDate ?? DateTime.now())),
+          child: Text(
+            'Chọn ngày bất kỳ: ${formatFullDate(getDateTimeFromDateRange(range: selectedDateRange))}',
+          ),
         ),
         SizedBox(height: kPaddingLarge),
-        LogStatisticFields(date: selectedDate),
+        TextButton(
+          onPressed: () async {
+            final picked = await selectDateRange(
+              c,
+              selectedDateRange ?? getDefaultDateRangeFromDateTime(),
+            );
+            if (picked != null) {
+              if (!c.mounted) return;
+              c.read<LogViewProvider>().updateRange(picked);
+            }
+          },
+          child: Text(
+            'Chọn khoảng thời gian bất kỳ: ${formatFullDate(selectedDateRange?.start ?? DateTime.now())} - ${formatFullDate(selectedDateRange?.end ?? DateTime.now())}',
+          ),
+        ),
         SizedBox(height: kPaddingLarge),
-        RelaxStatisticFields(date: selectedDate),
+        LogStatisticFields(dateRange: selectedDateRange),
+        SizedBox(height: kPaddingLarge),
+        RelaxStatisticFields(dateRange: selectedDateRange),
       ],
     );
   }
 }
 
 class LogStatisticFields extends StatelessWidget {
-  const LogStatisticFields({super.key, this.date});
+  const LogStatisticFields({super.key, this.dateRange});
 
-  final DateTime? date;
+  final DateTimeRange? dateRange;
 
   @override
   Widget build(BuildContext c) {
-    final numberOfLogs = date != null
-        ? c
-              .read<LogProvider>()
-              .logs
-              .where((log) => isSameDate(log.date, date!))
-              .length
-        : c.read<LogProvider>().logs.length;
+    return Consumer<LogViewProvider>(
+      builder: (c, logViewPvd, _) {
+        final numberOfLogs = logViewPvd.totalLogs;
+        final numberOfFavorLogs = logViewPvd.totalFavorLogs;
+        final numberOfNoteLogs = logViewPvd.totalNoteLogs;
+        final maxMood = logViewPvd.maxMoodPoint;
+        final minMood = logViewPvd.minMoodPoint;
+        final avgMood = logViewPvd.avgMoodPoint;
 
-    final numberOfNoteLogs = date != null
-        ? c
-              .read<LogProvider>()
-              .logs
-              .where(
-                (log) =>
-                    log.note != null &&
-                    log.note!.isNotEmpty &&
-                    isSameDate(log.date, date!),
-              )
-              .length
-        : c
-              .read<LogProvider>()
-              .logs
-              .where((log) => log.note != null && log.note!.isNotEmpty)
-              .length;
-
-    final maxMood = date != null
-        ? c
-              .read<LogProvider>()
-              .logs
-              .where((log) => isSameDate(log.date, date!))
-              .map((log) => log.moodPoint)
-              .fold<double?>(null, (prev, mood) {
-                if (prev == null) return mood;
-                if (mood == null) return prev;
-                return mood > prev ? mood : prev;
-              })
-        : c.read<LogProvider>().logs.map((log) => log.moodPoint).fold<double?>(
-            null,
-            (prev, mood) {
-              if (prev == null) return mood;
-              if (mood == null) return prev;
-              return mood > prev ? mood : prev;
-            },
-          );
-
-    final minMood = date != null
-        ? c
-              .read<LogProvider>()
-              .logs
-              .where((log) => isSameDate(log.date, date!))
-              .map((log) => log.moodPoint)
-              .fold<double?>(null, (prev, mood) {
-                if (prev == null) return mood;
-                if (mood == null) return prev;
-                return mood < prev ? mood : prev;
-              })
-        : c.read<LogProvider>().logs.map((log) => log.moodPoint).fold<double?>(
-            null,
-            (prev, mood) {
-              if (prev == null) return mood;
-              if (mood == null) return prev;
-              return mood < prev ? mood : prev;
-            },
-          );
-
-    final avgMood = date != null
-        ? c
-                  .read<LogProvider>()
-                  .logs
-                  .where((log) => isSameDate(log.date, date!))
-                  .map((log) => log.moodPoint)
-                  .whereType<double>()
-                  .fold<double>(0, (prev, mood) => prev + mood) /
-              numberOfLogs
-        : c
-                  .read<LogProvider>()
-                  .logs
-                  .map((log) => log.moodPoint)
-                  .whereType<double>()
-                  .fold<double>(0, (prev, mood) => prev + mood) /
-              numberOfLogs;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Total number of logs: $numberOfLogs',
-          style: Theme.of(c).textTheme.bodyMedium,
-        ),
-        Text(
-          'Total number of note logs: $numberOfNoteLogs',
-          style: Theme.of(c).textTheme.bodyMedium,
-        ),
-        Text(
-          'Highest mood point: ${maxMood?.toStringAsFixed(1) ?? "N/A"}',
-          style: Theme.of(c).textTheme.bodyMedium,
-        ),
-        Text(
-          'Lowest mood point: ${minMood?.toStringAsFixed(1) ?? "N/A"}',
-          style: Theme.of(c).textTheme.bodyMedium,
-        ),
-        Text(
-          'Average mood point: ${avgMood.isNaN ? "N/A" : avgMood.toStringAsFixed(2)}',
-          style: Theme.of(c).textTheme.bodyMedium,
-        ),
-      ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Total number of logs: $numberOfLogs',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+            Text(
+              'Total number of favorite logs: $numberOfFavorLogs',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+            Text(
+              'Total number of note logs: $numberOfNoteLogs',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+            Text(
+              'Highest mood point: ${maxMood == 0.0 ? "N/A" : maxMood}',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+            Text(
+              'Lowest mood point: $minMood',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+            Text(
+              'Average mood point: ${avgMood == 0.0 ? "N/A" : avgMood.toStringAsFixed(2)}',
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class RelaxStatisticFields extends StatelessWidget {
-  const RelaxStatisticFields({super.key, this.date});
+  const RelaxStatisticFields({super.key, this.dateRange});
 
-  final DateTime? date;
+  final DateTimeRange? dateRange;
 
   @override
   Widget build(BuildContext c) {
-    final numberOfRelaxSessions = date != null
+    final numberOfRelaxSessions = dateRange != null
         ? c
               .read<RelaxProvider>()
               .relaxs
-              .where((relax) => isSameDate(relax.startTime, date!))
+              .where(
+                (relax) => isInDateTimeRange(
+                  dateRange!,
+                  relax.startTime,
+                  relax.endTime,
+                ),
+              )
               .length
         : c.read<RelaxProvider>().relaxs.length;
 
-    final numberOfNoteRelaxSessions = date != null
+    final numberOfNoteRelaxSessions = dateRange != null
         ? c
               .read<RelaxProvider>()
               .relaxs
@@ -206,7 +201,11 @@ class RelaxStatisticFields extends StatelessWidget {
                 (relax) =>
                     relax.note != null &&
                     relax.note!.isNotEmpty &&
-                    isSameDate(relax.startTime, date!),
+                    isInDateTimeRange(
+                      dateRange!,
+                      relax.startTime,
+                      relax.endTime,
+                    ),
               )
               .length
         : c
@@ -215,11 +214,17 @@ class RelaxStatisticFields extends StatelessWidget {
               .where((relax) => relax.note != null && relax.note!.isNotEmpty)
               .length;
 
-    final maxDuration = date != null
+    final maxDuration = dateRange != null
         ? c
               .read<RelaxProvider>()
               .relaxs
-              .where((relax) => isSameDate(relax.startTime, date!))
+              .where(
+                (relax) => isInDateTimeRange(
+                  dateRange!,
+                  relax.startTime,
+                  relax.endTime,
+                ),
+              )
               .map((relax) => relax.durationMiliseconds)
               .fold<int?>(null, (prev, duration) {
                 if (prev == null) return duration;
@@ -234,11 +239,17 @@ class RelaxStatisticFields extends StatelessWidget {
                 return duration > prev ? duration : prev;
               });
 
-    final minDuration = date != null
+    final minDuration = dateRange != null
         ? c
               .read<RelaxProvider>()
               .relaxs
-              .where((relax) => isSameDate(relax.startTime, date!))
+              .where(
+                (relax) => isInDateTimeRange(
+                  dateRange!,
+                  relax.startTime,
+                  relax.endTime,
+                ),
+              )
               .map((relax) => relax.durationMiliseconds)
               .fold<int?>(null, (prev, duration) {
                 if (prev == null) return duration;
@@ -253,11 +264,17 @@ class RelaxStatisticFields extends StatelessWidget {
                 return duration < prev ? duration : prev;
               });
 
-    final avgDuration = date != null
+    final avgDuration = dateRange != null
         ? c
                   .read<RelaxProvider>()
                   .relaxs
-                  .where((relax) => isSameDate(relax.startTime, date!))
+                  .where(
+                    (relax) => isInDateTimeRange(
+                      dateRange!,
+                      relax.startTime,
+                      relax.endTime,
+                    ),
+                  )
                   .map((relax) => relax.durationMiliseconds)
                   .fold<int>(0, (prev, duration) => prev + duration) /
               numberOfRelaxSessions
@@ -267,6 +284,31 @@ class RelaxStatisticFields extends StatelessWidget {
                   .map((relax) => relax.durationMiliseconds)
                   .fold<int>(0, (prev, duration) => prev + duration) /
               numberOfRelaxSessions;
+
+    final maxDurationPerDay = dateRange != null
+        ? c
+              .read<RelaxProvider>()
+              .relaxs
+              .where(
+                (relax) => isInDateTimeRange(
+                  dateRange!,
+                  relax.startTime,
+                  relax.endTime,
+                ),
+              )
+              .map((relax) => relax.durationMiliseconds)
+              .fold<int?>(null, (prev, duration) {
+                if (prev == null) return duration;
+                return duration > prev ? duration : prev;
+              })
+        : c
+              .read<RelaxProvider>()
+              .relaxs
+              .map((relax) => relax.durationMiliseconds)
+              .fold<int?>(null, (prev, duration) {
+                if (prev == null) return duration;
+                return duration > prev ? duration : prev;
+              });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
