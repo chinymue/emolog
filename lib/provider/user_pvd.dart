@@ -36,9 +36,9 @@ class UserProvider extends ChangeNotifier {
     await isarService.saveUser(newUser);
     _currentUser = newUser;
     isFetchedUser = true;
-    if (_currentUser != null && !(_currentUser!.isGuest)) {
-      await _syncUserToFirestore(_currentUser!);
-    }
+    // if (_currentUser != null && !(_currentUser!.isGuest)) {
+    //   await _syncUserToFirestore(_currentUser!);
+    // }
     notifyListeners();
     return true;
   }
@@ -49,16 +49,17 @@ class UserProvider extends ChangeNotifier {
     required String password,
   }) async {
     final user = await isarService.getByUsername(username);
-    User? firestoreUser;
+    // User? firestoreUser;
     if (user == null) {
-      firestoreUser = await _fetchLatestUserFromFirestore(username);
-      if (firestoreUser == null) return false;
+      //   firestoreUser = await _fetchLatestUserFromFirestore(username);
+      //   if (firestoreUser == null) return false;
 
-      final hash = hashPassword(password, firestoreUser.salt);
-      if (hash != firestoreUser.passwordHash) return false;
-      _currentUser = firestoreUser;
+      //   final hash = hashPassword(password, firestoreUser.salt);
+      //   if (hash != firestoreUser.passwordHash) return false;
+      //   _currentUser = firestoreUser;
+      return false;
     } else {
-      final hash = hashPassword(password, user.salt);
+      final hash = hashPassword(password, user!.salt);
       if (hash != user.passwordHash) return false;
       _currentUser = user;
     }
@@ -66,7 +67,7 @@ class UserProvider extends ChangeNotifier {
     isFetchedUser = true;
     _currentUser!.lastLogin = DateTime.now();
 
-    if (!_currentUser!.isGuest) await _fetchAndSyncUser(_currentUser!);
+    // if (!_currentUser!.isGuest) await _fetchAndSyncUser(_currentUser!);
 
     if (c.mounted) {
       c.read<LanguageProvider>().setLang(_currentUser!.language);
