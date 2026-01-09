@@ -123,13 +123,13 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
 
   /// FETCH LOGS FROM ISAR
 
-  Future<void> fetchLogs(String? userUid) async {
+  Future<void> fetchLogs(String? userUid, {bool notify = true}) async {
     if (!isFetchedLogs) {
       logs = userUid == null
           ? await isarService.getAll<NoteLog>()
           : await isarService.getAllLogs(userUid);
       isFetchedLogs = true;
-      notifyListeners();
+      if (notify) notifyListeners();
     }
   }
 

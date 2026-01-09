@@ -21,14 +21,8 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class EmologForm extends StatefulWidget {
-  @override
-  State<EmologForm> createState() => _EmologFormState();
-}
-
-class _EmologFormState extends State<EmologForm> {
-  late NoteImage image;
-
+class EmologForm extends StatelessWidget {
+  // late NoteImage image;
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
@@ -51,7 +45,7 @@ class _EmologFormState extends State<EmologForm> {
           ),
         );
 
-      setState(() => image = NoteImage());
+      // setState(() => image = NoteImage());
     } catch (e) {
       if (!c.mounted) return;
       ScaffoldMessenger.of(c)

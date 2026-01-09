@@ -1,63 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../isar/model/notelog.dart';
 import '../utils/constant.dart';
-import '../utils/data_utils.dart';
 
 enum SortDateOrder { newestFirst, oldestFirst }
 
 class LogViewProvider extends ChangeNotifier
-    with LogViewStateMixin, LogViewFilters, LogStatsMixin {
+    with LogViewStateMixin, LogViewFilters {
   List<NoteLog> get allLogs => _sortedLogs;
-  DateTimeRange? get filterDateRange => _filterDateRange == null
-      ? getDefaultDateRangeFromDateTime()
-      : DateTimeRange(
-          start: _filterDateRange!.start,
-          end: DateTime(
-            _filterDateRange!.end.year,
-            _filterDateRange!.end.month,
-            _filterDateRange!.end.day,
-            0,
-            0,
-            0,
-          ).subtract(Duration(days: 1)),
-        );
 }
 
 mixin LogViewStateMixin on ChangeNotifier {
   List<NoteLog> _allLogs = [];
   bool isFetchedLogs = false;
-  DateTimeRange? _filterDateRange;
 
   void updateLogs(List<NoteLog> newLogs) {
     _allLogs = newLogs;
     isFetchedLogs = true;
     notifyListeners();
-  }
-
-  void updateRange(DateTimeRange newRange) {
-    _filterDateRange = DateTimeRange(
-      start: newRange.start,
-      end: DateTime(
-        newRange.end.year,
-        newRange.end.month,
-        newRange.end.day,
-        0,
-        0,
-        0,
-      ).add(Duration(days: 1)),
-    );
-    notifyListeners();
-  }
-
-  List<NoteLog> get logs {
-    if (_filterDateRange == null) {
-      return _allLogs;
-    } else {
-      return _allLogs.where((log) {
-        if (inDateRange(_filterDateRange!, log.date)) return true;
-        return false;
-      }).toList();
-    }
   }
 }
 
@@ -182,26 +141,4 @@ mixin LogViewFilters on LogViewStateMixin {
     _moodRangeFilter = values;
     notifyListeners();
   }
-}
-
-mixin LogStatsMixin on ChangeNotifier, LogViewStateMixin {
-  int get totalLogs => logs.length;
-
-  int get totalNoteLogs =>
-      logs.where((log) => log.note != null && log.note!.isNotEmpty).length;
-
-  int get totalFavorLogs => logs.where((log) => log.isFavor).length;
-
-  double get maxMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a > b ? a : b);
-
-  double get minMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a < b ? a : b);
-
-  double get avgMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a + b) /
-            logs.length;
 }

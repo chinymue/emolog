@@ -12,6 +12,7 @@ import './provider/log_view_pvd.dart';
 import './provider/user_pvd.dart';
 import './provider/relax_pvd.dart';
 import './provider/relax_view_pvd.dart';
+import 'package:emolog/provider/stats_pvd.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import './pages/home_page.dart';
@@ -76,11 +77,8 @@ class MyApp extends StatelessWidget {
               create: (c) => RelaxViewProvider(),
               child: RelaxPage(),
             ),
-            pages[3]['route']: (_) => MultiProvider(
-              providers: [
-                ChangeNotifierProvider(create: (c) => LogViewProvider()),
-                ChangeNotifierProvider(create: (c) => RelaxViewProvider()),
-              ],
+            pages[3]['route']: (_) => ChangeNotifierProvider(
+              create: (c) => StatsProvider(),
               child: StatisticPage(),
             ),
             pages[4]['route']: (_) => SettingsPage(),

@@ -9,6 +9,14 @@ bool isSameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
+DateTime normalizeDate(DateTime dt) {
+  return DateTime(dt.year, dt.month, dt.day, 0, 0, 0);
+}
+
+DateTime normalizeHourDate(DateTime dt) {
+  return DateTime(dt.year, dt.month, dt.day, dt.hour, 0, 0);
+}
+
 bool isInDateTimeRange(DateTimeRange a, DateTime start, DateTime end) {
   final aStart = a.start;
   final aEnd = a.end;
@@ -116,6 +124,13 @@ String formatFullDuration(int miliseconds) {
     buffer.write('$second giây');
   }
   return buffer.toString().trim();
+}
+
+String format(Duration d) {
+  final minutes = d.inMinutes.toString().padLeft(2, '0');
+  final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+  final ms = (d.inMilliseconds % 1000 ~/ 100).toString();
+  return '$minutes:$seconds.$ms';
 }
 
 /// === STRING & JSON UTILS ===

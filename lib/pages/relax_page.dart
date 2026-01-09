@@ -1,23 +1,29 @@
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/utils/constant.dart';
+import 'package:emolog/utils/data_utils.dart';
 import 'package:emolog/widgets/listview/default_log_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/template/scaffold_template.dart';
 import '../provider/relax_pvd.dart';
 import '../provider/relax_view_pvd.dart';
+import 'dart:async';
 
-class RelaxPage extends StatefulWidget {
+class RelaxPage extends StatelessWidget with RelaxPagePickers {
   RelaxPage({super.key});
 
-  @override
-  State<RelaxPage> createState() => _RelaxPageState();
-}
-
-class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
-  bool isInit = false;
-  DateTime? startTime;
+  Future<Object?> showTimer(BuildContext c) async {
+    return await showGeneralDialog(
+      context: c,
+      barrierDismissible: true,
+      barrierLabel: 'Relax detail',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (c, _, __) {
+        return RelaxTimerSheet();
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext c) {
@@ -45,35 +51,13 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
                       DateTime.now().subtract(Duration(minutes: 5)),
                       DateTime.now(),
                     );
-                    setState(() {});
                     print("Đã thêm relax ${newRelax.id} mới");
                   },
                 ),
-                // ElevatedButton(
-                //   child: Icon(Icons.update),
-                //   onPressed: () async {
-                //     final id = 36025389;
-                //     await c.read<RelaxProvider>().updateRelax(
-                //       id,
-                //       start: DateTime.now().subtract(Duration(minutes: 15)),
-                //       end: DateTime.now(),
-                //     );
-                //     // print("Đã sửa relax $id");
-                //   },
-                // ),
-                // ElevatedButton(
-                //   child: Icon(Icons.delete),
-                //   onPressed: () async {
-                //     final id = 36025389;
-                //     await c.read<RelaxProvider>().deleteRelax(id: id);
-                //     // print("Đã xóa relax $id");
-                //   },
-                // ),
                 ElevatedButton(
                   child: Icon(Icons.delete_forever),
                   onPressed: () async {
                     await c.read<RelaxProvider>().deleteAllRelax(userUid);
-                    setState(() {});
                     print("Đã xóa toàn bộ relax của user $userUid");
                   },
                 ),
@@ -81,7 +65,6 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
                   child: Icon(Icons.delete_sweep),
                   onPressed: () async {
                     await c.read<RelaxProvider>().deleteAllRelaxs();
-                    setState(() {});
                     print("Đã xóa toàn bộ relax trong database");
                   },
                 ),
@@ -94,37 +77,97 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  child: isInit ? Icon(Icons.stop) : Icon(Icons.play_arrow),
-                  onPressed: () async {
-                    if (!isInit) {
-                      final startTime = DateTime.now();
-                      print("Start at $startTime");
-                      setState(() {
-                        this.startTime = startTime;
-                        isInit = true;
-                      });
-                    } else {
-                      final endTime = DateTime.now();
-                      print("End at $endTime");
-                      final newRelax = await c.read<RelaxProvider>().saveRelax(
-                        userUid ?? "",
-                        startTime!,
-                        endTime,
-                      );
-                      print("Đã thêm relax ${newRelax.id} mới");
-                      setState(() {
-                        isInit = false;
-                        startTime = null;
-                      });
-                      print("reset lai trang thai");
-                    }
-                  },
+                  child: Icon(Icons.play_arrow),
+                  onPressed: () => showTimer(c),
                 ),
               ],
             ),
           ),
           Expanded(child: RelaxesList()),
         ],
+      ),
+    );
+  }
+}
+
+class RelaxTimerSheet extends StatefulWidget {
+  const RelaxTimerSheet({super.key});
+
+  @override
+  State<RelaxTimerSheet> createState() => _RelaxTimerSheetState();
+}
+
+class _RelaxTimerSheetState extends State<RelaxTimerSheet> {
+  Timer? _timer;
+  DateTime? _startTime;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted) return;
+      setState(() {
+        _elapsed = DateTime.now().difference(_startTime!);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> stopAndSave() async {
+    final userUid = context.read<UserProvider>().user?.uid;
+    if (userUid == null) return;
+
+    await context.read<RelaxProvider>().saveRelax(
+      userUid,
+      _startTime!,
+      _startTime!.add(_elapsed),
+    );
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(kPadding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  format(_elapsed),
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
+                SizedBox(height: kPaddingLarge),
+                ElevatedButton(
+                  onPressed: stopAndSave,
+                  child: const Text("Stop & Save"),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

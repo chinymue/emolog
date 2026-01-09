@@ -59,7 +59,7 @@ class UserProvider extends ChangeNotifier {
       //   _currentUser = firestoreUser;
       return false;
     } else {
-      final hash = hashPassword(password, user!.salt);
+      final hash = hashPassword(password, user.salt);
       if (hash != user.passwordHash) return false;
       _currentUser = user;
     }
