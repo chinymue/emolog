@@ -20,15 +20,20 @@ class StatsProvider extends ChangeNotifier
           ).subtract(Duration(days: 1)),
         );
 
-  List<FlSpot> get moodDaily => buildLineSpots(logs);
+  List<FlSpot> get moodSpots => _moodSpots;
 
-  List<FlSpot> get moodRaw => buildMoodSpots(logs);
+  void rebuildMood(RangePreset type, DateTimeRange range) {
+    final filtered = _allLogs.where((log) {
+      if (inDateRange(range, log.date)) return true;
+      return false;
+    }).toList();
 
-  // List<Map<DateTime, dynamic>> get durations {
-  //   if (_filterDateRange == null) {
-  //     return _durationDaily;
-  //   } else {}
-  // }
+    filtered.sort((a, b) => a.date.compareTo(b.date));
+    _moodSpots = buildMoodLineSpots(filtered, range, type);
+    notifyListeners();
+  }
+
+  // List<FlSpot> get moodRaw => buildMoodSpots(logs);
 }
 
 mixin StatsStateMixin on ChangeNotifier {
@@ -97,6 +102,8 @@ mixin StatsStateMixin on ChangeNotifier {
       return filtered;
     }
   }
+
+  List<FlSpot> _moodSpots = [];
 }
 
 mixin LogStatsMixin on ChangeNotifier, StatsStateMixin {
@@ -153,45 +160,37 @@ mixin RelaxStatsMixin on ChangeNotifier, StatsStateMixin {
   }
 }
 
-class DailyMoodData {
-  final DateTime date; // đã chuẩn hoá về 00:00:00.000
-  final List<double> moodPoints;
-  final double avgMood;
-  final bool isNoted;
-
-  DailyMoodData({
-    required this.date,
-    required this.moodPoints,
-    required this.avgMood,
-    required this.isNoted,
-  });
-}
-
 mixin MoodChartMixin on ChangeNotifier, StatsStateMixin {
-  Map<DateTime, List<NoteLog>> groupByDate(List<NoteLog> logs) {
-    final map = <DateTime, List<NoteLog>>{};
+  DateTime normalizeDateToGroup(RangePreset type, DateTime dt) {
+    switch (type) {
+      case RangePreset.day:
+        return normalizeHourDate(dt);
+      case RangePreset.week:
+        return normalizeDate(dt);
+      case RangePreset.month:
+        return normalizeDate(dt);
+      case RangePreset.sixMonths:
+        return normalizeWeekDate(dt);
+      case RangePreset.year:
+        return normalizeMonthDate(dt);
+    }
+  }
 
+  Map<DateTime, List<NoteLog>> groupByRange(
+    List<NoteLog> logs,
+    RangePreset type,
+  ) {
+    final map = <DateTime, List<NoteLog>>{};
     for (final log in logs) {
-      final key = normalizeDate(log.date);
+      final key = normalizeDateToGroup(type, log.date);
       map.putIfAbsent(key, () => []).add(log);
     }
 
     return map;
   }
 
-  Map<DateTime, List<NoteLog>> groupByHour(List<NoteLog> logs) {
-    final map = <DateTime, List<NoteLog>>{};
-
-    for (final log in logs) {
-      final key = normalizeHourDate(log.date);
-      map.putIfAbsent(key, () => []).add(log);
-    }
-
-    return map;
-  }
-
-  Map<DateTime, double> calcAvgMood(List<NoteLog> logs, {String type = "day"}) {
-    final grouped = type == "day" ? groupByDate(logs) : groupByHour(logs);
+  Map<DateTime, double> calcAvgMood(List<NoteLog> logs, RangePreset type) {
+    final grouped = groupByRange(logs, type);
     final result = <DateTime, double>{};
 
     grouped.forEach((date, items) {
@@ -202,24 +201,30 @@ mixin MoodChartMixin on ChangeNotifier, StatsStateMixin {
     return result;
   }
 
-  List<FlSpot> buildLineSpots(List<NoteLog> logs) {
-    final data = calcAvgMood(logs);
+  List<FlSpot> buildMoodLineSpots(
+    List<NoteLog> logs,
+    DateTimeRange range,
+    RangePreset type,
+  ) {
+    final data = calcAvgMood(logs, type);
 
     final dates = data.keys.toList()..sort();
+
+    final base = range.start.millisecondsSinceEpoch;
 
     return List.generate(dates.length, (i) {
       final date = dates[i];
       return FlSpot(
-        i.toDouble(), // trục X: index
-        data[date]!, // trục Y
+        (date.millisecondsSinceEpoch - base).toDouble(),
+        data[date]!,
       );
     });
   }
 
-  List<FlSpot> buildMoodSpots(List<NoteLog> logs) {
-    return List.generate(logs.length, (i) {
-      final log = logs[i];
-      return FlSpot(log.date.millisecondsSinceEpoch.toDouble(), log.moodPoint!);
-    });
-  }
+  // List<FlSpot> buildMoodSpots(List<NoteLog> logs) {
+  //   return List.generate(logs.length, (i) {
+  //     final log = logs[i];
+  //     return FlSpot(log.date.millisecondsSinceEpoch.toDouble(), log.moodPoint!);
+  //   });
+  // }
 }

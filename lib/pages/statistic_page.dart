@@ -5,7 +5,7 @@ import '../provider/stats_pvd.dart';
 import 'package:emolog/provider/log_pvd.dart';
 import '../provider/user_pvd.dart';
 import '../provider/relax_pvd.dart';
-import '../widgets/stats/stats_data.dart';
+import '../widgets/stats/stats_fields.dart';
 
 class StatisticPage extends StatelessWidget {
   @override

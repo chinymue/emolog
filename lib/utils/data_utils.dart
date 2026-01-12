@@ -5,6 +5,8 @@ import 'dart:convert'; // Để dùng jsonDecode
 
 /// === DATE UTILS ===
 
+enum RangePreset { day, week, month, sixMonths, year }
+
 bool isSameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
@@ -15,6 +17,15 @@ DateTime normalizeDate(DateTime dt) {
 
 DateTime normalizeHourDate(DateTime dt) {
   return DateTime(dt.year, dt.month, dt.day, dt.hour, 0, 0);
+}
+
+DateTime normalizeWeekDate(DateTime dt) {
+  final d = normalizeDate(dt);
+  return d.subtract(Duration(days: d.weekday - DateTime.monday));
+}
+
+DateTime normalizeMonthDate(DateTime dt) {
+  return DateTime(dt.year, dt.month, 1, 0, 0, 0);
 }
 
 bool isInDateTimeRange(DateTimeRange a, DateTime start, DateTime end) {
@@ -70,12 +81,16 @@ DateTime getDateTimeFromDateRange({DateTimeRange? range}) {
   }
 }
 
-String formatDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+String formatDate(DateTime date) => DateFormat('yyyy/MM/dd').format(date);
+
+String formatMonthDate(DateTime date) => DateFormat('yyyy/MM').format(date);
 
 String formatFullDate(DateTime date) =>
     DateFormat('EEEE yyyy-MM-dd').format(date);
 
 String formatTime(DateTime date) => DateFormat('HH:mm:ss').format(date);
+
+String formatTimeHHmm(DateTime date) => DateFormat('HH:mm').format(date);
 
 String formatShortTime(TimeOfDay time) =>
     '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
@@ -190,5 +205,19 @@ double moodPointFromLabel(String label) {
       return 1.0;
     default:
       return 0.5;
+  }
+}
+
+String labelFromMoodPoint(double moodPoint) {
+  if (moodPoint == 1) {
+    return 'awesome';
+  } else if (moodPoint >= 0.75) {
+    return 'good';
+  } else if (moodPoint >= 0.5) {
+    return 'chill';
+  } else if (moodPoint >= 0.25) {
+    return 'not good';
+  } else {
+    return 'terrible';
   }
 }
