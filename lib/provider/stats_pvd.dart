@@ -5,7 +5,7 @@ import '../utils/data_utils.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class StatsProvider extends ChangeNotifier
-    with StatsStateMixin, LogStatsMixin, RelaxStatsMixin, MoodChartMixin {
+    with StatsStateMixin, MoodChartMixin {
   DateTimeRange? get filterDateRange => _filterDateRange == null
       ? getDefaultDateRangeFromDateTime()
       : DateTimeRange(
@@ -23,17 +23,19 @@ class StatsProvider extends ChangeNotifier
   List<FlSpot> get moodSpots => _moodSpots;
 
   void rebuildMood(RangePreset type, DateTimeRange range) {
-    final filtered = _allLogs.where((log) {
-      if (inDateRange(range, log.date)) return true;
-      return false;
+    final source = _logsSorted ? _sortedLogs : _allLogs;
+
+    final filtered = source.where((log) {
+      return inDateRange(range, log.date);
     }).toList();
 
-    filtered.sort((a, b) => a.date.compareTo(b.date));
-    _moodSpots = buildMoodLineSpots(filtered, range, type);
+    final spots = buildMoodLineSpots(filtered, range, type);
+
+    if (spots.length == _moodSpots.length) return;
+
+    _moodSpots = spots;
     notifyListeners();
   }
-
-  // List<FlSpot> get moodRaw => buildMoodSpots(logs);
 }
 
 mixin StatsStateMixin on ChangeNotifier {
@@ -41,6 +43,8 @@ mixin StatsStateMixin on ChangeNotifier {
   List<Relax> _allRelaxs = [];
   bool isFetchedData = false;
   DateTimeRange? _filterDateRange;
+  List<NoteLog> _sortedLogs = [];
+  bool _logsSorted = false;
 
   Future<void> fetchData(List<NoteLog>? logs, List<Relax>? relaxs) async {
     if (isFetchedData) return;
@@ -49,9 +53,10 @@ mixin StatsStateMixin on ChangeNotifier {
     _allRelaxs = relaxs ?? [];
     isFetchedData = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifyListeners();
-    });
+    _sortedLogs = List.of(_allLogs)..sort((a, b) => a.date.compareTo(b.date));
+    _logsSorted = true;
+
+    notifyListeners();
   }
 
   void updateRange(DateTimeRange newRange) {
@@ -69,96 +74,95 @@ mixin StatsStateMixin on ChangeNotifier {
     notifyListeners();
   }
 
-  List<NoteLog> get logs {
-    if (_filterDateRange == null) {
-      return _allLogs;
-    } else {
-      final filtered = _allLogs.where((log) {
-        if (inDateRange(_filterDateRange!, log.date)) return true;
-        return false;
-      }).toList();
-
-      filtered.sort((a, b) => a.date.compareTo(b.date));
-      return filtered;
-    }
-  }
-
-  List<Relax> get relaxs {
-    if (_filterDateRange == null) {
-      return _allRelaxs;
-    } else {
-      final filtered = _allRelaxs.where((relax) {
-        if (isInDateTimeRange(
-          _filterDateRange!,
-          relax.startTime,
-          relax.endTime,
-        )) {
-          return true;
-        }
-        return false;
-      }).toList();
-
-      filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
-      return filtered;
-    }
-  }
-
   List<FlSpot> _moodSpots = [];
+  // List<NoteLog> get logs {
+  //   if (_filterDateRange == null) {
+  //     return _allLogs;
+  //   } else {
+  //     final filtered = _allLogs.where((log) {
+  //       if (inDateRange(_filterDateRange!, log.date)) return true;
+  //       return false;
+  //     }).toList();
+
+  //     filtered.sort((a, b) => a.date.compareTo(b.date));
+  //     return filtered;
+  //   }
+  // }
+
+  // List<Relax> get relaxs {
+  //   if (_filterDateRange == null) {
+  //     return _allRelaxs;
+  //   } else {
+  //     final filtered = _allRelaxs.where((relax) {
+  //       if (isInDateTimeRange(
+  //         _filterDateRange!,
+  //         relax.startTime,
+  //         relax.endTime,
+  //       )) {
+  //         return true;
+  //       }
+  //       return false;
+  //     }).toList();
+
+  //     filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
+  //     return filtered;
+  //   }
+  // }
 }
 
-mixin LogStatsMixin on ChangeNotifier, StatsStateMixin {
-  int get totalLogs => logs.length;
+// mixin LogStatsMixin on ChangeNotifier, StatsStateMixin {
+//   int get totalLogs => logs.length;
 
-  int get totalNoteLogs =>
-      logs.where((log) => log.note != null && log.note!.isNotEmpty).length;
+//   int get totalNoteLogs =>
+//       logs.where((log) => log.note != null && log.note!.isNotEmpty).length;
 
-  int get totalFavorLogs => logs.where((log) => log.isFavor).length;
+//   int get totalFavorLogs => logs.where((log) => log.isFavor).length;
 
-  double get maxMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a > b ? a : b);
+//   double get maxMoodPoint => logs.isEmpty
+//       ? 0.0
+//       : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a > b ? a : b);
 
-  double get minMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a < b ? a : b);
+//   double get minMoodPoint => logs.isEmpty
+//       ? 0.0
+//       : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a < b ? a : b);
 
-  double get avgMoodPoint => logs.isEmpty
-      ? 0.0
-      : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a + b) /
-            logs.length;
-}
+//   double get avgMoodPoint => logs.isEmpty
+//       ? 0.0
+//       : logs.map((log) => log.moodPoint ?? 0.0).reduce((a, b) => a + b) /
+//             logs.length;
+// }
 
-mixin RelaxStatsMixin on ChangeNotifier, StatsStateMixin {
-  int get totalSessions => relaxs.length;
+// mixin RelaxStatsMixin on ChangeNotifier, StatsStateMixin {
+//   int get totalSessions => relaxs.length;
 
-  int get totalDuration =>
-      relaxs.map((relax) => relax.durationMiliseconds).reduce((a, b) => a + b);
+//   int get totalDuration =>
+//       relaxs.map((relax) => relax.durationMiliseconds).reduce((a, b) => a + b);
 
-  DateTime get earliestDate =>
-      relaxs.firstWhere((relax) => relax.durationMiliseconds > 0).startTime;
-  DateTime get lastestDate =>
-      relaxs.lastWhere((relax) => relax.durationMiliseconds > 0).endTime;
+//   DateTime get earliestDate =>
+//       relaxs.firstWhere((relax) => relax.durationMiliseconds > 0).startTime;
+//   DateTime get lastestDate =>
+//       relaxs.lastWhere((relax) => relax.durationMiliseconds > 0).endTime;
 
-  int get daysCount {
-    final start = DateTime(
-      earliestDate.year,
-      earliestDate.month,
-      earliestDate.day,
-      0,
-      0,
-      0,
-    );
-    final end = DateTime(
-      lastestDate.year,
-      lastestDate.month,
-      lastestDate.day,
-      0,
-      0,
-      0,
-    );
-    return end.difference(start).inDays;
-  }
-}
+//   int get daysCount {
+//     final start = DateTime(
+//       earliestDate.year,
+//       earliestDate.month,
+//       earliestDate.day,
+//       0,
+//       0,
+//       0,
+//     );
+//     final end = DateTime(
+//       lastestDate.year,
+//       lastestDate.month,
+//       lastestDate.day,
+//       0,
+//       0,
+//       0,
+//     );
+//     return end.difference(start).inDays;
+//   }
+// }
 
 mixin MoodChartMixin on ChangeNotifier, StatsStateMixin {
   DateTime normalizeDateToGroup(RangePreset type, DateTime dt) {

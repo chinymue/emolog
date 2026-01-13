@@ -63,7 +63,7 @@ class _StatisticFieldsState extends State<StatisticFields>
           const SizedBox(height: kPaddingLarge),
 
           /// ---------- CONTENT ----------
-          LogStatisticFields(),
+          // LogStatisticFields(),
           const SizedBox(height: kPaddingLarge),
           MoodChart(type: _preset, range: _currentRange),
         ],
@@ -295,55 +295,16 @@ class MoodChart extends StatelessWidget {
     );
   }
 
-  LineChartData buildChartData(List<FlSpot> spots) {
+  List<LineChartBarData> buildChartData(List<FlSpot> spots) {
     if (spots.isEmpty) {
-      return LineChartData(
-        minX: minX,
-        maxX: maxX,
-        minY: 0.0,
-        maxY: 1.0,
-        lineBarsData: [],
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          rightTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          bottomTitles: AxisTitles(sideTitles: buildTimeTitles()),
-        ),
-        gridData: FlGridData(verticalInterval: 2),
-      );
+      return [];
     } else if (spots.length == 1) {
       final s = spots.first;
-      return LineChartData(
-        minX: minX,
-        maxX: maxX,
-        minY: 0.0,
-        maxY: 1.0,
-        lineBarsData: [
-          LineChartBarData(spots: [s, FlSpot(s.x + 0.0001, s.y)], barWidth: 0),
-        ],
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          rightTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          bottomTitles: AxisTitles(sideTitles: buildTimeTitles()),
-        ),
-        gridData: FlGridData(verticalInterval: 2),
-      );
+      return [
+        LineChartBarData(spots: [s, FlSpot(s.x + 0.0001, s.y)], barWidth: 0),
+      ];
     } else {
-      return LineChartData(
-        minX: minX,
-        maxX: maxX,
-        minY: 0.0,
-        maxY: 1.0,
-        lineBarsData: [LineChartBarData(spots: spots)],
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          rightTitles: AxisTitles(sideTitles: buildMoodTitles()),
-          bottomTitles: AxisTitles(sideTitles: buildTimeTitles()),
-        ),
-        gridData: FlGridData(verticalInterval: 2),
-      );
+      return [LineChartBarData(spots: spots)];
     }
   }
 
@@ -352,83 +313,88 @@ class MoodChart extends StatelessWidget {
     return Consumer<StatsProvider>(
       builder: (c, statsPvd, _) {
         final rawSpots = statsPvd.moodSpots;
-        if (rawSpots.isEmpty) {
-          return const SizedBox(
-            height: 200,
-            child: Center(child: Text('No data')),
-          );
-        } else if (rawSpots.length == 1) {
-          return const SizedBox(
-            height: 200,
-            child: Center(child: Text('Data shortage for draw chart')),
-          );
-        } else {
-          return SizedBox(
-            height: MediaQuery.of(c).size.height * 0.4,
-            width: MediaQuery.of(c).size.width * 0.8,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(kPaddingLarge),
-                child: Container(
-                  constraints: BoxConstraints.expand(height: 200, width: 700),
-                  child: LineChart(buildChartData(rawSpots)),
+        return SizedBox(
+          height: MediaQuery.of(c).size.height * 0.4,
+          width: MediaQuery.of(c).size.width * 0.8,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(kPaddingLarge),
+              child: Container(
+                constraints: BoxConstraints.expand(height: 200, width: 700),
+                child: LineChart(
+                  LineChartData(
+                    minX: minX,
+                    maxX: maxX,
+                    minY: 0.0,
+                    maxY: 1.0,
+                    lineBarsData: buildChartData(rawSpots),
+                    titlesData: FlTitlesData(
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: AxisTitles(sideTitles: buildMoodTitles()),
+                      rightTitles: AxisTitles(sideTitles: buildMoodTitles()),
+                      bottomTitles: AxisTitles(sideTitles: buildTimeTitles()),
+                    ),
+                    gridData: FlGridData(verticalInterval: 2),
+                  ),
                 ),
               ),
             ),
-          );
-        }
-      },
-    );
-  }
-}
-
-class LogStatisticFields extends StatelessWidget {
-  const LogStatisticFields({super.key});
-
-  @override
-  Widget build(BuildContext c) {
-    return Consumer<StatsProvider>(
-      builder: (c, statsPvd, _) {
-        final numberOfLogs = statsPvd.totalLogs;
-        final numberOfFavorLogs = statsPvd.totalFavorLogs;
-        final numberOfNoteLogs = statsPvd.totalNoteLogs;
-        final maxMood = statsPvd.maxMoodPoint;
-        final minMood = statsPvd.minMoodPoint;
-        final avgMood = statsPvd.avgMoodPoint;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Total number of logs: $numberOfLogs',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-            Text(
-              'Total number of favorite logs: $numberOfFavorLogs',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-            Text(
-              'Total number of note logs: $numberOfNoteLogs',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-            Text(
-              'Highest mood point: ${maxMood == 0.0 ? "N/A" : maxMood}',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-            Text(
-              'Lowest mood point: $minMood',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-            Text(
-              'Average mood point: ${avgMood == 0.0 ? "N/A" : avgMood.toStringAsFixed(2)}',
-              style: Theme.of(c).textTheme.bodyMedium,
-            ),
-          ],
+          ),
         );
       },
     );
   }
 }
+
+// class LogStatisticFields extends StatelessWidget {
+//   const LogStatisticFields({super.key});
+
+//   @override
+//   Widget build(BuildContext c) {
+//     return Consumer<StatsProvider>(
+//       builder: (c, statsPvd, _) {
+//         final numberOfLogs = statsPvd.totalLogs;
+//         final numberOfFavorLogs = statsPvd.totalFavorLogs;
+//         final numberOfNoteLogs = statsPvd.totalNoteLogs;
+//         final maxMood = statsPvd.maxMoodPoint;
+//         final minMood = statsPvd.minMoodPoint;
+//         final avgMood = statsPvd.avgMoodPoint;
+
+//         return Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(
+//               'Total number of logs: $numberOfLogs',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//             Text(
+//               'Total number of favorite logs: $numberOfFavorLogs',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//             Text(
+//               'Total number of note logs: $numberOfNoteLogs',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//             Text(
+//               'Highest mood point: ${maxMood == 0.0 ? "N/A" : maxMood}',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//             Text(
+//               'Lowest mood point: $minMood',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//             Text(
+//               'Average mood point: ${avgMood == 0.0 ? "N/A" : avgMood.toStringAsFixed(2)}',
+//               style: Theme.of(c).textTheme.bodyMedium,
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   }
+// }
 
 // class RelaxStatisticFields extends StatelessWidget {
 //   const RelaxStatisticFields({super.key, this.dateRange});
