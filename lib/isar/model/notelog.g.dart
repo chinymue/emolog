@@ -96,7 +96,14 @@ const NoteLogSchema = CollectionSchema(
       ],
     )
   },
-  links: {},
+  links: {
+    r'image': LinkSchema(
+      id: 6434347415372258438,
+      name: r'image',
+      target: r'NoteImage',
+      single: true,
+    )
+  },
   embeddedSchemas: {},
   getId: _noteLogGetId,
   getLinks: _noteLogGetLinks,
@@ -110,12 +117,7 @@ int _noteLogEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  {
-    final value = object.labelMood;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.labelMood.length * 3;
   bytesCount += 3 + object.logId.length * 3;
   {
     final value = object.note;
@@ -155,10 +157,10 @@ NoteLog _noteLogDeserialize(
   object.date = reader.readDateTime(offsets[1]);
   object.id = id;
   object.isFavor = reader.readBool(offsets[2]);
-  object.labelMood = reader.readStringOrNull(offsets[3]);
+  object.labelMood = reader.readString(offsets[3]);
   object.lastUpdated = reader.readDateTime(offsets[4]);
   object.logId = reader.readString(offsets[5]);
-  object.moodPoint = reader.readDoubleOrNull(offsets[6]);
+  object.moodPoint = reader.readDouble(offsets[6]);
   object.note = reader.readStringOrNull(offsets[7]);
   object.userUid = reader.readString(offsets[8]);
   return object;
@@ -178,13 +180,13 @@ P _noteLogDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
       return (reader.readDateTime(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
@@ -199,11 +201,12 @@ Id _noteLogGetId(NoteLog object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
-  return [];
+  return [object.image];
 }
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
+  object.image.attach(col, col.isar.collection<NoteImage>(), r'image', id);
 }
 
 extension NoteLogByIndex on IsarCollection<NoteLog> {
@@ -594,24 +597,8 @@ extension NoteLogQueryFilter
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'labelMood',
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'labelMood',
-      ));
-    });
-  }
-
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -624,7 +611,7 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -639,7 +626,7 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -654,8 +641,8 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> labelMoodBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -923,24 +910,8 @@ extension NoteLogQueryFilter
     });
   }
 
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'moodPoint',
-      ));
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'moodPoint',
-      ));
-    });
-  }
-
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointEqualTo(
-    double? value, {
+    double value, {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -953,7 +924,7 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointGreaterThan(
-    double? value, {
+    double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -968,7 +939,7 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointLessThan(
-    double? value, {
+    double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -983,8 +954,8 @@ extension NoteLogQueryFilter
   }
 
   QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> moodPointBetween(
-    double? lower,
-    double? upper, {
+    double lower,
+    double upper, {
     bool includeLower = true,
     bool includeUpper = true,
     double epsilon = Query.epsilon,
@@ -1282,7 +1253,20 @@ extension NoteLogQueryObject
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQueryLinks
-    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
+    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> image(
+      FilterQuery<NoteImage> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'image');
+    });
+  }
+
+  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imageIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'image', 0, true, 0, true);
+    });
+  }
+}
 
 extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByCreatedAt() {
@@ -1604,7 +1588,7 @@ extension NoteLogQueryProperty
     });
   }
 
-  QueryBuilder<NoteLog, String?, QQueryOperations> labelMoodProperty() {
+  QueryBuilder<NoteLog, String, QQueryOperations> labelMoodProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'labelMood');
     });
@@ -1622,7 +1606,7 @@ extension NoteLogQueryProperty
     });
   }
 
-  QueryBuilder<NoteLog, double?, QQueryOperations> moodPointProperty() {
+  QueryBuilder<NoteLog, double, QQueryOperations> moodPointProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'moodPoint');
     });

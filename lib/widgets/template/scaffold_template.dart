@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import '../utils/constant.dart';
-import '../l10n/app_localizations.dart';
+import '../../utils/constant.dart';
+import '../../l10n/app_localizations.dart';
+
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 String localizedLabel(AppLocalizations l10n, String key) {
   switch (key) {
     case 'pageHome':
       return l10n.pageHome;
-    case 'pageHistory':
-      return l10n.pageHistory;
+    case 'pageLog':
+      return "Mood Logs";
+    case 'pageRelax':
+      return "Relax";
+    case 'pageStats':
+      return "Statistics";
     case 'pageSettings':
       return l10n.pageSettings;
     default:
@@ -58,6 +65,7 @@ class MainScaffold extends StatelessWidget {
         items: [
           for (var i in pages)
             BottomNavigationBarItem(
+              backgroundColor: Theme.of(c).colorScheme.primary,
               icon: Icon(i['icon']),
               label: localizedLabel(l10n, i['label']),
             ),
@@ -67,7 +75,7 @@ class MainScaffold extends StatelessWidget {
   }
 }
 
-// Scaffold with bottom navigation bar -----------------------------
+// Scaffold without bottom navigation bar -----------------------------
 class DefaultScaffold extends StatelessWidget {
   final String title;
   final Widget child;

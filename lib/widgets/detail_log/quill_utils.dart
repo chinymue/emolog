@@ -143,51 +143,48 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Column(
-      children: [
-        // Toggle controls
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-              icon: Icon(
-                _showToolbar ? Icons.visibility_off : Icons.visibility,
-              ),
-              tooltip: _showToolbar ? l10n.toolbarShow : l10n.toolbarHidden,
-              onPressed: () => setState(() => _showToolbar = !_showToolbar),
-            ),
-          ],
-        ),
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: kFormMaxWidth,
+        minHeight: kSingleRowScrollMaxHeight + kToolbarHeight,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Toggle controls
+          IconButton(
+            alignment: Alignment.topLeft,
+            icon: Icon(_showToolbar ? Icons.visibility_off : Icons.visibility),
+            tooltip: _showToolbar ? l10n.toolbarShow : l10n.toolbarHidden,
+            onPressed: () => setState(() => _showToolbar = !_showToolbar),
+          ),
 
-        Expanded(
-          child: Padding(
+          Padding(
             padding: EdgeInsets.all(kPaddingLarge),
-            child: quill.QuillEditor.basic(
-              controller: _controller,
-              config: quill.QuillEditorConfig(
-                placeholder: l10n.logPlaceHolderNeutral,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: kFormMaxHeight,
+                minHeight: kSingleRowScrollMaxHeight,
+              ),
+              child: quill.QuillEditor.basic(
+                controller: _controller,
+                config: quill.QuillEditorConfig(
+                  placeholder: l10n.logPlaceHolderNeutral,
+                ),
               ),
             ),
           ),
-        ),
-        if (_showToolbar)
-          SizedBox(
-            height: kToolbarHeight,
-            child: Row(
+          if (_showToolbar)
+            Wrap(
               children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: _useFullToolbar
-                        ? quill.QuillSimpleToolbar(controller: _controller)
-                        : quill.QuillSimpleToolbar(
-                            controller: _controller,
-                            config: buildToolbarConfig(
-                              includeButtons: [...textFormattingButtons],
-                            ),
-                          ),
-                  ),
-                ),
+                _useFullToolbar
+                    ? quill.QuillSimpleToolbar(controller: _controller)
+                    : quill.QuillSimpleToolbar(
+                        controller: _controller,
+                        config: buildToolbarConfig(
+                          includeButtons: [...textFormattingButtons],
+                        ),
+                      ),
                 IconButton(
                   icon: Icon(
                     _useFullToolbar
@@ -204,8 +201,8 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
                 ),
               ],
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

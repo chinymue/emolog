@@ -1,4 +1,5 @@
 import 'package:emolog/l10n/app_localizations.dart';
+// import 'package:emolog/utils/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/log_pvd.dart';
@@ -77,30 +78,6 @@ class DetailsLog extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class DetailsLogContent extends StatelessWidget {
-  const DetailsLogContent({super.key});
-
-  @override
-  Widget build(BuildContext c) {
-    final logProvider = c.read<LogProvider>();
-    return Column(
-      children: [
-        MoodPicker(onMoodSelected: (mood) => logProvider.updateLabelMood(mood)),
-        MoodPointPicker(
-          onChangedMoodPoint: (moodPoint) {
-            logProvider.updateMoodPoint(moodPoint);
-          },
-        ),
-        Expanded(
-          child: DefaultQuillEditor(
-            onContentChanged: (doc) => logProvider.updateNote(doc),
-          ),
-        ),
-      ],
     );
   }
 }

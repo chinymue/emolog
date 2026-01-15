@@ -1,3 +1,4 @@
+import 'package:emolog/isar/model/note_image.dart';
 import 'package:flutter/material.dart';
 import '../../isar/isar_service.dart';
 import '../../isar/model/notelog.dart';
@@ -65,17 +66,19 @@ mixin LogStateMixin on ChangeNotifier {
 
 mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
   /// CREATE A NEW LOG
-
-  Future<int> addLog(String userUid, {DateTime? date}) async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+  Future<MoodLevel?> addLog(String userUid, {DateTime? date}) async {
+    if (logs.any((l) => l.id == newLog.id)) {
+      return null;
+    }
 
     newLog
       ..logId = const Uuid().v4()
       ..createdAt = DateTime.now()
       ..userUid = userUid
       ..date = date ?? DateTime.now()
-      ..labelMood ??= initialMood
-      ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+      ..labelMood
+      ..moodPoint = moodPointFromLabel(newLog.labelMood);
+
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -85,17 +88,58 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
 
     final savedLog = newLog;
     newLog = NoteLog();
-    return savedLog.id;
+    return stringToMoodLevel(savedLog.labelMood);
   }
+
+  Future<List<int>> addImages(List<NoteImage>? imgs) async {
+    if (imgs == null || imgs.isEmpty) return [];
+    final savedImgs = await isarService.saveImages(imgs);
+    return savedImgs.map((e) => e.id).toList();
+  }
+
+  // Future<int> addLogWithImage(
+  //   String userUid,
+  //   NoteImage img, {
+  //   DateTime? date,
+  // }) async {
+  //   if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+
+  //   newLog
+  //     ..logId = const Uuid().v4()
+  //     ..createdAt = DateTime.now()
+  //     ..userUid = userUid
+  //     ..date = date ?? DateTime.now()
+  //     ..labelMood ??= initialMood
+  //     ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+  //   await isarService.saveLogWithImage(newLog, img);
+
+  //   if (isFetchedLogs) {
+  //     logs.add(newLog);
+  //     notifyListeners();
+  //   }
+
+  //   final savedLog = newLog;
+  //   newLog = NoteLog();
+  //   return savedLog.id;
+  // }
 
   /// FETCH LOGS FROM ISAR
 
-  Future<void> fetchLogs(String? userUid) async {
+  Future<void> fetchLogs(String? userUid, {bool notify = true}) async {
     if (!isFetchedLogs) {
       logs = userUid == null
           ? await isarService.getAll<NoteLog>()
           : await isarService.getAllLogs(userUid);
       isFetchedLogs = true;
+      if (notify) notifyListeners();
+    }
+  }
+
+  void deleteAllLogs() async {
+    await isarService.clearCollection<NoteLog>();
+    if (isFetchedLogs) {
+      logs = [];
+      isFetchedLogs = false;
       notifyListeners();
     }
   }
@@ -168,7 +212,7 @@ mixin LogSyncMixin on ServiceAccess, LogStateMixin {
         ..logId = doc.id
         ..note = data['note']
         ..labelMood = data['labelMood']
-        ..moodPoint = (data['moodPoint'] as num?)?.toDouble()
+        ..moodPoint = (data['moodPoint'] as num?)!.toDouble()
         ..date = DateTime.parse(data['date'])
         ..createdAt = DateTime.parse(data['createdAt'])
         ..lastUpdated = DateTime.parse(data['lastUpdated'])

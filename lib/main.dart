@@ -10,15 +10,22 @@ import 'package:emolog/provider/theme_pvd.dart';
 import './provider/log_pvd.dart';
 import './provider/log_view_pvd.dart';
 import './provider/user_pvd.dart';
+import './provider/relax_pvd.dart';
+import './provider/relax_view_pvd.dart';
+import 'package:emolog/provider/stats_pvd.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import './pages/home_page.dart';
 import './pages/history_page.dart';
+import './pages/relax_page.dart';
+import './pages/statistic_page.dart';
 import './pages/settings_page.dart';
 import './l10n/app_localizations.dart';
 import './utils/color_utils.dart';
 import './utils/constant.dart';
 import './utils/theme.dart';
+import './widgets/template/image_picker_template.dart';
+import 'app_messenger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +39,9 @@ Future<void> main() async {
         Provider<IsarService>.value(value: isarService),
         ChangeNotifierProvider(
           create: (c) => LogProvider(c.read<IsarService>()),
+        ),
+        ChangeNotifierProvider(
+          create: (c) => RelaxProvider(c.read<IsarService>()),
         ),
         ChangeNotifierProvider<UserProvider>.value(value: userPvd),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
@@ -50,12 +60,14 @@ class MyApp extends StatelessWidget {
     return Consumer2<LanguageProvider, ThemeProvider>(
       builder: (c, lang, theme, _) {
         return MaterialApp(
+          scaffoldMessengerKey: appMessengerKey,
           onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),
           darkTheme: buildAppTheme(follyRed, isLight: false),
           initialRoute: '/login',
           routes: {
+            '/test': (_) => TestPage(),
             '/login': (_) => LoginPage(),
             '/register': (_) => RegisterPage(),
             pages[0]['route']: (_) => HomePage(),
@@ -63,7 +75,15 @@ class MyApp extends StatelessWidget {
               create: (c) => LogViewProvider(),
               child: HistoryPage(),
             ),
-            pages[2]['route']: (_) => SettingsPage(),
+            pages[2]['route']: (_) => ChangeNotifierProvider(
+              create: (c) => RelaxViewProvider(),
+              child: RelaxPage(),
+            ),
+            pages[3]['route']: (_) => ChangeNotifierProvider(
+              create: (c) => StatsProvider(),
+              child: StatisticPage(),
+            ),
+            pages[4]['route']: (_) => SettingsPage(),
           },
           locale: lang.locale,
           supportedLocales: AppLocalizations.supportedLocales,

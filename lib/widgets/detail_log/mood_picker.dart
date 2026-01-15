@@ -46,7 +46,7 @@ class _MoodPickerState extends State<MoodPicker> {
   Widget build(BuildContext c) {
     final colorPrimary = Theme.of(c).colorScheme.primary;
     return SizedBox(
-      height: 70,
+      height: iconMaxSize + kPadding,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(

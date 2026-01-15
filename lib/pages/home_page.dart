@@ -1,26 +1,49 @@
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/user_pvd.dart';
+import 'package:emolog/utils/data_utils.dart';
+import 'package:emolog/widgets/template/time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/message.dart';
 import '../../provider/log_pvd.dart';
 import '../utils/constant.dart';
-import '../widgets/detail_log/details_log.dart';
+import '../../widgets/detail_log/mood_picker.dart';
+import '../../widgets/detail_log/quill_utils.dart';
 
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
     return MainScaffold(
       currentIndex: 0,
-      child: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
+      child: Padding(
+        padding: const EdgeInsets.all(kPaddingLarge),
+        child: EmologForm(),
+      ),
     );
   }
 }
 
 class EmologForm extends StatelessWidget {
-  const EmologForm({super.key});
+  EmologForm({super.key});
+  DateTime _currentDate = DateTime.now();
+
+  String buildMessageByMoodLevel(MoodLevel mood) {
+    switch (mood) {
+      case MoodLevel.awesome:
+        return "Great! Keep it up!";
+      case MoodLevel.good:
+        return "Good to hear you're happy!";
+      case MoodLevel.chill:
+        return "Life is just keep going on.";
+      case MoodLevel.not_good:
+        return "Sorry to hear that. Hope things get better soon.";
+      case MoodLevel.terrible:
+        return "Take a deep breath. It's okay to lay down sometimes.";
+    }
+  }
+
   Future<void> _saveLog(BuildContext c) async {
     final l10n = AppLocalizations.of(c)!;
     final logProvider = c.read<LogProvider>();
@@ -29,47 +52,66 @@ class EmologForm extends StatelessWidget {
       throw Exception("No user logged in");
     }
     try {
-      final savedLogId = await logProvider.addLog(userUid);
-
-      if (!c.mounted) return;
-      ScaffoldMessenger.of(c)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(l10n.logRecorded(savedLogId)),
-            action: SnackBarAction(
-              label: l10n.undo,
-              onPressed: () => logProvider.deleteLog(id: savedLogId),
-            ),
-          ),
-        );
+      final savedMood = await logProvider.addLog(userUid, date: _currentDate);
+      if (savedMood == null) {
+        _replyMoodSelected(c, isSaved: false);
+      } else {
+        _replyMoodSelected(c, mood: savedMood);
+      }
     } catch (e) {
-      if (!c.mounted) return;
-      ScaffoldMessenger.of(c)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.saveFailed)));
+      _replyMoodSelected(c, isSaved: false);
       print(e);
     }
   }
 
+  void _replyMoodSelected(
+    BuildContext c, {
+    bool isSaved = true,
+    MoodLevel? mood,
+  }) {
+    showDialog(
+      context: c,
+      builder: (c) => AlertDialog(
+        title: isSaved ? Text("Saved successfully!") : Text("Saved failed!"),
+        content: isSaved
+            ? (mood != null
+                  ? Text(buildMessageByMoodLevel(mood))
+                  : Text("You have already logged for this date."))
+            : Text("An error occurred while saving your log."),
+        actions: [],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext c) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        HelloLog(),
-        const SizedBox(height: kPadding),
-        SizedBox(
-          height: kFormMaxHeight + kSingleRowScrollHeight,
-          width: kFormMaxWidth,
-          child: DetailsLogContent(),
+  Widget build(BuildContext c) => SizedBox(
+    height: MediaQuery.of(c).size.height,
+    width: MediaQuery.of(c).size.width,
+    child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(kPaddingLarge),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            HelloLog(),
+            const SizedBox(height: kPadding),
+            TimePickerExampleWidget(onChanged: (value) => _currentDate = value),
+            const SizedBox(height: kPadding),
+            MoodPicker(
+              onMoodSelected: (mood) =>
+                  c.read<LogProvider>().updateLabelMood(mood),
+            ),
+            DefaultQuillEditor(
+              onContentChanged: (doc) => c.read<LogProvider>().updateNote(doc),
+            ),
+            ElevatedButton(
+              onPressed: () => _saveLog(c),
+              child: Text(AppLocalizations.of(c)!.submit),
+            ),
+          ],
         ),
-        const SizedBox(height: kPaddingLarge),
-        ElevatedButton(
-          onPressed: () => _saveLog(c),
-          child: Text(AppLocalizations.of(c)!.submit),
-        ),
-      ],
+      ),
     ),
   );
 }

@@ -4,7 +4,12 @@ import '../utils/constant.dart';
 
 enum SortDateOrder { newestFirst, oldestFirst }
 
-class LogViewProvider extends ChangeNotifier {
+class LogViewProvider extends ChangeNotifier
+    with LogViewStateMixin, LogViewFilters {
+  List<NoteLog> get allLogs => _sortedLogs;
+}
+
+mixin LogViewStateMixin on ChangeNotifier {
   List<NoteLog> _allLogs = [];
   bool isFetchedLogs = false;
 
@@ -13,9 +18,9 @@ class LogViewProvider extends ChangeNotifier {
     isFetchedLogs = true;
     notifyListeners();
   }
+}
 
-  List<NoteLog> get allLogs => _sortedLogs;
-
+mixin LogViewFilters on LogViewStateMixin {
   /// SORT
   SortDateOrder sortDateOrder = SortDateOrder.newestFirst;
 
@@ -40,7 +45,6 @@ class LogViewProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// FILTERS
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
   bool? _isFavoredLog;

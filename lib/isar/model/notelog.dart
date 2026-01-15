@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import './note_image.dart';
 
 part 'notelog.g.dart';
 
@@ -10,8 +11,8 @@ class NoteLog {
   late String logId; // global ID (UUID), dùng để sync với Firestore
 
   String? note;
-  String? labelMood;
-  double? moodPoint;
+  String labelMood = "chill";
+  double moodPoint = 0.5;
   late DateTime date;
   bool isFavor = false;
 
@@ -20,6 +21,8 @@ class NoteLog {
 
   @Index()
   late String userUid; // user uid from User collection for linking with Firestore user collection
+
+  final image = IsarLink<NoteImage>();
 }
 
 extension NoteLogCopyWith on NoteLog {

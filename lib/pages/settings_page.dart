@@ -3,7 +3,7 @@ import 'package:emolog/pages/login_page.dart';
 import 'package:emolog/provider/user_pvd.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/user_info.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final userPvd = c.read<UserProvider>();
     final l10n = AppLocalizations.of(context)!;
     return MainScaffold(
-      currentIndex: 2,
+      currentIndex: 4,
       actions: [
         IconButton(
           onPressed: () {
@@ -36,6 +36,14 @@ class _SettingsPageState extends State<SettingsPage> {
           },
           icon: Icon(Icons.restore),
           tooltip: l10n.restoreSettings,
+        ),
+        IconButton(
+          onPressed: () {
+            userPvd.deleteAllUsers();
+            setState(() => _formKeyReset = UniqueKey());
+          },
+          icon: Icon(Icons.dangerous),
+          tooltip: "Xóa toàn bộ người dùng trong cơ sở dữ liệu",
         ),
       ],
       child: userPvd.user == null
