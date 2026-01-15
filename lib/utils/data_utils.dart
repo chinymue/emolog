@@ -259,6 +259,23 @@ String moodLevelToString(MoodLevel level) {
   }
 }
 
+MoodLevel stringToMoodLevel(String label) {
+  switch (label) {
+    case 'terrible':
+      return MoodLevel.terrible;
+    case 'not good':
+      return MoodLevel.not_good;
+    case 'chill':
+      return MoodLevel.chill;
+    case 'good':
+      return MoodLevel.good;
+    case 'awesome':
+      return MoodLevel.awesome;
+    default:
+      return MoodLevel.chill;
+  }
+}
+
 double moodPointFromLabel(String label) {
   switch (label) {
     case 'terrible':

@@ -21,6 +21,7 @@ const double kButtonMinWidth = 50.0;
 const double kButtonWidth = 120.0;
 const double kFormMaxWidth = 600.0;
 const double kFormMaxHeight = 300.0;
+const double kToolbarMaxHeight = 150;
 const double kSingleRowScrollHeight = 100;
 const double kSingleRowScrollMaxHeight = 150;
 const double kChartHeight = 300;

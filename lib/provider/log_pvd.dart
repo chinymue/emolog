@@ -66,8 +66,10 @@ mixin LogStateMixin on ChangeNotifier {
 
 mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
   /// CREATE A NEW LOG
-  Future<int> addLog(String userUid, {DateTime? date}) async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+  Future<MoodLevel?> addLog(String userUid, {DateTime? date}) async {
+    if (logs.any((l) => l.id == newLog.id)) {
+      return null;
+    }
 
     newLog
       ..logId = const Uuid().v4()
@@ -86,7 +88,7 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
 
     final savedLog = newLog;
     newLog = NoteLog();
-    return savedLog.id;
+    return stringToMoodLevel(savedLog.labelMood!);
   }
 
   Future<List<int>> addImages(List<NoteImage>? imgs) async {

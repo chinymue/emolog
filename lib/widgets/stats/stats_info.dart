@@ -389,7 +389,12 @@ class MoodAvgChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
-    // return Center(child: Text('No data'));
+    final moodAvg = c.read<StatsProvider>().getMoodAvgInRange(range);
+    if (moodAvg.isEmpty) {
+      return const Center(child: Text('No data'));
+    } else if (moodAvg.length == 1) {
+      return const Center(child: Text('Not enough data to draw chart'));
+    }
     return Padding(
       padding: const EdgeInsets.all(kPaddingLarge),
       child: Center(
@@ -407,17 +412,7 @@ class MoodAvgChart extends StatelessWidget {
                   width: kChartWidth,
                   child: LineChart(
                     LineChartData(
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: [
-                            FlSpot(0, 1),
-                            FlSpot(1, 2),
-                            FlSpot(2, 3),
-                            FlSpot(3, 4),
-                            FlSpot(4, 5),
-                          ],
-                        ),
-                      ],
+                      lineBarsData: [LineChartBarData(spots: moodAvg)],
                     ),
                   ),
                 ),

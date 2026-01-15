@@ -95,40 +95,6 @@ mixin StatsStateMixin on ChangeNotifier {
     );
     notifyListeners();
   }
-
-  // List<NoteLog> get logs {
-  //   if (_filterDateRange == null) {
-  //     return _allLogs;
-  //   } else {
-  //     final filtered = _allLogs.where((log) {
-  //       if (inDateRange(_filterDateRange!, log.date)) return true;
-  //       return false;
-  //     }).toList();
-
-  //     filtered.sort((a, b) => a.date.compareTo(b.date));
-  //     return filtered;
-  //   }
-  // }
-
-  // List<Relax> get relaxs {
-  //   if (_filterDateRange == null) {
-  //     return _allRelaxs;
-  //   } else {
-  //     final filtered = _allRelaxs.where((relax) {
-  //       if (isInDateTimeRange(
-  //         _filterDateRange!,
-  //         relax.startTime,
-  //         relax.endTime,
-  //       )) {
-  //         return true;
-  //       }
-  //       return false;
-  //     }).toList();
-
-  //     filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
-  //     return filtered;
-  //   }
-  // }
 }
 /***
 // mixin LogStatsMixin on ChangeNotifier, StatsStateMixin {
@@ -256,7 +222,7 @@ mixin MoodChartMixin on ChangeNotifier, StatsStateMixin, MoodStatsMixin {
     return moodCounts;
   }
 
-  List<FlSpot> buildMoodLineSpots(DateTimeRange range, RangePreset type) {
+  List<FlSpot> getMoodAvgInRange(DateTimeRange range) {
     if (avgMoodByDateLogs.isEmpty) return [];
 
     final dates = avgMoodByDateLogs.keys.toList();
