@@ -10,33 +10,43 @@ import '../widgets/message.dart';
 import '../../provider/log_pvd.dart';
 import '../utils/constant.dart';
 import '../widgets/detail_log/details_log.dart';
+import '../app_messenger.dart';
 
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext c) {
     return MainScaffold(
       currentIndex: 0,
-      child: Padding(padding: const EdgeInsets.all(20), child: EmologForm()),
+      child: Builder(
+        builder: (scaffoldContext) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: EmologForm(scaffoldContext: scaffoldContext),
+          );
+        },
+      ),
     );
   }
 }
 
 class EmologForm extends StatelessWidget {
+  final BuildContext scaffoldContext;
+  const EmologForm({super.key, required this.scaffoldContext});
   // late NoteImage image;
-  Future<void> _saveLog(BuildContext c) async {
-    final l10n = AppLocalizations.of(c)!;
-    final logProvider = c.read<LogProvider>();
-    final userUid = c.read<UserProvider>().user?.uid;
+  Future<void> _saveLog() async {
+    final l10n = AppLocalizations.of(scaffoldContext)!;
+    final logProvider = scaffoldContext.read<LogProvider>();
+    final userUid = scaffoldContext.read<UserProvider>().user?.uid;
     if (userUid == null) {
       throw Exception("No user logged in");
     }
     try {
       final savedLogId = await logProvider.addLog(userUid);
-      if (!c.mounted) return;
-      ScaffoldMessenger.of(c)
+      appMessengerKey.currentState!
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
+            duration: const Duration(seconds: 3),
             content: Text(l10n.logRecorded(savedLogId)),
             action: SnackBarAction(
               label: l10n.undo,
@@ -47,8 +57,7 @@ class EmologForm extends StatelessWidget {
 
       // setState(() => image = NoteImage());
     } catch (e) {
-      if (!c.mounted) return;
-      ScaffoldMessenger.of(c)
+      appMessengerKey.currentState!
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.saveFailed)));
       print(e);
@@ -81,8 +90,8 @@ class EmologForm extends StatelessWidget {
             ),
             const SizedBox(height: kPaddingLarge),
             ElevatedButton(
-              onPressed: () => _saveLog(c),
-              child: Text(AppLocalizations.of(c)!.submit),
+              onPressed: () => _saveLog(),
+              child: Text(AppLocalizations.of(scaffoldContext)!.submit),
             ),
           ],
         ),

@@ -25,6 +25,7 @@ import './utils/color_utils.dart';
 import './utils/constant.dart';
 import './utils/theme.dart';
 import './widgets/template/image_picker_template.dart';
+import 'app_messenger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
     return Consumer2<LanguageProvider, ThemeProvider>(
       builder: (c, lang, theme, _) {
         return MaterialApp(
+          scaffoldMessengerKey: appMessengerKey,
           onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
           themeMode: theme.themeMode,
           theme: buildAppTheme(follyRed),

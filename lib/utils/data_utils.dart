@@ -7,6 +7,42 @@ import 'dart:convert'; // Để dùng jsonDecode
 
 enum RangePreset { day, week, month, sixMonths, year }
 
+enum TimePreset { hour, day, week, month }
+
+TimePreset rangeToTimePreset(RangePreset preset) {
+  switch (preset) {
+    case RangePreset.day:
+      return TimePreset.hour;
+    case RangePreset.week:
+    case RangePreset.month:
+      return TimePreset.day;
+    case RangePreset.sixMonths:
+      return TimePreset.week;
+    case RangePreset.year:
+      return TimePreset.month;
+  }
+}
+
+DateTime normalizeByPreset(DateTime dt, TimePreset preset) {
+  switch (preset) {
+    case TimePreset.hour:
+      return DateTime(dt.year, dt.month, dt.day, dt.hour, 0, 0);
+    case TimePreset.day:
+      return DateTime(dt.year, dt.month, dt.day, 0, 0, 0);
+    case TimePreset.week:
+      return DateTime(
+        dt.year,
+        dt.month,
+        dt.day,
+        0,
+        0,
+        0,
+      ).subtract(Duration(days: dt.weekday - 1));
+    case TimePreset.month:
+      return DateTime(dt.year, dt.month, 1, 0, 0, 0);
+  }
+}
+
 bool isSameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
@@ -189,6 +225,38 @@ bool isNoteLogChanged(NoteLog a, NoteLog b) {
       a.moodPoint != b.moodPoint ||
       a.isFavor != b.isFavor ||
       a.date != b.date;
+}
+
+enum MoodLevel { terrible, not_good, chill, good, awesome }
+
+Color colorMood(MoodLevel level) {
+  switch (level) {
+    case MoodLevel.terrible:
+      return Colors.red;
+    case MoodLevel.not_good:
+      return Colors.orange;
+    case MoodLevel.chill:
+      return Colors.yellow;
+    case MoodLevel.good:
+      return Colors.lightGreen;
+    case MoodLevel.awesome:
+      return Colors.green;
+  }
+}
+
+String moodLevelToString(MoodLevel level) {
+  switch (level) {
+    case MoodLevel.terrible:
+      return 'terrible';
+    case MoodLevel.not_good:
+      return 'not good';
+    case MoodLevel.chill:
+      return 'chill';
+    case MoodLevel.good:
+      return 'good';
+    case MoodLevel.awesome:
+      return 'awesome';
+  }
 }
 
 double moodPointFromLabel(String label) {

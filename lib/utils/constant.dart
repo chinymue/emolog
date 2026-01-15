@@ -9,6 +9,7 @@ const double iconSizeLarge = 40.0;
 const double iconMaxSize = 50.0;
 
 /// Padding -------------------------------------------
+const double kPaddingExtraSmall = 4.0;
 const double kPaddingSmall = 8.0;
 const double kPadding = 16.0;
 const double kPaddingLarge = 20.0;
@@ -22,6 +23,10 @@ const double kFormMaxWidth = 600.0;
 const double kFormMaxHeight = 300.0;
 const double kSingleRowScrollHeight = 100;
 const double kSingleRowScrollMaxHeight = 150;
+const double kChartHeight = 300;
+const double kChartHeightMax = 360;
+const double kChartWidth = 400;
+const double kChartWidthMax = 500;
 
 /// Font Size -----------------------------------------
 /// ExtraSmall: caption, ghi chú

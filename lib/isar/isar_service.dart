@@ -209,7 +209,7 @@ class IsarService {
       return await Isar.open(
         [NoteLogSchema, UserSchema, NoteImageSchema, RelaxSchema],
         directory: dir.path,
-        name: "emolog_v3.2",
+        name: "emolog_v3.3",
         inspector: true,
       );
     }

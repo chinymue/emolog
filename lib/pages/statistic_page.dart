@@ -1,3 +1,4 @@
+import 'package:emolog/widgets/stats/stats_info.dart';
 import 'package:flutter/material.dart';
 import '../widgets/template/scaffold_template.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,7 @@ import '../provider/stats_pvd.dart';
 import 'package:emolog/provider/log_pvd.dart';
 import '../provider/user_pvd.dart';
 import '../provider/relax_pvd.dart';
-import '../widgets/stats/stats_fields.dart';
+// import '../widgets/stats/stats_fields.dart';
 
 class StatisticPage extends StatelessWidget {
   @override
@@ -30,13 +31,26 @@ class _StatsDataState extends State<StatsData> {
   @override
   void initState() {
     super.initState();
-    final userUid = context.read<UserProvider>().user?.uid;
-    context.read<LogProvider>().fetchLogs(userUid);
-    final logs = context.read<LogProvider>().logs;
-    context.read<RelaxProvider>().fetchRelaxs(userUid);
-    final relaxs = context.read<RelaxProvider>().relaxs;
+    _future = _loadStats();
+    // _future = Future.value();
+  }
 
-    _future = context.read<StatsProvider>().fetchData(logs, relaxs);
+  Future<void> _loadStats() async {
+    final userUid = context.read<UserProvider>().user?.uid;
+
+    final logPvd = context.read<LogProvider>();
+    final relaxPvd = context.read<RelaxProvider>();
+
+    await logPvd.fetchLogs(userUid);
+    await relaxPvd.fetchRelaxs(userUid);
+
+    final logs = logPvd.logs;
+    final relaxs = relaxPvd.relaxs;
+
+    if (!mounted) return;
+    await context.read<StatsProvider>().fetchData(logs, relaxs);
+    if (!mounted) return;
+    context.read<StatsProvider>().groupLogsByDate();
   }
 
   @override
@@ -47,7 +61,7 @@ class _StatsDataState extends State<StatsData> {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        return StatisticFields();
+        return StatsInfo();
       },
     );
   }

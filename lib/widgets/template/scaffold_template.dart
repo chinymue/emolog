@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../utils/constant.dart';
 import '../../l10n/app_localizations.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 String localizedLabel(AppLocalizations l10n, String key) {
   switch (key) {
     case 'pageHome':
