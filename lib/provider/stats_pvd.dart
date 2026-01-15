@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../../isar/model/notelog.dart';
 import '../../isar/model/relax.dart';
@@ -5,7 +7,12 @@ import '../utils/data_utils.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class StatsProvider extends ChangeNotifier
-    with StatsStateMixin, MoodStatsMixin, MoodChartMixin {
+    with
+        StatsStateMixin,
+        MoodStatsMixin,
+        MoodChartMixin,
+        RelaxStatsMixin,
+        RelaxChartMixin {
   DateTimeRange? get filterDateRange => _filterDateRange == null
       ? getDefaultDateRangeFromDateTime()
       : DateTimeRange(
@@ -19,28 +26,6 @@ class StatsProvider extends ChangeNotifier
             0,
           ).subtract(Duration(days: 1)),
         );
-
-  // List<FlSpot> get moodSpots => _moodSpots;
-  // // ChartXMapper? get mapper => _mapper;
-  // // bool get hasMoodData => _moodSpots.isNotEmpty && _mapper != null;
-
-  // void rebuildMood(RangePreset type, DateTimeRange range) {
-  //   final source = _logsSorted ? _sortedLogs : _allLogs;
-
-  //   final filtered = source.where((log) {
-  //     return inDateRange(range, log.date);
-  //   }).toList();
-
-  //   final spots = buildMoodLineSpots(filtered, range, type);
-
-  //   if (spots.length == _moodSpots.length) return;
-  //   _moodSpots = spots;
-  //   // if (spots.isEmpty) {
-  //   //   _mapper = null;
-  //   // }
-
-  //   notifyListeners();
-  // }
 }
 
 mixin StatsStateMixin on ChangeNotifier {
@@ -49,10 +34,12 @@ mixin StatsStateMixin on ChangeNotifier {
   bool isFetchedData = false;
   DateTimeRange? _filterDateRange;
   List<NoteLog> _sortedLogs = [];
-  bool _logsSorted = false;
+  List<Relax> _sortedRelaxs = [];
   Map<DateTime, List<NoteLog>> _groupedByDateLogs = {};
   Map<DateTime, Map<String, int>> _groupedByMoodLogs = {};
   Map<DateTime, double> _avgMoodByDateLogs = {};
+  Map<DateTime, List<Relax>> _groupedByDateRelaxs = {};
+  Map<DateTime, int> _totalDurationByDateRelaxs = {};
 
   Future<void> fetchData(List<NoteLog>? logs, List<Relax>? relaxs) async {
     final sw = Stopwatch()..start();
@@ -68,7 +55,8 @@ mixin StatsStateMixin on ChangeNotifier {
     isFetchedData = true;
 
     _sortedLogs = List.of(_allLogs)..sort((a, b) => a.date.compareTo(b.date));
-    _logsSorted = true;
+    _sortedRelaxs = List.of(_allRelaxs)
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     debugPrint(
       '[Stats] notifyListeners (postFrame): ${sw.elapsedMilliseconds}ms',
@@ -181,7 +169,7 @@ mixin MoodStatsMixin on ChangeNotifier, StatsStateMixin {
     for (final entry in _groupedByDateLogs.entries) {
       final moodCountMap = <String, int>{};
       for (final log in entry.value) {
-        final mood = log.labelMood ?? 'unknown';
+        final mood = log.labelMood;
         moodCountMap[mood] = (moodCountMap[mood] ?? 0) + 1;
       }
       map[entry.key] = moodCountMap;
@@ -192,14 +180,21 @@ mixin MoodStatsMixin on ChangeNotifier, StatsStateMixin {
 
   void calculateAvgMoodByDate({bool notify = false}) {
     final map = <DateTime, double>{};
+
     for (final entry in _groupedByDateLogs.entries) {
-      final totalMood = entry.value.fold<double>(
-        0.0,
-        (previousValue, log) => previousValue + (log.moodPoint ?? 0.0),
-      );
-      final avgMood = totalMood / entry.value.length;
-      map[entry.key] = avgMood;
+      final validMoods = entry.value
+          .map((e) => e.moodPoint)
+          .whereType<double>()
+          .toList();
+
+      if (validMoods.isEmpty) {
+        continue;
+      }
+
+      final totalMood = validMoods.reduce((a, b) => a + b);
+      map[entry.key] = totalMood / validMoods.length;
     }
+
     _avgMoodByDateLogs = map;
     if (notify) notifyListeners();
   }
@@ -212,6 +207,7 @@ mixin MoodChartMixin on ChangeNotifier, StatsStateMixin, MoodStatsMixin {
     final moodCounts = <String, int>{};
     for (final date in dates) {
       if (!inDateRange(range, date)) continue;
+
       final moodMap = groupedByMoodLogs[date]!;
       for (final moodEntry in moodMap.entries) {
         moodCounts[moodEntry.key] =
@@ -226,12 +222,11 @@ mixin MoodChartMixin on ChangeNotifier, StatsStateMixin, MoodStatsMixin {
     if (avgMoodByDateLogs.isEmpty) return [];
 
     final dates = avgMoodByDateLogs.keys.toList();
-    // final base = dates.first;
 
     return dates
         .where((date) => inDateRange(range, date))
         .map((date) {
-          final x = date.difference(range.start).inDays.toDouble();
+          final x = (date.difference(range.start).inDays + 1).toDouble();
           final y = avgMoodByDateLogs[date]!;
 
           if (!x.isFinite || !y.isFinite) return null;
@@ -242,146 +237,93 @@ mixin MoodChartMixin on ChangeNotifier, StatsStateMixin, MoodStatsMixin {
   }
 }
 
-// mixin MoodChartMixin on ChangeNotifier, StatsStateMixin {
-//   double dateToX(DateTime date, DateTime base, RangePreset type) {
-//     switch (type) {
-//       case RangePreset.day:
-//         return date.difference(base).inHours.toDouble();
-//       case RangePreset.week:
-//       case RangePreset.month:
-//         return date.difference(base).inDays.toDouble();
-//       case RangePreset.sixMonths:
-//         return (date.difference(base).inDays / 7).floorToDouble();
-//       case RangePreset.year:
-//         return (date.year - base.year) * 12 +
-//             (date.month - base.month).toDouble();
-//     }
-//   }
+mixin RelaxStatsMixin on ChangeNotifier, StatsStateMixin {
+  Map<DateTime, List<Relax>> get groupedByDateRelax => _groupedByDateRelaxs;
 
-//   DateTime normalizeDateToGroup(RangePreset type, DateTime dt) {
-//     switch (type) {
-//       case RangePreset.day:
-//         return normalizeByPreset(dt, TimePreset.hour);
-//       case RangePreset.week:
-//       case RangePreset.month:
-//         return normalizeByPreset(dt, TimePreset.day);
-//       case RangePreset.sixMonths:
-//         return normalizeByPreset(dt, TimePreset.week);
-//       case RangePreset.year:
-//         return normalizeByPreset(dt, TimePreset.month);
-//     }
-//   }
+  Map<DateTime, int> get totalDurationByDate => _totalDurationByDateRelaxs;
 
-//   Map<DateTime, List<NoteLog>> groupByRange(
-//     List<NoteLog> logs,
-//     RangePreset type,
-//   ) {
-//     final map = <DateTime, List<NoteLog>>{};
-//     for (final log in logs) {
-//       final key = normalizeDateToGroup(type, log.date);
-//       map.putIfAbsent(key, () => []).add(log);
-//     }
+  void groupRelaxByDate() {
+    final map = <DateTime, List<Relax>>{};
+    for (final relax in _sortedRelaxs) {
+      final key = normalizeByPreset(relax.startTime, TimePreset.day);
+      map.putIfAbsent(key, () => []).add(relax);
+    }
+    _groupedByDateRelaxs = map;
+    if (map.isEmpty) {
+      _totalDurationByDateRelaxs = {};
+    } else {
+      calculateTotalDurationByDate();
+      debugPrint('Relax grouped by date calculated.');
+      for (final entry in groupedByDateRelax.entries) {
+        debugPrint('Date: ${entry.key}, Sessions: ${entry.value.length}');
+      }
+      for (final entry in totalDurationByDate.entries) {
+        debugPrint('Date: ${entry.key}, Total Duration: ${entry.value} ms');
+      }
+    }
+    notifyListeners();
+  }
 
-//     return map;
-//   }
+  void calculateTotalDurationByDate({bool notify = false}) {
+    final map = <DateTime, int>{};
 
-//   Map<DateTime, double> calcAvgMood(List<NoteLog> logs, RangePreset type) {
-//     final grouped = groupByRange(logs, type);
-//     final entries = grouped.entries.toList()
-//       ..sort((a, b) => a.key.compareTo(b.key));
-//     final result = <DateTime, double>{};
+    for (final entry in _groupedByDateRelaxs.entries) {
+      final validMoods = entry.value
+          .map((e) => e.durationMiliseconds)
+          .whereType<int>()
+          .toList();
 
-//     for (final e in entries) {
-//       final sum = e.value.fold<double>(0, (p, n) => p + n.moodPoint!);
-//       result[e.key] = sum / e.value.length;
-//     }
+      if (validMoods.isEmpty) {
+        continue;
+      }
 
-//     return result;
-//   }
+      final totalMood = validMoods.reduce((a, b) => a + b);
+      map[entry.key] = totalMood;
+    }
 
-//   // List<FlSpot> buildMoodLineSpots(
-//   //   List<NoteLog> logs,
-//   //   DateTimeRange range,
-//   //   RangePreset type,
-//   // ) {
-//   //   if (logs.isEmpty) return [];
+    _totalDurationByDateRelaxs = map;
+    if (notify) notifyListeners();
+  }
+}
 
-//   //   final data = calcAvgMood(logs, type);
-//   //   final base = normalizeByPreset(data.keys.first, rangeToTimePreset(type));
-//   //   //   final mapper = ChartXMapper(base, rangeToTimePreset(type));
+mixin RelaxChartMixin on ChangeNotifier, StatsStateMixin, RelaxStatsMixin {
+  List<BarChartGroupData> getRelaxDurationInRange(
+    DateTimeRange range, {
+    double? width,
+    Color? color,
+  }) {
+    if (totalDurationByDate.isEmpty) return [];
 
-//   //   //     return data.entries.map((log) {
-//   //   //   final x = mapper.toX(log.date);
-//   //   //   final y = log.moodPoint;
+    final dates = totalDurationByDate.keys.toList();
+    final start = dates.first;
+    final end = dates.last;
 
-//   //   //   if (!x.isFinite || !y.isFinite) return null;
-//   //   //   return FlSpot(x, y);
-//   //   // }).whereType<FlSpot>().toList();
+    final days = <DateTime>[];
+    for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+      days.add(d);
+    }
 
-//   //   return List.generate(dates.length, (i) {
-//   //     final date = dates[i];
-//   //     return FlSpot(
-//   //       (date.millisecondsSinceEpoch - base).toDouble(),
-//   //       data[date]!,
-//   //     );
-//   //   });
-//   // }
+    Map<DateTime, int> map = {};
 
-//   List<FlSpot> buildMoodLineSpots(
-//     List<NoteLog> logs,
-//     DateTimeRange range,
-//     RangePreset type,
-//   ) {
-//     if (logs.isEmpty) return [];
+    for (final date in dates) {
+      if (!inDateRange(range, date)) continue;
+      map[date] = totalDurationByDate[date] ?? 0;
+    }
 
-//     final data = calcAvgMood(logs, type);
-//     if (data.isEmpty) return [];
+    return List.generate(days.length, (i) {
+      final day = days[i];
+      final value = (map[day] ?? 0) ~/ (1000 * 60);
 
-//     final dates = data.keys.toList()..sort();
-//     final base = dates.first;
-//     // _mapper = ChartXMapper(base, rangeToTimePreset(type));
-
-//     return dates
-//         .map((date) {
-//           final x = dateToX(date, base, type);
-//           final y = data[date]!;
-
-//           if (!x.isFinite || !y.isFinite) return null;
-//           return FlSpot(x, y);
-//         })
-//         .whereType<FlSpot>()
-//         .toList();
-//   }
-// }
-
-// class ChartXMapper {
-//   final DateTime base;
-//   final TimePreset preset;
-
-//   ChartXMapper(this.base, this.preset);
-
-//   double toX(DateTime dt) {
-//     final d = normalizeByPreset(dt, preset);
-//     switch (preset) {
-//       case TimePreset.hour:
-//         return d.difference(base).inHours.toDouble();
-//       case TimePreset.day:
-//       case TimePreset.week:
-//         return d.difference(base).inDays.toDouble();
-//       case TimePreset.month:
-//         return (d.year - base.year) * 12 + (d.month - base.month).toDouble();
-//     }
-//   }
-
-//   DateTime fromX(double x) {
-//     switch (preset) {
-//       case TimePreset.hour:
-//         return base.add(Duration(hours: x.toInt()));
-//       case TimePreset.day:
-//       case TimePreset.week:
-//         return base.add(Duration(days: x.toInt()));
-//       case TimePreset.month:
-//         return DateTime(base.year, base.month + x.toInt(), 1);
-//     }
-//   }
-// }
+      return BarChartGroupData(
+        x: day.difference(range.start).inDays + 1,
+        barRods: [
+          BarChartRodData(
+            toY: value.toDouble(),
+            width: width == null ? 10 : width / (days.length * 4),
+            color: color,
+          ),
+        ],
+      );
+    });
+  }
+}

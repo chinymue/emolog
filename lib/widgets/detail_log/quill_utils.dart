@@ -145,10 +145,8 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       constraints: BoxConstraints(
-        maxHeight: kFormMaxHeight + (_showToolbar ? kToolbarMaxHeight : 0),
         maxWidth: kFormMaxWidth,
-        minHeight:
-            kSingleRowScrollMaxHeight + (_showToolbar ? kToolbarHeight : 0),
+        minHeight: kSingleRowScrollMaxHeight + kToolbarHeight,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,

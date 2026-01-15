@@ -30,6 +30,19 @@ class _StatsInfoState extends State<StatsInfo> with RangeMixin {
     stats.updateRange(_currentRange);
   }
 
+  Widget buildChartArea(ColorScheme colorScheme, Widget childWidget) =>
+      Container(
+        constraints: BoxConstraints(
+          minHeight: kChartHeightMax + kPaddingLarge,
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(kBorderRadius),
+        ),
+        child: childWidget,
+      );
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -63,28 +76,13 @@ class _StatsInfoState extends State<StatsInfo> with RangeMixin {
                 _updateRange();
               },
             ),
-            Container(
-              constraints: BoxConstraints(
-                minHeight: kChartHeightMax + kPaddingLarge,
-                maxWidth: MediaQuery.of(context).size.width * 0.8,
-              ),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(kBorderRadius),
-              ),
-              child: MoodCountChart(range: _currentRange),
-            ),
+            buildChartArea(colorScheme, MoodCountChart(range: _currentRange)),
             SizedBox(height: kPaddingLarge),
-            Container(
-              constraints: BoxConstraints(
-                minHeight: kChartHeightMax + kPaddingLarge,
-                maxWidth: MediaQuery.of(context).size.width * 0.8,
-              ),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(kBorderRadius),
-              ),
-              child: MoodAvgChart(range: _currentRange),
+            buildChartArea(colorScheme, MoodAvgChart(range: _currentRange)),
+            SizedBox(height: kPaddingLarge),
+            buildChartArea(
+              colorScheme,
+              RelaxDurationChart(range: _currentRange),
             ),
           ],
         ),
@@ -165,7 +163,7 @@ mixin RangeMixin {
       );
     } else if (preset == RangePreset.month) {
       return Text(
-        '${formatMonthDate(dtRange.start)}',
+        formatMonthDate(dtRange.start),
         style: Theme.of(c).textTheme.headlineMedium,
       );
     } else {
@@ -330,18 +328,29 @@ class MoodCountChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
     final moodCounts = c.read<StatsProvider>().getMoodCountsInRange(range);
     final total = moodCounts.values.fold<int>(0, (p, n) => p + n);
     if (moodCounts.isEmpty || total == 0) {
-      return const Center(child: Text('No data'));
+      return Center(
+        child: Text(
+          'No data',
+          style: textTheme.displayLarge?.copyWith(color: colorScheme.primary),
+        ),
+      );
     }
-
     return Padding(
       padding: const EdgeInsets.all(kPaddingLarge),
       child: Center(
         child: Column(
           children: [
-            Text('Mood Counts', style: Theme.of(c).textTheme.headlineMedium),
+            Text(
+              'Mood Counts',
+              style: textTheme.headlineMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
             const SizedBox(height: kPaddingLarge),
             Wrap(
               children: [
@@ -361,7 +370,7 @@ class MoodCountChart extends StatelessWidget {
                       Center(
                         child: Text(
                           total.toString(),
-                          style: Theme.of(c).textTheme.headlineMedium,
+                          style: textTheme.headlineMedium,
                         ),
                       ),
                     ],
@@ -387,14 +396,75 @@ class MoodAvgChart extends StatelessWidget {
 
   final DateTimeRange range;
 
+  AxisTitles buildMoodTitle() => AxisTitles(
+    sideTitles: SideTitles(
+      showTitles: true,
+      interval: 0.25,
+      reservedSize: iconMaxSize + kPaddingLarge,
+      getTitlesWidget: (value, meta) {
+        const ticks = [0.0, 0.25, 0.5, 0.75, 1.0];
+        final v = double.parse(value.toStringAsFixed(2));
+
+        if (!ticks.contains(v)) {
+          return const SizedBox.shrink();
+        }
+
+        final moodKey = labelFromMoodPoint(v);
+        final moodLevel = stringToMoodLevel(moodKey);
+
+        return Padding(
+          padding: const EdgeInsets.all(kPaddingSmall),
+          child: Tooltip(
+            message: moodKey,
+            child: Icon(
+              moods[moodKey],
+              size: iconMaxSize,
+              color: colorMood(moodLevel),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+
+  AxisTitles buildDateTitle() => AxisTitles(
+    sideTitles: SideTitles(
+      showTitles: true,
+      interval: 1,
+      reservedSize: 32,
+      getTitlesWidget: (value, meta) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          value.toInt().toString(),
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext c) {
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
     final moodAvg = c.read<StatsProvider>().getMoodAvgInRange(range);
     if (moodAvg.isEmpty) {
-      return const Center(child: Text('No data'));
+      return Center(
+        child: Text(
+          'No data',
+          style: textTheme.displayLarge?.copyWith(color: colorScheme.primary),
+        ),
+      );
     } else if (moodAvg.length == 1) {
-      return const Center(child: Text('Not enough data to draw chart'));
+      return Center(
+        child: Text(
+          'Not enough data to draw chart',
+          style: textTheme.displayLarge?.copyWith(color: colorScheme.primary),
+        ),
+      );
     }
+    final avgMonthly = labelFromMoodPoint(
+      moodAvg.map((e) => e.y).reduce((a, b) => a + b) / moodAvg.length,
+    );
     return Padding(
       padding: const EdgeInsets.all(kPaddingLarge),
       child: Center(
@@ -402,24 +472,237 @@ class MoodAvgChart extends StatelessWidget {
           children: [
             Text(
               'Mood Average Daily',
-              style: Theme.of(c).textTheme.headlineMedium,
+              style: textTheme.headlineMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
             ),
             const SizedBox(height: kPaddingLarge),
-            Wrap(
-              children: [
-                SizedBox(
-                  height: kChartHeight,
-                  width: kChartWidth,
-                  child: LineChart(
-                    LineChartData(
-                      lineBarsData: [LineChartBarData(spots: moodAvg)],
+            SizedBox(
+              height: kChartHeight,
+              width: kChartWidthMax,
+              child: LineChart(
+                LineChartData(
+                  minY: 0.0,
+                  maxY: 1.0,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: moodAvg,
+                      color: colorScheme.primary,
                     ),
+                  ],
+                  titlesData: FlTitlesData(
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: buildMoodTitle(),
+                    bottomTitles: buildDateTitle(),
+                  ),
+                  gridData: FlGridData(
+                    show: true,
+                    horizontalInterval: 0.25,
+                    drawVerticalLine: false,
+                  ),
+                  lineTouchData: buildTouchTooltip(colorScheme, textTheme),
+                ),
+              ),
+            ),
+            const SizedBox(height: kPaddingLarge),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Mood in this month: $avgMonthly',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(kPaddingSmall),
+                  child: Icon(
+                    moods[avgMonthly],
+                    color: colorMood(stringToMoodLevel(avgMonthly)),
+                    size: iconSize,
                   ),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  LineTouchData buildTouchTooltip(
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    return LineTouchData(
+      enabled: true,
+      touchTooltipData: LineTouchTooltipData(
+        getTooltipColor: (_) => colorScheme.primary,
+        getTooltipItems: (touchedSpots) {
+          return touchedSpots.map((spot) {
+            return LineTooltipItem(
+              'Mood: ${(spot.y * 100).round()}%',
+              textTheme.labelLarge!.copyWith(color: colorScheme.onPrimary),
+            );
+          }).toList();
+        },
+      ),
+    );
+  }
+}
+
+class RelaxDurationChart extends StatelessWidget {
+  const RelaxDurationChart({super.key, required this.range});
+
+  final DateTimeRange range;
+
+  AxisTitles buildDurationTitle() => AxisTitles(
+    sideTitles: SideTitles(
+      showTitles: true,
+      reservedSize: 32,
+      getTitlesWidget: (value, meta) {
+        return SizedBox(
+          width: 24,
+          child: Text(
+            value.round().toString(),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(fontSize: 16),
+          ),
+        );
+      },
+    ),
+  );
+
+  AxisTitles buildDateTitle() => AxisTitles(
+    sideTitles: SideTitles(
+      showTitles: true,
+      interval: 1,
+      reservedSize: 32,
+      getTitlesWidget: (value, meta) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          value.toInt().toString(),
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext c) {
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
+    final duration = c.read<StatsProvider>().getRelaxDurationInRange(
+      range,
+      width: kChartWidthMax,
+      color: colorScheme.primary,
+    );
+    if (duration.isEmpty) {
+      return Center(
+        child: Text(
+          'No data',
+          style: textTheme.displayLarge?.copyWith(color: colorScheme.primary),
+        ),
+      );
+    }
+
+    final totalDuration = duration
+        .map((e) => e.barRods.first.toY)
+        .reduce((a, b) => a + b)
+        .round();
+    final len = duration.fold<int>(
+      0,
+      (count, e) => e.barRods.first.toY > 0 ? count + 1 : count,
+    );
+
+    final avgDuration = (totalDuration / len).round();
+    return Padding(
+      padding: const EdgeInsets.all(kPaddingLarge),
+      child: Center(
+        child: Column(
+          children: [
+            Text(
+              'Relax Duration Daily',
+              style: textTheme.headlineMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: kPaddingLarge),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                RotatedBox(
+                  quarterTurns: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(kPaddingExtraSmall),
+                    child: Text(
+                      "minutes",
+                      style: textTheme.labelLarge?.copyWith(
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: kPadding),
+                SizedBox(
+                  height: kChartHeight,
+                  width: kChartWidthMax - kPaddingLarge * 2,
+                  child: BarChart(
+                    BarChartData(
+                      barGroups: duration,
+                      titlesData: FlTitlesData(
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: buildDurationTitle(),
+                        bottomTitles: buildDateTitle(),
+                      ),
+                      gridData: FlGridData(verticalInterval: 5),
+                      barTouchData: buildTouchTooltip(colorScheme, textTheme),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: kPaddingLarge),
+
+            Text(
+              'Average duration daily: $avgDuration minutes',
+              style: textTheme.bodyLarge?.copyWith(color: colorScheme.primary),
+            ),
+            Text(
+              'Total time this month: $totalDuration minutes',
+              style: textTheme.bodyLarge?.copyWith(color: colorScheme.primary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BarTouchData buildTouchTooltip(ColorScheme colorScheme, TextTheme textTheme) {
+    return BarTouchData(
+      enabled: true,
+      touchTooltipData: BarTouchTooltipData(
+        getTooltipColor: (_) => colorScheme.primary,
+        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+          final value = rod.toY;
+
+          return BarTooltipItem(
+            '${value.round()} minutes',
+            textTheme.labelLarge!.copyWith(color: colorScheme.onPrimary),
+          );
+        },
       ),
     );
   }

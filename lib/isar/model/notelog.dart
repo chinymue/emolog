@@ -11,8 +11,8 @@ class NoteLog {
   late String logId; // global ID (UUID), dùng để sync với Firestore
 
   String? note;
-  String? labelMood;
-  double? moodPoint;
+  String labelMood = "chill";
+  double moodPoint = 0.5;
   late DateTime date;
   bool isFavor = false;
 

@@ -10,81 +10,165 @@ import '../provider/relax_pvd.dart';
 import '../provider/relax_view_pvd.dart';
 import 'dart:async';
 
-class RelaxPage extends StatelessWidget with RelaxPagePickers {
+enum TimerOption { countdown, timer, other }
+
+class RelaxPage extends StatefulWidget {
   RelaxPage({super.key});
 
-  Future<Object?> showTimer(BuildContext c) async {
+  @override
+  State<RelaxPage> createState() => _RelaxPageState();
+}
+
+class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
+  TimerOption preset = TimerOption.timer;
+
+  Future<Object?> showTimer(BuildContext c, TimerOption opt) async {
     return await showGeneralDialog(
       context: c,
       barrierDismissible: true,
       barrierLabel: 'Relax detail',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (c, _, __) {
-        return RelaxTimerSheet();
+        final relaxPvd = c.read<RelaxProvider>();
+        final userUID = c.read<UserProvider>().user?.id.toString();
+        switch (opt) {
+          case TimerOption.countdown:
+          case TimerOption.timer:
+            return RelaxTimerSheet();
+          case TimerOption.other:
+            if (userUID == null) {
+              return const SizedBox.shrink();
+            }
+
+            return FutureBuilder(
+              future: relaxPvd.saveRelax(
+                userUID,
+                DateTime.now().subtract(const Duration(minutes: 5)),
+                DateTime.now(),
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Something went wrong'));
+                }
+
+                final newRelax = snapshot.data!;
+                return RelaxDetailView(relax: newRelax);
+              },
+            );
+        }
       },
     );
   }
 
   @override
   Widget build(BuildContext c) {
-    final userUid = c.read<UserProvider>().user?.uid;
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
     return MainScaffold(
       currentIndex: 2,
       actions: [
         ResetActions(),
         RelaxPageActions(onSelectDate: () => selectDate(c)),
-        RelexViewActions(),
       ],
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(kPaddingSmall),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Text("Debug Actions:"), // delete later
-                ElevatedButton(
-                  child: Icon(Icons.add),
-                  onPressed: () async {
-                    final newRelax = await c.read<RelaxProvider>().saveRelax(
-                      userUid ?? "",
-                      DateTime.now().subtract(Duration(minutes: 5)),
-                      DateTime.now(),
-                    );
-                    print("Đã thêm relax ${newRelax.id} mới");
-                  },
-                ),
-                ElevatedButton(
-                  child: Icon(Icons.delete_forever),
-                  onPressed: () async {
-                    await c.read<RelaxProvider>().deleteAllRelax(userUid);
-                    print("Đã xóa toàn bộ relax của user $userUid");
-                  },
-                ),
-                ElevatedButton(
-                  child: Icon(Icons.delete_sweep),
-                  onPressed: () async {
-                    await c.read<RelaxProvider>().deleteAllRelaxs();
-                    print("Đã xóa toàn bộ relax trong database");
-                  },
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(kPaddingSmall),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  child: Icon(Icons.play_arrow),
-                  onPressed: () => showTimer(c),
-                ),
-              ],
-            ),
+          // Padding(
+          //   padding: const EdgeInsets.all(kPaddingSmall),
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //     children: [
+          //       Text("Debug Actions:"), // delete later
+          //       ElevatedButton(
+          //         child: Icon(Icons.add),
+          //         onPressed: () async {
+          //           final newRelax = await c.read<RelaxProvider>().saveRelax(
+          //             userUid ?? "",
+          //             DateTime.now().subtract(Duration(minutes: 5)),
+          //             DateTime.now(),
+          //           );
+          //           print("Đã thêm relax ${newRelax.id} mới");
+          //         },
+          //       ),
+          //       ElevatedButton(
+          //         child: Icon(Icons.delete_forever),
+          //         onPressed: () async {
+          //           await c.read<RelaxProvider>().deleteAllRelax(userUid);
+          //           print("Đã xóa toàn bộ relax của user $userUid");
+          //         },
+          //       ),
+          //       ElevatedButton(
+          //         child: Icon(Icons.delete_sweep),
+          //         onPressed: () async {
+          //           await c.read<RelaxProvider>().deleteAllRelaxs();
+          //           print("Đã xóa toàn bộ relax trong database");
+          //         },
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          SegmentedButton<TimerOption>(
+            segments: [
+              // ButtonSegment(
+              //   value: TimerOption.countdown,
+              //   label: Row(
+              //     children: [
+              //       Icon(Icons.hourglass_empty, size: iconSizeLarge),
+              //       Text(
+              //         TimerOption.countdown.name,
+              //         style: textTheme.labelMedium?.copyWith(
+              //           color: colorScheme.primary,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              buildButtonSegment(
+                colorScheme,
+                textTheme,
+                TimerOption.timer,
+                Icons.timer,
+              ),
+              buildButtonSegment(
+                colorScheme,
+                textTheme,
+                TimerOption.other,
+                Icons.add,
+              ),
+            ],
+            selected: {preset},
+            onSelectionChanged: (set) => showTimer(c, set.first),
           ),
           Expanded(child: RelaxesList()),
         ],
+      ),
+    );
+  }
+
+  ButtonSegment<TimerOption> buildButtonSegment(
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+    TimerOption value,
+    IconData icon,
+  ) {
+    return ButtonSegment(
+      value: value,
+      label: Padding(
+        padding: const EdgeInsets.all(kPaddingSmall),
+        child: Row(
+          children: [
+            Icon(icon, size: iconSize, color: colorScheme.primary),
+            Text(
+              value.name,
+              style: textTheme.labelMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -229,45 +313,6 @@ class RelaxPageActions extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class RelexViewActions extends StatelessWidget {
-  const RelexViewActions({super.key});
-
-  @override
-  Widget build(BuildContext c) {
-    // final logViewProvider = c.read<LogViewProvider>();
-    // final sortDateOrder = c.select<LogViewProvider, SortDateOrder>(
-    //   (provider) => provider.sortDateOrder,
-    // );
-    // final isFavorFilter = c.select<LogViewProvider, bool>(
-    //   (provider) => provider.isFavoredLog,
-    // );
-    // final l10n = AppLocalizations.of(c)!;
-    // return Row(
-    //   children: [
-    //     IconButton(
-    //       onPressed: () => logViewProvider.setFilterFavor(),
-    //       icon: isFavorFilter
-    //           ? Icon(Icons.favorite_border)
-    //           : Icon(Icons.favorite),
-    //       tooltip: isFavorFilter ? l10n.filterFavorClear : l10n.filterFavor,
-    //     ),
-    //     IconButton(
-    //       onPressed: () => logViewProvider.toggleSortDateOrder(),
-    //       icon: Icon(
-    //         sortDateOrder == SortDateOrder.newestFirst
-    //             ? Icons.arrow_downward
-    //             : Icons.arrow_upward,
-    //       ),
-    //       tooltip: sortDateOrder == SortDateOrder.newestFirst
-    //           ? l10n.sortOldest
-    //           : l10n.sortNewest,
-    //     ),
-    //   ],
-    // );
-    return SizedBox.shrink();
   }
 }
 

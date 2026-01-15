@@ -51,6 +51,7 @@ class _StatsDataState extends State<StatsData> {
     await context.read<StatsProvider>().fetchData(logs, relaxs);
     if (!mounted) return;
     context.read<StatsProvider>().groupLogsByDate();
+    context.read<StatsProvider>().groupRelaxByDate();
   }
 
   @override

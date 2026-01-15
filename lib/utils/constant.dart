@@ -27,7 +27,7 @@ const double kSingleRowScrollMaxHeight = 150;
 const double kChartHeight = 300;
 const double kChartHeightMax = 360;
 const double kChartWidth = 400;
-const double kChartWidthMax = 500;
+const double kChartWidthMax = 900;
 
 /// Font Size -----------------------------------------
 /// ExtraSmall: caption, ghi chú

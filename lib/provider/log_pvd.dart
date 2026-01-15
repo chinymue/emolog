@@ -76,8 +76,8 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
       ..createdAt = DateTime.now()
       ..userUid = userUid
       ..date = date ?? DateTime.now()
-      ..labelMood ??= initialMood
-      ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+      ..labelMood
+      ..moodPoint = moodPointFromLabel(newLog.labelMood);
 
     await isarService.saveLog(newLog);
 
@@ -88,7 +88,7 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
 
     final savedLog = newLog;
     newLog = NoteLog();
-    return stringToMoodLevel(savedLog.labelMood!);
+    return stringToMoodLevel(savedLog.labelMood);
   }
 
   Future<List<int>> addImages(List<NoteImage>? imgs) async {
@@ -97,31 +97,31 @@ mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
     return savedImgs.map((e) => e.id).toList();
   }
 
-  Future<int> addLogWithImage(
-    String userUid,
-    NoteImage img, {
-    DateTime? date,
-  }) async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+  // Future<int> addLogWithImage(
+  //   String userUid,
+  //   NoteImage img, {
+  //   DateTime? date,
+  // }) async {
+  //   if (logs.any((l) => l.id == newLog.id)) return newLog.id;
 
-    newLog
-      ..logId = const Uuid().v4()
-      ..createdAt = DateTime.now()
-      ..userUid = userUid
-      ..date = date ?? DateTime.now()
-      ..labelMood ??= initialMood
-      ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
-    await isarService.saveLogWithImage(newLog, img);
+  //   newLog
+  //     ..logId = const Uuid().v4()
+  //     ..createdAt = DateTime.now()
+  //     ..userUid = userUid
+  //     ..date = date ?? DateTime.now()
+  //     ..labelMood ??= initialMood
+  //     ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+  //   await isarService.saveLogWithImage(newLog, img);
 
-    if (isFetchedLogs) {
-      logs.add(newLog);
-      notifyListeners();
-    }
+  //   if (isFetchedLogs) {
+  //     logs.add(newLog);
+  //     notifyListeners();
+  //   }
 
-    final savedLog = newLog;
-    newLog = NoteLog();
-    return savedLog.id;
-  }
+  //   final savedLog = newLog;
+  //   newLog = NoteLog();
+  //   return savedLog.id;
+  // }
 
   /// FETCH LOGS FROM ISAR
 
@@ -212,7 +212,7 @@ mixin LogSyncMixin on ServiceAccess, LogStateMixin {
         ..logId = doc.id
         ..note = data['note']
         ..labelMood = data['labelMood']
-        ..moodPoint = (data['moodPoint'] as num?)?.toDouble()
+        ..moodPoint = (data['moodPoint'] as num?)!.toDouble()
         ..date = DateTime.parse(data['date'])
         ..createdAt = DateTime.parse(data['createdAt'])
         ..lastUpdated = DateTime.parse(data['lastUpdated'])

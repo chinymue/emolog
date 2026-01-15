@@ -163,7 +163,7 @@ String formatDuration(int miliseconds) {
 String formatFullDuration(int miliseconds) {
   final hour = miliseconds ~/ (1000 * 60 * 60);
   final minute = (miliseconds % (1000 * 60 * 60)) ~/ (1000 * 60);
-  final second = (miliseconds % (1000 * 60)) ~/ 1000;
+  // final second = (miliseconds % (1000 * 60)) ~/ 1000;
   final buffer = StringBuffer();
   if (hour > 0) {
     buffer.write('$hour giờ ');
@@ -171,9 +171,10 @@ String formatFullDuration(int miliseconds) {
   if (minute > 0) {
     buffer.write('$minute phút ');
   }
-  if (second > 0 || buffer.isEmpty) {
-    buffer.write('$second giây');
-  }
+  // if (second > 0 || buffer.isEmpty) {
+  //   buffer.write('$second giây');
+  // }
+  if (buffer.isEmpty) buffer.write('-');
   return buffer.toString().trim();
 }
 
@@ -182,6 +183,12 @@ String format(Duration d) {
   final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
   final ms = (d.inMilliseconds % 1000 ~/ 100).toString();
   return '$minutes:$seconds.$ms';
+}
+
+String formatMinutesDuration(int miliseconds) {
+  final totalMinutes = miliseconds ~/ (1000 * 60);
+  final minute = totalMinutes % 60;
+  return minute.round().toString();
 }
 
 /// === STRING & JSON UTILS ===
@@ -236,7 +243,7 @@ Color colorMood(MoodLevel level) {
     case MoodLevel.not_good:
       return Colors.orange;
     case MoodLevel.chill:
-      return Colors.yellow;
+      return Colors.yellow.shade600;
     case MoodLevel.good:
       return Colors.lightGreen;
     case MoodLevel.awesome:
@@ -280,7 +287,7 @@ double moodPointFromLabel(String label) {
   switch (label) {
     case 'terrible':
       return 0;
-    case 'not good':
+    case 'not_good':
       return 0.25;
     case 'chill':
       return 0.5;

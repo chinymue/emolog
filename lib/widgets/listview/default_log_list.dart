@@ -158,7 +158,7 @@ class DefaultLogTile extends StatelessWidget {
         style: textTheme.labelMedium?.copyWith(fontWeight: kFontWeightRegular),
       ),
       trailing: Tooltip(
-        message: localizedMood(l10n, log.labelMood!),
+        message: localizedMood(l10n, log.labelMood),
         child: Icon(
           moods[log.labelMood],
           size: iconSizeLarge,
@@ -216,17 +216,13 @@ mixin RelaxDetailPickers {
     return await showTimePicker(context: c, initialTime: initialTime);
   }
 
-  Future<void> selectDate(BuildContext c, DateTime initialDate) async {
-    final DateTime? picked = await showDatePicker(
+  Future<DateTime?> selectDate(BuildContext c, DateTime initialDate) async {
+    return await showDatePicker(
       context: c,
       initialDate: initialDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null) {
-      if (!c.mounted) return;
-      print("Ngày chọn: $picked");
-    }
   }
 }
 
@@ -237,13 +233,19 @@ mixin RelaxDetailBuilders {
       child: Material(
         color: Colors.transparent,
         child: Container(
-          width: MediaQuery.of(c).size.width * 0.8,
-          height: MediaQuery.of(c).size.height * 0.5,
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(c).size.width * 0.8,
+          ),
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Padding(padding: EdgeInsets.all(kPadding), child: childWidget),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(kPaddingLarge),
+              child: childWidget,
+            ),
+          ),
         ),
       ),
     );
@@ -279,7 +281,7 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
   DateTime? newEnd;
   bool isWarningShown = false;
   String warningText = "";
-  bool isUpdated = false;
+  bool isSaved = false;
 
   Widget buildTimeButton(BuildContext c, bool isStart) {
     final textTheme = Theme.of(c).textTheme;
@@ -347,7 +349,51 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
         ? (newStart ?? widget.relax.startTime)
         : (newEnd ?? widget.relax.endTime);
     return TextButton(
-      onPressed: () => selectDate(c, date),
+      onPressed: () async {
+        final picked = await selectDate(c, date);
+        if (picked != null) {
+          if (!c.mounted) return;
+          if (isStart) {
+            final tmp = DateTime(
+              picked.year,
+              picked.month,
+              picked.day,
+              widget.relax.startTime.hour,
+              widget.relax.startTime.minute,
+            );
+            if (tmp.isAfter(newEnd ?? widget.relax.endTime)) {
+              setState(() {
+                isWarningShown = true;
+                warningText = "Thời gian bắt đầu phải trước thời gian kết thúc";
+              });
+            } else {
+              setState(() {
+                newStart = tmp;
+                isWarningShown = false;
+              });
+            }
+          } else {
+            final tmp = DateTime(
+              picked.year,
+              picked.month,
+              picked.day,
+              widget.relax.endTime.hour,
+              widget.relax.endTime.minute,
+            );
+            if (tmp.isBefore(newStart ?? widget.relax.startTime)) {
+              setState(() {
+                isWarningShown = true;
+                warningText = "Thời gian kết thúc phải sau thời gian bắt đầu";
+              });
+            } else {
+              setState(() {
+                newEnd = tmp;
+                isWarningShown = false;
+              });
+            }
+          }
+        }
+      },
       child: Text(
         formatDate(date),
         style: textTheme.bodyLarge?.copyWith(
@@ -396,12 +442,15 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
 
   Widget handleUpdateButton(BuildContext c) {
     return ElevatedButton(
-      onPressed: () => c.read<RelaxProvider>().updateRelax(
-        id: widget.relax.id,
-        start: newStart,
-        end: newEnd,
-        newNote: widget.relax.note,
-      ),
+      onPressed: () {
+        c.read<RelaxProvider>().updateRelax(
+          id: widget.relax.id,
+          start: newStart,
+          end: newEnd,
+          newNote: widget.relax.note,
+        );
+        setState(() => isSaved = true);
+      },
       child: Text("Cập nhật"),
     );
   }
@@ -436,6 +485,9 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
           buildNoteField(),
           SizedBox(height: kPaddingLarge),
           handleUpdateButton(c),
+          SizedBox(height: kPaddingLarge),
+          isSaved ? Text("Saved successfully") : const SizedBox.shrink(),
+          SizedBox(height: kPaddingLarge),
         ],
       ),
     );
