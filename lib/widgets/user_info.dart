@@ -279,11 +279,11 @@ class ActionButtons extends StatelessWidget {
           ),
           SizedBox(width: kPaddingLarge),
           ElevatedButton(onPressed: onLogout, child: const Text('logout')),
-          SizedBox(width: kPaddingLarge),
-          ElevatedButton(
-            onPressed: isGuest ? null : onSync,
-            child: const Text('sync'),
-          ),
+          // SizedBox(width: kPaddingLarge),
+          // ElevatedButton(
+          //   onPressed: isGuest ? null : onSync,
+          //   child: const Text('sync'),
+          // ),
         ],
       ),
     );

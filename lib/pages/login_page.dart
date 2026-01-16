@@ -41,10 +41,46 @@ class _LoginFormState extends State<LoginForm> {
     }
   }
 
+  Future<bool> _showDisclaimerDialog(BuildContext c) async {
+    final textTheme = Theme.of(c).textTheme;
+    final colorScheme = Theme.of(c).colorScheme;
+
+    return await showDialog<bool>(
+          context: c,
+          barrierDismissible: false, // không cho bấm ra ngoài
+          builder: (_) => AlertDialog(
+            icon: const Icon(Icons.warning),
+            title: Text(
+              "Disclaimer",
+              style: textTheme.headlineMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
+            content: Text(
+              "This app couldn't be use to cure / fix health problem. Only using to reflect and relaxing",
+              style: textTheme.bodyMedium,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: const Text("Accepted"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Future<void> _handleLoginAsGuest(BuildContext c) async {
+    final isAccepted = await _showDisclaimerDialog(c);
+    if (!c.mounted) return;
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.loginAsGuest(c);
-    if (ok) {
+    if (isAccepted & ok) {
       if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, widget.redirect);
     } else {

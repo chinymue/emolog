@@ -92,6 +92,7 @@ class DefaultScaffold extends StatelessWidget {
   Widget build(BuildContext c) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           title,
           style: Theme.of(c).textTheme.headlineLarge?.copyWith(
