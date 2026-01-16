@@ -8,53 +8,22 @@ class User {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true)
-  late String username; // TODO: loại bỏ late và tạo constructor
+  late String uid; // Firebase UID
+  @Index(unique: true)
+  late String username;
   late String passwordHash;
   late String salt;
+  bool isGuest = false;
 
   String? fullName;
   String? email;
   late String avatarUrl;
+  DateTime createdAt = DateTime.now();
+  DateTime? lastLogin;
+  late DateTime updatedAt;
 
   @enumerated
   LanguageAvailable language = LanguageAvailable.en;
   @enumerated
   ThemeStyle theme = ThemeStyle.light;
 }
-
-// extension UserClone on User {
-//   User clone() {
-//     return User()
-//       ..id = id
-//       ..username = username
-//       ..passwordHash = passwordHash
-//       ..fullName = fullName
-//       ..email = email
-//       ..avatarUrl = avatarUrl
-//       ..language = language
-//       ..theme = theme;
-//   }
-// }
-
-// extension UserCopyWith on User {
-//   User copyWith({
-//     Id? id,
-//     String? username,
-//     String? password,
-//     String? fullName,
-//     String? email,
-//     String? avatarUrl,
-//     LanguageAvailable? language,
-//     ThemeStyle? theme,
-//   }) {
-//     return User()
-//       ..id = id ?? this.id
-//       ..username = username ?? this.username
-//       ..password = password ?? this.password
-//       ..fullName = fullName ?? this.fullName
-//       ..email = email ?? this.email
-//       ..avatarUrl = avatarUrl ?? this.avatarUrl
-//       ..language = language ?? this.language
-//       ..theme = theme ?? this.theme;
-//   }
-// }

@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import './note_image.dart';
 
 part 'notelog.g.dart';
 
@@ -6,47 +7,45 @@ part 'notelog.g.dart';
 class NoteLog {
   Id id = Isar.autoIncrement;
 
+  @Index(unique: true)
+  late String logId; // global ID (UUID), dùng để sync với Firestore
+
   String? note;
-
-  String? labelMood;
-
-  double? moodPoint;
-
+  String labelMood = "chill";
+  double moodPoint = 0.5;
   late DateTime date;
+  bool isFavor = false;
 
+  DateTime createdAt = DateTime.now();
   late DateTime lastUpdated;
 
-  bool isFavor = false;
-}
+  @Index()
+  late String userUid; // user uid from User collection for linking with Firestore user collection
 
-extension NoteLogClone on NoteLog {
-  NoteLog clone() {
-    return NoteLog()
-      ..id = id
-      ..date = date
-      ..isFavor = isFavor
-      ..note = note
-      ..labelMood = labelMood
-      ..moodPoint = moodPoint
-      ..lastUpdated = lastUpdated;
-  }
+  final image = IsarLink<NoteImage>();
 }
 
 extension NoteLogCopyWith on NoteLog {
   NoteLog copyWith({
     Id? id,
+    String? logId,
     String? note,
     String? labelMood,
     double? moodPoint,
     DateTime? date,
     bool? isFavor,
+    DateTime? lastUpdated,
+    String? userUid,
   }) {
     return NoteLog()
       ..id = id ?? this.id
+      ..logId = logId ?? this.logId
       ..note = note ?? this.note
       ..labelMood = labelMood ?? this.labelMood
       ..moodPoint = moodPoint ?? this.moodPoint
       ..date = date ?? this.date
-      ..isFavor = isFavor ?? this.isFavor;
+      ..isFavor = isFavor ?? this.isFavor
+      ..lastUpdated = lastUpdated ?? this.lastUpdated
+      ..userUid = userUid ?? this.userUid;
   }
 }

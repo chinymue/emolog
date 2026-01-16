@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "474193537658",
+    "project_id": "emolog-37614",
+    "storage_bucket": "emolog-37614.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474193537658:android:2427b4cee79e5a7ce669c3",
+        "android_client_info": {
+          "package_name": "com.example.emolog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474193537658-eucdgg88m574pfih7tqm56a47am2c7ck.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBG5LWzvckRAIKd9ACd8INxexvTNvDXm4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474193537658-eucdgg88m574pfih7tqm56a47am2c7ck.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474193537658-o6j74jetg17o9e52hu55vn5ta5l8olou.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.emolog"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

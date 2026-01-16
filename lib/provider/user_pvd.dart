@@ -1,4 +1,5 @@
 import 'package:emolog/provider/lang_pvd.dart';
+import 'package:emolog/provider/log_pvd.dart';
 import 'package:emolog/provider/theme_pvd.dart';
 import 'package:emolog/utils/auth_utils.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import '../isar/isar_service.dart';
 import '../isar/model/user.dart';
 import '../enum/lang.dart';
 import '../enum/theme_style.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class UserProvider extends ChangeNotifier {
   final IsarService isarService;
@@ -17,64 +20,284 @@ class UserProvider extends ChangeNotifier {
   User? get user => _currentUser;
 
   /// LOGIN, LOGOUT AND REGISTATION
-  Future<bool> login(
-    BuildContext c, {
-    required String username,
-    required String password,
-  }) async {
-    final user = await isarService.getByUsername(username);
-    if (user == null) return false;
-    final hash = hashPassword(password, user.salt);
-    if (hash == user.passwordHash) {
-      _currentUser = user;
-      isFetchedUser = true;
-      notifyListeners();
-      c.read<LanguageProvider>().setLang(_currentUser!.language);
-      c.read<ThemeProvider>().setTheme(_currentUser!.theme);
-      return true;
-    }
-    return false;
-  }
-
-  void logout() {
-    _currentUser = null;
-    isFetchedUser = false;
-    notifyListeners();
-  }
-
   Future<bool> register(String username, String password) async {
     final user = await isarService.getByUsername(username);
     if (user != null) return false;
     final salt = generateSalt();
     final hash = hashPassword(password, salt);
     final newUser = User()
+      ..uid = const Uuid().v4()
       ..username = username
       ..passwordHash = hash
-      ..salt = salt;
+      ..salt = salt
+      ..avatarUrl = ""
+      ..createdAt = DateTime.now()
+      ..fullName = username;
     await isarService.saveUser(newUser);
     _currentUser = newUser;
     isFetchedUser = true;
+    // if (_currentUser != null && !(_currentUser!.isGuest)) {
+    //   await _syncUserToFirestore(_currentUser!);
+    // }
     notifyListeners();
     return true;
   }
 
-  Future<bool> loginAsGuest(BuildContext c) async {
-    final user = await isarService.getByUsername('guest');
+  Future<bool> login(
+    BuildContext c, {
+    required String username,
+    required String password,
+  }) async {
+    final user = await isarService.getByUsername(username);
+    // User? firestoreUser;
     if (user == null) {
+      //   firestoreUser = await _fetchLatestUserFromFirestore(username);
+      //   if (firestoreUser == null) return false;
+
+      //   final hash = hashPassword(password, firestoreUser.salt);
+      //   if (hash != firestoreUser.passwordHash) return false;
+      //   _currentUser = firestoreUser;
       return false;
     } else {
+      final hash = hashPassword(password, user.salt);
+      if (hash != user.passwordHash) return false;
       _currentUser = user;
-      isFetchedUser = true;
-      notifyListeners();
+    }
+
+    isFetchedUser = true;
+    _currentUser!.lastLogin = DateTime.now();
+
+    // if (!_currentUser!.isGuest) await _fetchAndSyncUser(_currentUser!);
+
+    if (c.mounted) {
       c.read<LanguageProvider>().setLang(_currentUser!.language);
       c.read<ThemeProvider>().setTheme(_currentUser!.theme);
-      return true;
+    }
+
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> logout(BuildContext c) async {
+    if (_currentUser!.isGuest) {
+      await resetGuest(c, isLogout: true);
+    }
+    _currentUser = null;
+    isFetchedUser = false;
+    notifyListeners();
+    if (c.mounted) c.read<LogProvider>().reset();
+  }
+
+  Future<bool> loginAsGuest(BuildContext c) async {
+    final newUser = User()
+      ..uid = const Uuid().v4()
+      ..username = "guest${DateTime.now().millisecondsSinceEpoch}"
+      ..passwordHash = "default_pw"
+      ..salt = "default_salt"
+      ..isGuest = true
+      ..fullName = "guest"
+      ..avatarUrl = "default_url"
+      ..createdAt = DateTime.now()
+      ..lastLogin = DateTime.now();
+    await isarService.saveUser(newUser);
+    _currentUser = newUser;
+    isFetchedUser = true;
+    notifyListeners();
+    if (!c.mounted) return false;
+    c.read<LanguageProvider>().setLang(_currentUser!.language);
+    c.read<ThemeProvider>().setTheme(_currentUser!.theme);
+    return true;
+  }
+
+  /// CLOUD FIRESTORE SYNC
+
+  Future<void> _fetchAndSyncUser(User user) async {
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        final cloudData = doc.data()!;
+        final cloudUpdatedAt = DateTime.parse(cloudData['updatedAt']);
+
+        if (user.updatedAt.isAfter(cloudUpdatedAt)) {
+          await isarService.updateUser(user);
+          await _syncUserToFirestore(user);
+        } else if (cloudUpdatedAt.isAfter(user.updatedAt)) {
+          await _checkAndSyncUserFromFirestore(user);
+        }
+      } else {
+        await isarService.updateUser(user);
+        await _syncUserToFirestore(user);
+      }
+    } catch (e) {
+      print("Error during user sync: $e");
+    }
+  }
+
+  Future<User?> _fetchLatestUserFromFirestore(String username) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .get(); // lấy tất cả phiên bản cùng username
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      // Chọn doc có updatedAt mới nhất
+      querySnapshot.docs.sort((a, b) {
+        final aUpdated = a.data()['updatedAt'] != null
+            ? DateTime.parse(a.data()['updatedAt'])
+            : DateTime.fromMillisecondsSinceEpoch(0);
+        final bUpdated = b.data()['updatedAt'] != null
+            ? DateTime.parse(b.data()['updatedAt'])
+            : DateTime.fromMillisecondsSinceEpoch(0);
+        return bUpdated.compareTo(aUpdated); // giảm dần
+      });
+
+      final doc = querySnapshot.docs.first;
+      final data = doc.data();
+
+      return User()
+        ..uid = doc.id
+        ..username = data['username'] ?? ''
+        ..passwordHash = data['passwordHash'] ?? ''
+        ..salt = data['salt'] ?? ''
+        ..fullName = data['fullName']
+        ..email = data['email']
+        ..avatarUrl = data['avatarUrl'] ?? ''
+        ..createdAt = DateTime.parse(data['createdAt'])
+        ..lastLogin = data['lastLogin'] != null
+            ? DateTime.parse(data['lastLogin'])
+            : null
+        ..language = LanguageAvailable.values.firstWhere(
+          (e) => e.name == data['language'],
+          orElse: () => LanguageAvailable.en,
+        )
+        ..theme = ThemeStyle.values.firstWhere(
+          (e) => e.name == data['theme'],
+          orElse: () => ThemeStyle.light,
+        )
+        ..updatedAt = data['updatedAt'] != null
+            ? DateTime.parse(data['updatedAt'])
+            : DateTime.now();
+    } catch (e) {
+      debugPrint('Error fetching user from Firestore: $e');
+      return null;
+    }
+  }
+
+  Future<void> syncAllUsersToFirestore() async {
+    final users = await isarService.getAll<User>();
+
+    for (var user in users) {
+      if (user.uid.isEmpty) {
+        user.uid = const Uuid().v4();
+        await isarService.updateUser(user);
+      }
+
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+
+      await docRef.set({
+        'username': user.username,
+        'passwordHash': user.passwordHash,
+        'salt': user.salt,
+        'fullName': user.fullName,
+        'email': user.email,
+        'avatarUrl': user.avatarUrl,
+        'createdAt': user.createdAt.toIso8601String(),
+        'lastLogin': user.lastLogin?.toIso8601String(),
+        'language': user.language.name,
+        'theme': user.theme.name,
+        'updatedAt': user.updatedAt.toIso8601String(),
+      }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
+    }
+  }
+
+  Future<void> _syncUserToFirestore(User user) async {
+    if (user.uid.isEmpty) {
+      user.uid = const Uuid().v4();
+      await isarService.updateUser(user);
+    }
+    final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    await docRef.set({
+      'username': user.username,
+      'passwordHash': user.passwordHash,
+      'salt': user.salt,
+      'fullName': user.fullName,
+      'email': user.email,
+      'avatarUrl': user.avatarUrl,
+      'createdAt': user.createdAt.toIso8601String(),
+      'lastLogin': user.lastLogin?.toIso8601String(),
+      'language': user.language.name,
+      'theme': user.theme.name,
+      'updatedAt': user.updatedAt.toIso8601String(),
+    }, SetOptions(merge: true)); // merge để không overwrite dữ liệu cũ
+  }
+
+  Future<void> _checkAndSyncUserFromFirestore(User localUser) async {
+    if (localUser.uid.isEmpty) return; // chưa có Firestore docId → không sync
+
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(localUser.uid);
+    final doc = await docRef.get();
+
+    if (!doc.exists) return; // user chưa có trên Firestore
+
+    final data = doc.data()!;
+    bool updated = false;
+
+    // Kiểm tra từng field, nếu khác thì cập nhật
+    final userToUpdate = localUser;
+
+    if ((data['fullName'] ?? '') != (localUser.fullName ?? '')) {
+      userToUpdate.fullName = data['fullName'];
+      updated = true;
+    }
+    if ((data['email'] ?? '') != (localUser.email ?? '')) {
+      userToUpdate.email = data['email'];
+      updated = true;
+    }
+    if ((data['avatarUrl'] ?? '') != localUser.avatarUrl) {
+      userToUpdate.avatarUrl = data['avatarUrl'];
+      updated = true;
+    }
+    if (data['lastLogin'] != null) {
+      final firestoreLastLogin = DateTime.parse(data['lastLogin']);
+      if (localUser.lastLogin == null ||
+          firestoreLastLogin.isAfter(localUser.lastLogin!)) {
+        userToUpdate.lastLogin = firestoreLastLogin;
+        updated = true;
+      }
+    }
+    if (data['language'] != null &&
+        data['language'] != localUser.language.name) {
+      userToUpdate.language = LanguageAvailable.values.firstWhere(
+        (e) => e.name == data['language'],
+      );
+      updated = true;
+    }
+    if (data['theme'] != null && data['theme'] != localUser.theme.name) {
+      userToUpdate.theme = ThemeStyle.values.firstWhere(
+        (e) => e.name == data['theme'],
+      );
+      updated = true;
+    }
+
+    if (updated) {
+      await isarService.updateUser(userToUpdate);
     }
   }
 
   /// RESET USER INFO INTO DEFAULT
 
-  void resetGuest(
+  Future<void> resetGuest(
     BuildContext c, {
     bool isNotify = true,
     bool isChange = true,
@@ -88,12 +311,13 @@ class UserProvider extends ChangeNotifier {
     _currentUser!.language = LanguageAvailable.en;
     _currentUser!.theme = ThemeStyle.light;
     if (isNotify) notifyListeners();
-    if (isChange) {
+    if (isChange && c.mounted) {
       c.read<LanguageProvider>().resetLang();
       c.read<ThemeProvider>().resetTheme();
+      c.read<LogProvider>().deleteAllLog(userUid: _currentUser!.uid);
     }
     if (isLogout) {
-      await isarService.updateUser(_currentUser!);
+      await isarService.deleteById<User>(_currentUser!.id);
     }
   }
 
@@ -105,6 +329,13 @@ class UserProvider extends ChangeNotifier {
     c.read<ThemeProvider>().resetTheme();
   }
 
+  void deleteAllUsers() async {
+    await isarService.clearCollection<User>();
+    _currentUser = null;
+    isFetchedUser = false;
+    notifyListeners();
+  }
+
   /// UPDATE USER INFO
 
   Future<void> updateUser({
@@ -113,8 +344,10 @@ class UserProvider extends ChangeNotifier {
     String? newFullname,
     String? newEmail,
     String? newURL,
+    DateTime? newLastLogin,
     LanguageAvailable? newLanguage,
     ThemeStyle? newTheme,
+    bool isNotify = true,
   }) async {
     if (newUsername != null) {
       _currentUser!.username = newUsername;
@@ -134,6 +367,9 @@ class UserProvider extends ChangeNotifier {
     if (newURL != null) {
       _currentUser!.avatarUrl = newURL;
     }
+    if (newLastLogin != null) {
+      _currentUser!.lastLogin = newLastLogin;
+    }
     if (newLanguage != null) {
       _currentUser!.language = newLanguage;
     }
@@ -141,41 +377,6 @@ class UserProvider extends ChangeNotifier {
       _currentUser!.theme = newTheme;
     }
     await isarService.updateUser(_currentUser!);
-    notifyListeners();
-  }
-
-  // update each field
-
-  void updatePassword(String newPass) {
-    final salt = generateSalt();
-    final hash = hashPassword(newPass, salt);
-    _currentUser!.passwordHash = hash;
-    _currentUser!.salt = salt;
-    notifyListeners();
-  }
-
-  void updateFullname(String newFullname) {
-    _currentUser!.fullName = newFullname;
-    notifyListeners();
-  }
-
-  void updateEmail(String newEmail) {
-    _currentUser!.email = newEmail;
-    notifyListeners();
-  }
-
-  void updateAvatar(String newURL) {
-    _currentUser!.avatarUrl = newURL;
-    notifyListeners();
-  }
-
-  void updateLanguage(LanguageAvailable newLanguage) {
-    _currentUser!.language = newLanguage;
-    notifyListeners();
-  }
-
-  void updateTheme(ThemeStyle newTheme) {
-    _currentUser!.theme = newTheme;
-    notifyListeners();
+    if (isNotify) notifyListeners();
   }
 }

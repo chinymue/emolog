@@ -1,10 +1,10 @@
 import 'package:emolog/provider/user_pvd.dart';
-import 'package:emolog/widgets/form_template.dart';
+import 'package:emolog/widgets/template/form_template.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:emolog/l10n/app_localizations.dart';
-import 'package:emolog/export/decor_utils.dart';
-import 'package:emolog/widgets/scaffold_template.dart';
+import '../utils/constant.dart';
+import 'package:emolog/widgets/template/scaffold_template.dart';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -28,6 +28,7 @@ class _RegisterFormState extends State<RegisterForm> {
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.register(_usernameCtrl.text, _passwordCtrl.text);
     if (ok) {
+      if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, '/');
     } else {
       setState(() => _error = "This username has been used");

@@ -1,17 +1,37 @@
-import 'package:emolog/export/decor_utils.dart';
+import 'package:emolog/provider/user_pvd.dart';
+import '../utils/constant.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';
 import 'package:emolog/widgets/detail_log/mood_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/log_pvd.dart';
-import '../widgets/scaffold_template.dart';
+import '../widgets/template/scaffold_template.dart';
 import '../widgets/listview/default_log_list.dart';
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends StatelessWidget with HistoryPagePickers {
   HistoryPage({super.key});
 
-  Future<void> _selectDate(BuildContext c) async {
+  @override
+  Widget build(BuildContext c) {
+    return MainScaffold(
+      currentIndex: 1,
+      actions: [
+        ResetActions(),
+        HistoryPageActions(
+          onShowMoodPicker: () => showMoodPicker(c),
+          onShowMoodRangePicker: () => showMoodRangePicker(c),
+          onSelectDate: () => selectDate(c),
+        ),
+        LogViewActions(),
+      ],
+      child: LogsList(),
+    );
+  }
+}
+
+mixin HistoryPagePickers {
+  Future<void> selectDate(BuildContext c) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: c,
       initialDateRange: DateTimeRange(
@@ -28,7 +48,7 @@ class HistoryPage extends StatelessWidget {
     }
   }
 
-  Future<void> _showMoodPicker(BuildContext c) async {
+  Future<void> showMoodPicker(BuildContext c) async {
     return showModalBottomSheet(
       context: c,
       builder: (_) => Padding(
@@ -43,18 +63,88 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  Future<void> _showMoodRangePicker(BuildContext c) async {
+  Future<void> showMoodRangePicker(BuildContext c) async {
     return showModalBottomSheet(
       context: c,
       builder: (_) => Padding(
         padding: const EdgeInsets.all(kPaddingSmall),
-        child: MoodRangePicker(
-          onChangedRange: (values) =>
-              c.read<LogViewProvider>().setMoodRangeFilter(values),
+        child: SizedBox(
+          height: kSingleRowScrollMaxHeight,
+          child: MoodRangePicker(
+            onChangedRange: (values) =>
+                c.read<LogViewProvider>().setMoodRangeFilter(values),
+          ),
         ),
       ),
     );
   }
+}
+
+class ResetActions extends StatelessWidget {
+  const ResetActions({super.key});
+
+  @override
+  Widget build(BuildContext c) {
+    final l10n = AppLocalizations.of(c)!;
+    final hasActiveFilter = c.select<LogViewProvider, bool>(
+      (provider) => provider.hasActiveFilter,
+    );
+    return hasActiveFilter
+        ? IconButton(
+            onPressed: () => c.read<LogViewProvider>().clearFilters(),
+            icon: Icon(Icons.filter_alt_off),
+            tooltip: l10n.filtersClear,
+          )
+        : SizedBox.shrink();
+  }
+}
+
+class HistoryPageActions extends StatelessWidget {
+  const HistoryPageActions({
+    super.key,
+    required this.onShowMoodPicker,
+    required this.onShowMoodRangePicker,
+    required this.onSelectDate,
+  });
+
+  final VoidCallback onShowMoodPicker;
+  final VoidCallback onShowMoodRangePicker;
+  final VoidCallback onSelectDate;
+
+  @override
+  Widget build(BuildContext c) {
+    final l10n = AppLocalizations.of(c)!;
+    return Row(
+      children: [
+        IconButton(
+          onPressed: onShowMoodPicker,
+          icon: Icon(Icons.emoji_emotions),
+          tooltip: l10n.filterMood,
+        ),
+        IconButton(
+          onPressed: onShowMoodRangePicker,
+          icon: Icon(Icons.percent),
+          tooltip: l10n.filterMoodPoint,
+        ),
+        IconButton(
+          onPressed: onSelectDate,
+          icon: Icon(Icons.date_range),
+          tooltip: l10n.filterDateRange,
+        ),
+        IconButton(
+          onPressed: () {
+            c.read<LogProvider>().deleteAllLogs();
+          },
+          icon: Icon(Icons.dangerous),
+          tooltip: "Xóa toàn bộ log trong cơ sở dữ liệu",
+        ),
+      ],
+    );
+  }
+}
+
+class LogViewActions extends StatelessWidget {
+  const LogViewActions({super.key});
 
   @override
   Widget build(BuildContext c) {
@@ -62,43 +152,18 @@ class HistoryPage extends StatelessWidget {
     final sortDateOrder = c.select<LogViewProvider, SortDateOrder>(
       (provider) => provider.sortDateOrder,
     );
-    final hasActiveFilter = c.select<LogViewProvider, bool>(
-      (provider) => provider.hasActiveFilter,
-    );
     final isFavorFilter = c.select<LogViewProvider, bool>(
       (provider) => provider.isFavoredLog,
     );
     final l10n = AppLocalizations.of(c)!;
-    return MainScaffold(
-      currentIndex: 1,
-      actions: [
-        if (hasActiveFilter)
-          IconButton(
-            onPressed: () => logViewProvider.clearFilters(),
-            icon: Icon(Icons.filter_alt_off),
-            tooltip: l10n.filtersClear,
-          ),
-        IconButton(
-          onPressed: () => _showMoodPicker(c),
-          icon: Icon(Icons.emoji_emotions),
-          tooltip: l10n.filterMood,
-        ),
-        IconButton(
-          onPressed: () => _showMoodRangePicker(c),
-          icon: Icon(Icons.percent),
-          tooltip: l10n.filterMoodPoint,
-        ),
+    return Row(
+      children: [
         IconButton(
           onPressed: () => logViewProvider.setFilterFavor(),
           icon: isFavorFilter
               ? Icon(Icons.favorite_border)
               : Icon(Icons.favorite),
           tooltip: isFavorFilter ? l10n.filterFavorClear : l10n.filterFavor,
-        ),
-        IconButton(
-          onPressed: () => _selectDate(c),
-          icon: Icon(Icons.date_range),
-          tooltip: l10n.filterDateRange,
         ),
         IconButton(
           onPressed: () => logViewProvider.toggleSortDateOrder(),
@@ -112,7 +177,6 @@ class HistoryPage extends StatelessWidget {
               : l10n.sortNewest,
         ),
       ],
-      child: LogsList(),
     );
   }
 }
@@ -122,8 +186,9 @@ class LogsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) {
+    final userUid = c.read<UserProvider>().user?.uid;
     return FutureBuilder(
-      future: c.read<LogProvider>().fetchLogs(),
+      future: c.read<LogProvider>().fetchLogs(userUid),
       builder: (c, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -135,7 +200,7 @@ class LogsList extends StatelessWidget {
             c.read<LogViewProvider>().updateLogs(logs);
           });
         }
-        return DefaultList();
+        return DefaultList(type: "log");
       },
     );
   }

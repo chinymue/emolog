@@ -1,16 +1,84 @@
-import '../export/data/notelog_isar.dart';
+import 'package:emolog/isar/model/note_image.dart';
 import 'package:flutter/material.dart';
-import '../export/basic_utils.dart';
+import '../../isar/isar_service.dart';
+import '../../isar/model/notelog.dart';
+import '../utils/data_utils.dart';
+import '../utils/constant.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
-class LogProvider extends ChangeNotifier {
-  final IsarService isarService;
-  LogProvider(this.isarService);
+class LogProvider extends ChangeNotifier
+    with
+        ServiceAccess,
+        LogStateMixin,
+        LogCRUDMixin,
+        LogSyncMixin,
+        EditableLogMixin,
+        FieldUpdaterMixin,
+        ToggleMixin {
+  LogProvider(IsarService service) {
+    isarService = service;
+  }
+}
 
-  /// CREATE A NEW LOG
+mixin ServiceAccess on ChangeNotifier {
+  late final IsarService isarService;
+}
+
+mixin LogStateMixin on ChangeNotifier {
   NoteLog newLog = NoteLog();
 
-  Future<int> addLog() async {
-    if (logs.any((l) => l.id == newLog.id)) return newLog.id;
+  List<NoteLog> logs = [];
+  bool isFetchedLogs = false;
+
+  late NoteLog editableLog;
+  bool hasEditableLog = false;
+
+  void reset() {
+    logs = [];
+    isFetchedLogs = false;
+    notifyListeners();
+  }
+
+  void updateLogField(
+    NoteLog target,
+    void Function(NoteLog) updater, {
+    bool notify = false,
+  }) {
+    updater(target);
+    if (notify) notifyListeners();
+  }
+
+  void updateLogInList(
+    int id,
+    NoteLog Function(NoteLog) transform, {
+    bool notify = true,
+  }) {
+    if (!isFetchedLogs) return;
+
+    final index = logs.indexWhere((l) => l.id == id);
+    if (index == -1) return;
+
+    logs[index] = transform(logs[index]);
+    if (notify) notifyListeners();
+  }
+}
+
+mixin LogCRUDMixin on ServiceAccess, LogStateMixin {
+  /// CREATE A NEW LOG
+  Future<MoodLevel?> addLog(String userUid, {DateTime? date}) async {
+    if (logs.any((l) => l.id == newLog.id)) {
+      return null;
+    }
+
+    newLog
+      ..logId = const Uuid().v4()
+      ..createdAt = DateTime.now()
+      ..userUid = userUid
+      ..date = date ?? DateTime.now()
+      ..labelMood
+      ..moodPoint = moodPointFromLabel(newLog.labelMood);
+
     await isarService.saveLog(newLog);
 
     if (isFetchedLogs) {
@@ -20,46 +88,70 @@ class LogProvider extends ChangeNotifier {
 
     final savedLog = newLog;
     newLog = NoteLog();
-    return savedLog.id;
+    return stringToMoodLevel(savedLog.labelMood);
   }
 
-  // set each field
-
-  void setLabelMood({required String mood, bool notify = false}) {
-    if (moods.containsKey(mood)) {
-      newLog.labelMood = mood;
-      if (notify) notifyListeners();
-    }
+  Future<List<int>> addImages(List<NoteImage>? imgs) async {
+    if (imgs == null || imgs.isEmpty) return [];
+    final savedImgs = await isarService.saveImages(imgs);
+    return savedImgs.map((e) => e.id).toList();
   }
 
-  void setMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
-      newLog.moodPoint = moodPoint;
-      if (notify) notifyListeners();
-    }
-  }
+  // Future<int> addLogWithImage(
+  //   String userUid,
+  //   NoteImage img, {
+  //   DateTime? date,
+  // }) async {
+  //   if (logs.any((l) => l.id == newLog.id)) return newLog.id;
 
-  void setNote({String? note, bool notify = false}) {
-    if (note != null) {
-      newLog.note = note;
-      if (notify) notifyListeners();
-    }
-  }
+  //   newLog
+  //     ..logId = const Uuid().v4()
+  //     ..createdAt = DateTime.now()
+  //     ..userUid = userUid
+  //     ..date = date ?? DateTime.now()
+  //     ..labelMood ??= initialMood
+  //     ..moodPoint ??= moodPointFromLabel(newLog.labelMood!);
+  //   await isarService.saveLogWithImage(newLog, img);
 
-  void setFavor({bool notify = false}) {
-    newLog.isFavor = !newLog.isFavor;
-    if (notify) notifyListeners();
-  }
+  //   if (isFetchedLogs) {
+  //     logs.add(newLog);
+  //     notifyListeners();
+  //   }
+
+  //   final savedLog = newLog;
+  //   newLog = NoteLog();
+  //   return savedLog.id;
+  // }
 
   /// FETCH LOGS FROM ISAR
-  List<NoteLog> logs = [];
-  bool isFetchedLogs = false;
 
-  Future<void> fetchLogs() async {
+  Future<void> fetchLogs(String? userUid, {bool notify = true}) async {
     if (!isFetchedLogs) {
-      logs = await isarService.getAll<NoteLog>();
+      logs = userUid == null
+          ? await isarService.getAll<NoteLog>()
+          : await isarService.getAllLogs(userUid);
       isFetchedLogs = true;
+      if (notify) notifyListeners();
+    }
+  }
+
+  void deleteAllLogs() async {
+    await isarService.clearCollection<NoteLog>();
+    if (isFetchedLogs) {
+      logs = [];
+      isFetchedLogs = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> deleteAllLog({
+    required String userUid,
+    bool notify = false,
+  }) async {
+    await isarService.deleteLogOfUser(userUid);
+    if (isFetchedLogs) {
+      logs = [];
+      if (notify) notifyListeners();
     }
   }
 
@@ -71,85 +163,125 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> saveUpdatedLog({required int id}) async {
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == id);
-      if (index != -1) {
-        await isarService.updateLog(logs[index]);
-      }
-    }
-  }
-
   Future<void> updateLog({required NoteLog updatedLog}) async {
     await isarService.updateLog(updatedLog);
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == updatedLog.id);
-      if (index != -1) {
-        logs[index] = updatedLog;
-        notifyListeners();
+    updateLogInList(updatedLog.id, (_) => updatedLog);
+  }
+}
+
+mixin LogSyncMixin on ServiceAccess, LogStateMixin {
+  final _firestore = FirebaseFirestore.instance;
+  Future<void> syncLogs(String userUid) async {
+    final isarLogs = await isarService.getAllLogs(userUid);
+    final firestoreLogs = await _fetchLogsFromFirestore(userUid);
+
+    // Map để dễ so sánh
+    final isarMap = {for (var log in isarLogs) log.logId: log};
+    final firestoreMap = {for (var log in firestoreLogs) log.logId: log};
+
+    // Đồng bộ Isar -> Firestore
+    for (var log in isarLogs) {
+      final cloudLog = firestoreMap[log.logId];
+      if (cloudLog == null) {
+        await _uploadLogToFirestore(log);
+      } else if (log.lastUpdated.isAfter(cloudLog.lastUpdated)) {
+        await _uploadLogToFirestore(log); // overwrite cloud
+      }
+    }
+
+    // Đồng bộ Firestore -> Isar
+    for (var log in firestoreLogs) {
+      final localLog = isarMap[log.logId];
+      if (localLog == null) {
+        await isarService.saveLog(log);
+      } else if (log.lastUpdated.isAfter(localLog.lastUpdated)) {
+        await isarService.updateLog(log);
       }
     }
   }
 
-  // only if logs is fetched
-  void updateLogFavor({required int id}) {
-    if (isFetchedLogs) {
-      final index = logs.indexWhere((l) => l.id == id);
-      if (index != -1) {
-        logs[index] = logs[index].copyWith(isFavor: !logs[index].isFavor);
-        notifyListeners();
-      }
-    }
+  Future<List<NoteLog>> _fetchLogsFromFirestore(String userUid) async {
+    final snap = await _firestore
+        .collection('notelogs')
+        .where('userUid', isEqualTo: userUid)
+        .get();
+
+    return snap.docs.map((doc) {
+      final data = doc.data();
+      return NoteLog()
+        ..logId = doc.id
+        ..note = data['note']
+        ..labelMood = data['labelMood']
+        ..moodPoint = (data['moodPoint'] as num?)!.toDouble()
+        ..date = DateTime.parse(data['date'])
+        ..createdAt = DateTime.parse(data['createdAt'])
+        ..lastUpdated = DateTime.parse(data['lastUpdated'])
+        ..isFavor = data['isFavor'] ?? false
+        ..userUid = data['userUid'];
+    }).toList();
   }
 
-  /// UPDATE IN DETAILS LOG
-  late NoteLog editableLog;
-  bool hasEditableLog = false;
+  Future<void> _uploadLogToFirestore(NoteLog log) async {
+    await _firestore.collection('notelogs').doc(log.logId).set({
+      'note': log.note,
+      'labelMood': log.labelMood,
+      'moodPoint': log.moodPoint,
+      'date': log.date.toIso8601String(),
+      'createdAt': log.createdAt.toIso8601String(),
+      'lastUpdated': log.lastUpdated.toIso8601String(),
+      'isFavor': log.isFavor,
+      'userUid': log.userUid,
+    });
+  }
+}
 
+mixin EditableLogMixin on ServiceAccess, LogStateMixin {
   void setEditableLog({required NoteLog log, bool notify = true}) {
-    editableLog = log.clone();
+    editableLog = log.copyWith();
     hasEditableLog = true;
-    if (notify) notifyListeners();
-  }
-
-  void updateLabelMood({required String mood, bool notify = false}) {
-    if (moods.containsKey(mood)) {
-      editableLog.labelMood = mood;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void updateMoodPoint({required double moodPoint, bool notify = false}) {
-    if (moodPoint >= minMoodPoint && moodPoint <= maxMoodPoint) {
-      editableLog.moodPoint = moodPoint;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void updateNote({String? note, bool notify = false}) {
-    if (note != null) {
-      editableLog.note = note;
-      if (notify) notifyListeners();
-    }
-  }
-
-  void updateFavor({bool notify = false}) {
-    editableLog.isFavor = !editableLog.isFavor;
     if (notify) notifyListeners();
   }
 
   Future<void> saveEditableLog() async {
     await isarService.updateLog(editableLog);
+    updateLogInList(
+      editableLog.id,
+      (log) => isNoteLogChanged(log, editableLog) ? editableLog : log,
+    );
+    editableLog = NoteLog();
+    hasEditableLog = false;
+  }
+}
+
+mixin FieldUpdaterMixin on LogStateMixin {
+  void updateLabelMood(String mood, {NoteLog? target}) =>
+      updateLogField(target ?? newLog, (log) => log.labelMood = mood);
+
+  void updateMoodPoint(double point, {NoteLog? target}) =>
+      updateLogField(target ?? newLog, (log) => log.moodPoint = point);
+
+  void updateNote(String? note, {NoteLog? target}) =>
+      updateLogField(target ?? newLog, (log) => log.note = note);
+
+  void updateFavor({NoteLog? target}) =>
+      updateLogField(target ?? newLog, (log) => log.isFavor = !log.isFavor);
+}
+
+mixin ToggleMixin on ServiceAccess, LogStateMixin, LogSyncMixin {
+  /// TOGGLE FAVORITE STATUS
+  Future<void> updateLogFavor({required int id, bool isSaved = false}) async {
+    updateLogInList(id, (log) => log.copyWith(isFavor: !log.isFavor));
+    if (isSaved) {
+      final log = logs.firstWhere((log) => log.id == id);
+      await isarService.updateLog(log);
+    }
+  }
+
+  Future<void> toggleSync(String userUid) async {
+    await syncLogs(userUid);
     if (isFetchedLogs) {
-      final index = logs.indexWhere((log) => log.id == editableLog.id);
-      if (isNoteLogChanged(logs[index], editableLog)) {
-        if (index != -1) {
-          logs[index] = editableLog;
-          editableLog = NoteLog();
-          hasEditableLog = false;
-          notifyListeners();
-        }
-      }
+      logs = await isarService.getAllLogs(userUid);
+      notifyListeners();
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:emolog/l10n/app_localizations.dart';
+// import 'package:emolog/utils/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/log_pvd.dart';
@@ -60,48 +61,23 @@ class DetailsLog extends StatelessWidget {
           MoodPicker(
             selectedMood: editable.labelMood,
             onMoodSelected: (mood) =>
-                c.read<LogProvider>().updateLabelMood(mood: mood),
+                c.read<LogProvider>().updateLabelMood(mood, target: editable),
           ),
           MoodPointPicker(
             selectedMoodPoint: editable.moodPoint,
-            onChangedMoodPoint: (moodPoint) =>
-                c.read<LogProvider>().updateMoodPoint(moodPoint: moodPoint),
+            onChangedMoodPoint: (moodPoint) => c
+                .read<LogProvider>()
+                .updateMoodPoint(moodPoint, target: editable),
           ),
           Expanded(
             child: DefaultQuillEditor(
               initialContent: editable.note ?? '',
               onContentChanged: (doc) =>
-                  c.read<LogProvider>().updateNote(note: doc),
+                  c.read<LogProvider>().updateNote(doc, target: editable),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class DetailsLogContent extends StatelessWidget {
-  const DetailsLogContent({super.key});
-
-  @override
-  Widget build(BuildContext c) {
-    final logProvider = c.read<LogProvider>();
-    return Column(
-      children: [
-        MoodPicker(
-          onMoodSelected: (mood) => logProvider.setLabelMood(mood: mood),
-        ),
-        MoodPointPicker(
-          onChangedMoodPoint: (moodPoint) {
-            logProvider.setMoodPoint(moodPoint: moodPoint);
-          },
-        ),
-        Expanded(
-          child: DefaultQuillEditor(
-            onContentChanged: (doc) => logProvider.setNote(note: doc),
-          ),
-        ),
-      ],
     );
   }
 }

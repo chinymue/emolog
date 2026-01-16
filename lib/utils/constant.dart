@@ -9,6 +9,7 @@ const double iconSizeLarge = 40.0;
 const double iconMaxSize = 50.0;
 
 /// Padding -------------------------------------------
+const double kPaddingExtraSmall = 4.0;
 const double kPaddingSmall = 8.0;
 const double kPadding = 16.0;
 const double kPaddingLarge = 20.0;
@@ -20,7 +21,13 @@ const double kButtonMinWidth = 50.0;
 const double kButtonWidth = 120.0;
 const double kFormMaxWidth = 600.0;
 const double kFormMaxHeight = 300.0;
-const double kSingleRowScrollMaxHeight = 100;
+const double kToolbarMaxHeight = 150;
+const double kSingleRowScrollHeight = 100;
+const double kSingleRowScrollMaxHeight = 150;
+const double kChartHeight = 300;
+const double kChartHeightMax = 360;
+const double kChartWidth = 400;
+const double kChartWidthMax = 900;
 
 /// Font Size -----------------------------------------
 /// ExtraSmall: caption, ghi chú
@@ -67,7 +74,9 @@ const Duration kAnimationDurationLong = Duration(milliseconds: 600);
 
 const List<Map<String, dynamic>> pages = [
   {'route': '/', 'label': 'pageHome', 'icon': Icons.home},
-  {'route': '/logs', 'label': 'pageHistory', 'icon': Icons.history},
+  {'route': '/logs', 'label': 'pageLog', 'icon': Icons.emoji_emotions},
+  {'route': '/relaxes', 'label': 'pageRelax', 'icon': Icons.self_improvement},
+  {'route': '/stats', 'label': 'pageStats', 'icon': Icons.analytics},
   {'route': '/settings', 'label': 'pageSettings', 'icon': Icons.settings},
 ];
 
