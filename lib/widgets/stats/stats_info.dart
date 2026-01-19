@@ -622,7 +622,7 @@ class RelaxDurationChart extends StatelessWidget {
       (count, e) => e.barRods.first.toY > 0 ? count + 1 : count,
     );
 
-    final avgDuration = (totalDuration / len).round();
+    final avgDuration = len != 0 ? (totalDuration / len).round() : 0;
     return Padding(
       padding: const EdgeInsets.all(kPaddingLarge),
       child: Center(

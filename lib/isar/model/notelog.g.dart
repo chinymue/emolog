@@ -96,14 +96,7 @@ const NoteLogSchema = CollectionSchema(
       ],
     )
   },
-  links: {
-    r'image': LinkSchema(
-      id: 6434347415372258438,
-      name: r'image',
-      target: r'NoteImage',
-      single: true,
-    )
-  },
+  links: {},
   embeddedSchemas: {},
   getId: _noteLogGetId,
   getLinks: _noteLogGetLinks,
@@ -201,12 +194,11 @@ Id _noteLogGetId(NoteLog object) {
 }
 
 List<IsarLinkBase<dynamic>> _noteLogGetLinks(NoteLog object) {
-  return [object.image];
+  return [];
 }
 
 void _noteLogAttach(IsarCollection<dynamic> col, Id id, NoteLog object) {
   object.id = id;
-  object.image.attach(col, col.isar.collection<NoteImage>(), r'image', id);
 }
 
 extension NoteLogByIndex on IsarCollection<NoteLog> {
@@ -1253,20 +1245,7 @@ extension NoteLogQueryObject
     on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQueryLinks
-    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> image(
-      FilterQuery<NoteImage> q) {
-    return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'image');
-    });
-  }
-
-  QueryBuilder<NoteLog, NoteLog, QAfterFilterCondition> imageIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'image', 0, true, 0, true);
-    });
-  }
-}
+    on QueryBuilder<NoteLog, NoteLog, QFilterCondition> {}
 
 extension NoteLogQuerySortBy on QueryBuilder<NoteLog, NoteLog, QSortBy> {
   QueryBuilder<NoteLog, NoteLog, QAfterSortBy> sortByCreatedAt() {

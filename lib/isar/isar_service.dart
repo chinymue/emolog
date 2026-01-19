@@ -23,20 +23,20 @@ class IsarService {
     return log;
   }
 
-  Future<NoteLog> saveLogWithImage(NoteLog log, NoteImage img) async {
-    final isar = await db;
-    await isar.writeTxn(() async {
-      img.usedCount += 1;
-      await isar.noteImages.put(img);
-      log
-        ..image.value = img
-        ..lastUpdated = DateTime.now();
+  // Future<NoteLog> saveLogWithImage(NoteLog log, NoteImage img) async {
+  //   final isar = await db;
+  //   await isar.writeTxn(() async {
+  //     img.usedCount += 1;
+  //     await isar.noteImages.put(img);
+  //     log
+  //       ..image.value = img
+  //       ..lastUpdated = DateTime.now();
 
-      await isar.noteLogs.put(log);
-      await log.image.save();
-    });
-    return log;
-  }
+  //     await isar.noteLogs.put(log);
+  //     await log.image.save();
+  //   });
+  //   return log;
+  // }
 
   Future<User> saveUser(User user) async {
     final isar = await db;
