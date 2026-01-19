@@ -121,23 +121,23 @@ class HistoryPageActions extends StatelessWidget {
           icon: Icon(Icons.emoji_emotions),
           tooltip: l10n.filterMood,
         ),
-        IconButton(
-          onPressed: onShowMoodRangePicker,
-          icon: Icon(Icons.percent),
-          tooltip: l10n.filterMoodPoint,
-        ),
+        // IconButton(
+        //   onPressed: onShowMoodRangePicker,
+        //   icon: Icon(Icons.percent),
+        //   tooltip: l10n.filterMoodPoint,
+        // ),
         IconButton(
           onPressed: onSelectDate,
           icon: Icon(Icons.date_range),
           tooltip: l10n.filterDateRange,
         ),
-        IconButton(
-          onPressed: () {
-            c.read<LogProvider>().deleteAllLogs();
-          },
-          icon: Icon(Icons.dangerous),
-          tooltip: "Xóa toàn bộ log trong cơ sở dữ liệu",
-        ),
+        // IconButton(
+        //   onPressed: () {
+        //     c.read<LogProvider>().deleteAllLogs();
+        //   },
+        //   icon: Icon(Icons.dangerous),
+        //   tooltip: "Xóa toàn bộ log trong cơ sở dữ liệu",
+        // ),
       ],
     );
   }

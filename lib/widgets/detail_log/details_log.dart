@@ -56,27 +56,29 @@ class DetailsLog extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          MoodPicker(
-            selectedMood: editable.labelMood,
-            onMoodSelected: (mood) =>
-                c.read<LogProvider>().updateLabelMood(mood, target: editable),
-          ),
-          MoodPointPicker(
-            selectedMoodPoint: editable.moodPoint,
-            onChangedMoodPoint: (moodPoint) => c
-                .read<LogProvider>()
-                .updateMoodPoint(moodPoint, target: editable),
-          ),
-          Expanded(
-            child: DefaultQuillEditor(
-              initialContent: editable.note ?? '',
-              onContentChanged: (doc) =>
-                  c.read<LogProvider>().updateNote(doc, target: editable),
+      body: Center(
+        child: Column(
+          children: [
+            MoodPicker(
+              selectedMood: editable.labelMood,
+              onMoodSelected: (mood) =>
+                  c.read<LogProvider>().updateLabelMood(mood, target: editable),
             ),
-          ),
-        ],
+            // MoodPointPicker(
+            //   selectedMoodPoint: editable.moodPoint,
+            //   onChangedMoodPoint: (moodPoint) => c
+            //       .read<LogProvider>()
+            //       .updateMoodPoint(moodPoint, target: editable),
+            // ),
+            Expanded(
+              child: DefaultQuillEditor(
+                initialContent: editable.note ?? '',
+                onContentChanged: (doc) =>
+                    c.read<LogProvider>().updateNote(doc, target: editable),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

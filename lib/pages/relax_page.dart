@@ -33,6 +33,7 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
         final userUID = c.read<UserProvider>().user?.id.toString();
         switch (opt) {
           case TimerOption.countdown:
+            return const SizedBox.shrink();
           case TimerOption.timer:
             return RelaxTimerSheet();
           case TimerOption.other:
@@ -140,7 +141,12 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
               ),
             ],
             selected: {preset},
-            onSelectionChanged: (set) => showTimer(c, set.first),
+            onSelectionChanged: (set) {
+              setState(() {
+                preset = set.first;
+              });
+              showTimer(c, set.first);
+            },
           ),
           Expanded(child: RelaxesList()),
         ],
