@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:emolog/utils/constant.dart';
-import '../../utils/color_utils.dart';
 
 class DefaultSegmentedButton<T> extends StatelessWidget {
   const DefaultSegmentedButton({

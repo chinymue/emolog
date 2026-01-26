@@ -163,7 +163,7 @@ String formatDuration(int miliseconds) {
 String formatFullDuration(int miliseconds) {
   final hour = miliseconds ~/ (1000 * 60 * 60);
   final minute = (miliseconds % (1000 * 60 * 60)) ~/ (1000 * 60);
-  // final second = (miliseconds % (1000 * 60)) ~/ 1000;
+  final second = (miliseconds % (1000 * 60)) ~/ 1000;
   final buffer = StringBuffer();
   if (hour > 0) {
     buffer.write('$hour giờ ');
@@ -171,9 +171,9 @@ String formatFullDuration(int miliseconds) {
   if (minute > 0) {
     buffer.write('$minute phút ');
   }
-  // if (second > 0 || buffer.isEmpty) {
-  //   buffer.write('$second giây');
-  // }
+  if (second > 0 || buffer.isEmpty) {
+    buffer.write('$second giây');
+  }
   if (buffer.isEmpty) buffer.write('-');
   return buffer.toString().trim();
 }

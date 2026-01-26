@@ -42,7 +42,7 @@ class _StatsDataState extends State<StatsData> {
     final relaxPvd = context.read<RelaxProvider>();
 
     await logPvd.fetchLogs(userUid);
-    await relaxPvd.fetchRelaxs(userUid);
+    if (userUid != null) await relaxPvd.fetchRelaxs(userUid: userUid);
 
     final logs = logPvd.logs;
     final relaxs = relaxPvd.relaxs;

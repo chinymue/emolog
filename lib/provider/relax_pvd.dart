@@ -99,11 +99,12 @@ mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
     updateSessionInList(id, (_) => updatedRelax);
   }
 
-  Future<void> fetchRelaxs(String? userUid, {bool notify = true}) async {
+  Future<void> fetchRelaxs({
+    required String userUid,
+    bool notify = true,
+  }) async {
     if (!isFetchedRelaxs) {
-      relaxs = userUid == null
-          ? await isarService.getAll<Relax>()
-          : await isarService.getAllRelaxs(userUid);
+      relaxs = await isarService.getAllRelaxs(userUid);
       isFetchedRelaxs = true;
       if (notify) notifyListeners();
     }

@@ -281,6 +281,7 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
   late DateTime newStart;
   late DateTime newEnd;
   late String note;
+  late final TextEditingController _noteCtrl;
   bool isWarningShown = false;
   String warningText = "";
   bool isSaved = false;
@@ -291,12 +292,19 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
     if (widget.relax != null) {
       newStart = widget.relax!.startTime;
       newEnd = widget.relax!.endTime;
-      note = widget.relax!.note ?? "";
+      _noteCtrl = TextEditingController(text: widget.relax?.note ?? "");
     } else {
       newEnd = DateTime.now();
       newStart = newEnd.subtract(Duration(minutes: 5));
-      note = "";
+      _noteCtrl = TextEditingController(text: "");
     }
+  }
+
+  @override
+  void dispose() {
+    note = "";
+    _noteCtrl.dispose();
+    super.dispose();
   }
 
   Widget buildTimeButton(BuildContext c, bool isStart) {
@@ -442,41 +450,47 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
 
   Widget buildNoteField() {
     return TextField(
-      controller: TextEditingController(text: note),
+      controller: _noteCtrl,
       maxLines: 3,
       decoration: InputDecoration(
         labelText: "Ghi chú",
         border: OutlineInputBorder(),
       ),
-      onChanged: (value) {
-        note = value;
-      },
+      // onChanged: (value) {
+      //   note = value;
+      // },
     );
   }
 
   Widget handleUpdateButton(BuildContext c) {
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
         if (widget.relax != null &&
-            widget.relax!.startTime != newStart &&
-            widget.relax!.endTime != newEnd) {
-          c.read<RelaxProvider>().updateRelax(
+            (widget.relax!.startTime != newStart ||
+                widget.relax!.endTime != newEnd ||
+                widget.relax!.note != _noteCtrl.text)) {
+          await c.read<RelaxProvider>().updateRelax(
             id: widget.relax!.id,
             start: newStart,
             end: newEnd,
-            newNote: widget.relax!.note,
+            newNote: _noteCtrl.text,
           );
-        } else {
-          final userUID = c.read<UserProvider>().user?.id.toString();
+          setState(() => isSaved = true);
+        } else if (widget.relax == null) {
+          final userUID = c.read<UserProvider>().user?.uid.toString();
           if (userUID == null || userUID == "") return;
-          c.read<RelaxProvider>().saveRelax(
+          await c.read<RelaxProvider>().saveRelax(
             userUID,
             newStart,
             newEnd,
-            note: note,
+            note: _noteCtrl.text,
           );
+          setState(() => isSaved = true);
         }
-        setState(() => isSaved = true);
+
+        if (isSaved && mounted) {
+          Navigator.pop(c, true);
+        }
       },
       child: Text("Cập nhật"),
     );
