@@ -7,7 +7,7 @@ class RelaxViewProvider extends ChangeNotifier {
   List<Relax> _allRelaxs = [];
   bool isFetchedRelaxs = false;
 
-  void updateRelaxs(List<Relax> newRelaxs) {
+  void updateFromSource(List<Relax> newRelaxs) {
     _allRelaxs = newRelaxs;
     isFetchedRelaxs = true;
     notifyListeners();

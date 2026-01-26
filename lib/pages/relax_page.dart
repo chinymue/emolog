@@ -3,12 +3,14 @@ import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/utils/constant.dart';
 import 'package:emolog/utils/data_utils.dart';
 import 'package:emolog/widgets/listview/default_log_list.dart';
+import 'package:emolog/widgets/template/buttons_template.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/template/scaffold_template.dart';
 import '../provider/relax_pvd.dart';
 import '../provider/relax_view_pvd.dart';
 import 'dart:async';
+import '../isar/model/relax.dart';
 
 enum TimerOption { countdown, timer, other }
 
@@ -29,37 +31,13 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
       barrierLabel: 'Relax detail',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (c, _, __) {
-        final relaxPvd = c.read<RelaxProvider>();
-        final userUID = c.read<UserProvider>().user?.id.toString();
         switch (opt) {
           case TimerOption.countdown:
             return const SizedBox.shrink();
           case TimerOption.timer:
             return RelaxTimerSheet();
           case TimerOption.other:
-            if (userUID == null) {
-              return const SizedBox.shrink();
-            }
-
-            return FutureBuilder(
-              future: relaxPvd.saveRelax(
-                userUID,
-                DateTime.now().subtract(const Duration(minutes: 5)),
-                DateTime.now(),
-              ),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Something went wrong'));
-                }
-
-                final newRelax = snapshot.data!;
-                return RelaxDetailView(relax: newRelax);
-              },
-            );
+            return RelaxDetailView();
         }
       },
     );
@@ -67,8 +45,6 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
 
   @override
   Widget build(BuildContext c) {
-    final textTheme = Theme.of(c).textTheme;
-    final colorScheme = Theme.of(c).colorScheme;
     return MainScaffold(
       currentIndex: 2,
       actions: [
@@ -77,75 +53,16 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
       ],
       child: Column(
         children: [
-          // Padding(
-          //   padding: const EdgeInsets.all(kPaddingSmall),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //     children: [
-          //       Text("Debug Actions:"), // delete later
-          //       ElevatedButton(
-          //         child: Icon(Icons.add),
-          //         onPressed: () async {
-          //           final newRelax = await c.read<RelaxProvider>().saveRelax(
-          //             userUid ?? "",
-          //             DateTime.now().subtract(Duration(minutes: 5)),
-          //             DateTime.now(),
-          //           );
-          //           print("Đã thêm relax ${newRelax.id} mới");
-          //         },
-          //       ),
-          //       ElevatedButton(
-          //         child: Icon(Icons.delete_forever),
-          //         onPressed: () async {
-          //           await c.read<RelaxProvider>().deleteAllRelax(userUid);
-          //           print("Đã xóa toàn bộ relax của user $userUid");
-          //         },
-          //       ),
-          //       ElevatedButton(
-          //         child: Icon(Icons.delete_sweep),
-          //         onPressed: () async {
-          //           await c.read<RelaxProvider>().deleteAllRelaxs();
-          //           print("Đã xóa toàn bộ relax trong database");
-          //         },
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          SegmentedButton<TimerOption>(
-            segments: [
-              // ButtonSegment(
-              //   value: TimerOption.countdown,
-              //   label: Row(
-              //     children: [
-              //       Icon(Icons.hourglass_empty, size: iconSizeLarge),
-              //       Text(
-              //         TimerOption.countdown.name,
-              //         style: textTheme.labelMedium?.copyWith(
-              //           color: colorScheme.primary,
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              buildButtonSegment(
-                colorScheme,
-                textTheme,
-                TimerOption.timer,
-                Icons.timer,
-              ),
-              buildButtonSegment(
-                colorScheme,
-                textTheme,
-                TimerOption.other,
-                Icons.add,
-              ),
-            ],
-            selected: {preset},
-            onSelectionChanged: (set) {
+          DefaultSegmentedButton(
+            values: const [TimerOption.timer, TimerOption.other],
+            selected: preset,
+            icons: const [Icons.timer, Icons.add],
+            labels: const ['timer', 'other'],
+            onPressed: (opt) {
               setState(() {
-                preset = set.first;
+                preset = opt;
               });
-              showTimer(c, set.first);
+              showTimer(c, opt);
             },
           ),
           Expanded(child: RelaxesList()),
@@ -155,6 +72,7 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
   }
 
   ButtonSegment<TimerOption> buildButtonSegment(
+    BuildContext c,
     ColorScheme colorScheme,
     TextTheme textTheme,
     TimerOption value,
@@ -162,18 +80,23 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
   ) {
     return ButtonSegment(
       value: value,
-      label: Padding(
-        padding: const EdgeInsets.all(kPaddingSmall),
-        child: Row(
-          children: [
-            Icon(icon, size: iconSize, color: colorScheme.primary),
-            Text(
-              value.name,
-              style: textTheme.labelMedium?.copyWith(
-                color: colorScheme.primary,
+      label: InkWell(
+        onTap: () {
+          showTimer(c, value);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(kPaddingSmall),
+          child: Row(
+            children: [
+              Icon(icon, size: iconSize, color: colorScheme.primary),
+              Text(
+                value.name,
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.primary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -312,38 +235,44 @@ class RelaxPageActions extends StatelessWidget {
     final l10n = AppLocalizations.of(c)!;
     return Row(
       children: [
-        IconButton(
-          onPressed: onSelectDate,
-          icon: Icon(Icons.date_range),
-          tooltip: l10n.filterDateRange,
-        ),
+        // IconButton(
+        //   onPressed: onSelectDate,
+        //   icon: Icon(Icons.date_range),
+        //   tooltip: l10n.filterDateRange,
+        // ),
       ],
     );
   }
 }
 
-class RelaxesList extends StatelessWidget {
+class RelaxesList extends StatefulWidget {
   const RelaxesList({super.key});
 
   @override
+  State<RelaxesList> createState() => _RelaxesListState();
+}
+
+class _RelaxesListState extends State<RelaxesList> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final uid = context.read<UserProvider>().user?.uid;
+      context.read<RelaxProvider>().fetchRelaxs(uid, notify: true);
+    });
+  }
+
+  @override
   Widget build(BuildContext c) {
-    final userUid = c.read<UserProvider>().user?.uid;
-
-    return FutureBuilder(
-      future: c.read<RelaxProvider>().fetchRelaxs(userUid),
-      builder: (c, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+    return Selector<RelaxViewProvider, List<Relax>>(
+      selector: (_, pvd) => pvd.allRelaxs,
+      builder: (context, relaxs, _) {
+        if (relaxs.isEmpty) {
+          return const Center(child: Text('Không có dữ liệu'));
         }
 
-        if (snap.connectionState == ConnectionState.done) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final relaxs = c.read<RelaxProvider>().relaxs;
-            c.read<RelaxViewProvider>().updateRelaxs(relaxs);
-            print("Số lượng relaxs: ${relaxs.length}");
-          });
-        }
-        return DefaultList(type: "relax");
+        return DefaultList(type: 'relax');
       },
     );
   }

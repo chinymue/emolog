@@ -43,6 +43,13 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (c) => RelaxProvider(c.read<IsarService>()),
         ),
+        ChangeNotifierProxyProvider<RelaxProvider, RelaxViewProvider>(
+          create: (_) => RelaxViewProvider(),
+          update: (_, relaxPvd, viewPvd) {
+            viewPvd!.updateFromSource(relaxPvd.relaxs);
+            return viewPvd;
+          },
+        ),
         ChangeNotifierProvider<UserProvider>.value(value: userPvd),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -75,10 +82,7 @@ class MyApp extends StatelessWidget {
               create: (c) => LogViewProvider(),
               child: HistoryPage(),
             ),
-            pages[2]['route']: (_) => ChangeNotifierProvider(
-              create: (c) => RelaxViewProvider(),
-              child: RelaxPage(),
-            ),
+            pages[2]['route']: (_) => RelaxPage(),
             pages[3]['route']: (_) => ChangeNotifierProvider(
               create: (c) => StatsProvider(),
               child: StatisticPage(),

@@ -17,22 +17,11 @@ mixin ServiceAccess on ChangeNotifier {
 mixin RelaxStateMixin on ChangeNotifier {
   List<Relax> relaxs = [];
   bool isFetchedRelaxs = false;
-  late Relax newRelax;
 
   void reset() {
     relaxs = [];
     isFetchedRelaxs = false;
     notifyListeners();
-  }
-
-  void setNewRelax(String userUID, DateTime start) {
-    newRelax = Relax(
-      relaxId: const Uuid().v4(),
-      userUid: userUID,
-      startTime: start,
-      endTime: start.add(Duration(minutes: 5)),
-      durationMiliseconds: Duration(minutes: 5).inMilliseconds,
-    );
   }
 
   void updateSessionInList(
@@ -51,7 +40,12 @@ mixin RelaxStateMixin on ChangeNotifier {
 }
 
 mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
-  Future<Relax> saveRelax(String userUID, DateTime start, DateTime end) async {
+  Future<Relax> saveRelax(
+    String userUID,
+    DateTime start,
+    DateTime end, {
+    String? note,
+  }) async {
     final relax = Relax(
       relaxId: const Uuid().v4(),
       userUid: userUID,

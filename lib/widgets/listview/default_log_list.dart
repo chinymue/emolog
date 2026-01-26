@@ -12,6 +12,7 @@ import '../../utils/data_utils.dart';
 import '../../widgets/detail_log/details_log.dart';
 import '../../provider/relax_view_pvd.dart';
 import '../../provider/relax_pvd.dart';
+import '../../provider/user_pvd.dart';
 
 class DefaultList extends StatelessWidget {
   const DefaultList({super.key, required this.type});
@@ -267,9 +268,9 @@ mixin RelaxDetailBuilders {
 }
 
 class RelaxDetailView extends StatefulWidget {
-  const RelaxDetailView({super.key, required this.relax});
+  RelaxDetailView({super.key, this.relax});
 
-  final Relax relax;
+  Relax? relax;
 
   @override
   State<RelaxDetailView> createState() => _RelaxDetailViewState();
@@ -277,17 +278,32 @@ class RelaxDetailView extends StatefulWidget {
 
 class _RelaxDetailViewState extends State<RelaxDetailView>
     with RelaxDetailPickers, RelaxDetailBuilders {
-  DateTime? newStart;
-  DateTime? newEnd;
+  late DateTime newStart;
+  late DateTime newEnd;
+  late String note;
   bool isWarningShown = false;
   String warningText = "";
   bool isSaved = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.relax != null) {
+      newStart = widget.relax!.startTime;
+      newEnd = widget.relax!.endTime;
+      note = widget.relax!.note ?? "";
+    } else {
+      newEnd = DateTime.now();
+      newStart = newEnd.subtract(Duration(minutes: 5));
+      note = "";
+    }
+  }
+
   Widget buildTimeButton(BuildContext c, bool isStart) {
     final textTheme = Theme.of(c).textTheme;
     final time = isStart
-        ? TimeOfDay.fromDateTime(newStart ?? widget.relax.startTime)
-        : TimeOfDay.fromDateTime(newEnd ?? widget.relax.endTime);
+        ? TimeOfDay.fromDateTime(newStart)
+        : TimeOfDay.fromDateTime(newEnd);
     return TextButton(
       onPressed: () async {
         final picked = await selectTime(c, time);
@@ -295,13 +311,13 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
           if (!c.mounted) return;
           if (isStart) {
             final tmp = DateTime(
-              widget.relax.startTime.year,
-              widget.relax.startTime.month,
-              widget.relax.startTime.day,
+              newStart.year,
+              newStart.month,
+              newStart.day,
               picked.hour,
               picked.minute,
             );
-            if (tmp.isAfter(newEnd ?? widget.relax.endTime)) {
+            if (tmp.isAfter(newEnd)) {
               setState(() {
                 isWarningShown = true;
                 warningText = "Thời gian bắt đầu phải trước thời gian kết thúc";
@@ -314,13 +330,13 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
             }
           } else {
             final tmp = DateTime(
-              widget.relax.endTime.year,
-              widget.relax.endTime.month,
-              widget.relax.endTime.day,
+              newEnd.year,
+              newEnd.month,
+              newEnd.day,
               picked.hour,
               picked.minute,
             );
-            if (tmp.isBefore(newStart ?? widget.relax.startTime)) {
+            if (tmp.isBefore(newStart)) {
               setState(() {
                 isWarningShown = true;
                 warningText = "Thời gian kết thúc phải sau thời gian bắt đầu";
@@ -345,9 +361,7 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
 
   Widget buildDateButton(BuildContext c, bool isStart) {
     final textTheme = Theme.of(c).textTheme;
-    final date = isStart
-        ? (newStart ?? widget.relax.startTime)
-        : (newEnd ?? widget.relax.endTime);
+    final date = isStart ? newStart : newEnd;
     return TextButton(
       onPressed: () async {
         final picked = await selectDate(c, date);
@@ -358,10 +372,10 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
               picked.year,
               picked.month,
               picked.day,
-              widget.relax.startTime.hour,
-              widget.relax.startTime.minute,
+              newStart.hour,
+              newStart.minute,
             );
-            if (tmp.isAfter(newEnd ?? widget.relax.endTime)) {
+            if (tmp.isAfter(newEnd)) {
               setState(() {
                 isWarningShown = true;
                 warningText = "Thời gian bắt đầu phải trước thời gian kết thúc";
@@ -377,10 +391,10 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
               picked.year,
               picked.month,
               picked.day,
-              widget.relax.endTime.hour,
-              widget.relax.endTime.minute,
+              newEnd.hour,
+              newEnd.minute,
             );
-            if (tmp.isBefore(newStart ?? widget.relax.startTime)) {
+            if (tmp.isBefore(newStart)) {
               setState(() {
                 isWarningShown = true;
                 warningText = "Thời gian kết thúc phải sau thời gian bắt đầu";
@@ -419,7 +433,7 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
     return Row(
       children: [
         Text(
-          "Thời lượng: ${formatFullDuration(widget.relax.durationMiliseconds)}",
+          "Thời lượng: ${formatFullDuration(newEnd.difference(newStart).inMilliseconds)}",
           style: textTheme.bodyLarge,
         ),
       ],
@@ -428,14 +442,14 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
 
   Widget buildNoteField() {
     return TextField(
-      controller: TextEditingController(text: widget.relax.note ?? ''),
+      controller: TextEditingController(text: note),
       maxLines: 3,
       decoration: InputDecoration(
         labelText: "Ghi chú",
         border: OutlineInputBorder(),
       ),
       onChanged: (value) {
-        widget.relax.note = value;
+        note = value;
       },
     );
   }
@@ -443,12 +457,25 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
   Widget handleUpdateButton(BuildContext c) {
     return ElevatedButton(
       onPressed: () {
-        c.read<RelaxProvider>().updateRelax(
-          id: widget.relax.id,
-          start: newStart,
-          end: newEnd,
-          newNote: widget.relax.note,
-        );
+        if (widget.relax != null &&
+            widget.relax!.startTime != newStart &&
+            widget.relax!.endTime != newEnd) {
+          c.read<RelaxProvider>().updateRelax(
+            id: widget.relax!.id,
+            start: newStart,
+            end: newEnd,
+            newNote: widget.relax!.note,
+          );
+        } else {
+          final userUID = c.read<UserProvider>().user?.id.toString();
+          if (userUID == null || userUID == "") return;
+          c.read<RelaxProvider>().saveRelax(
+            userUID,
+            newStart,
+            newEnd,
+            note: note,
+          );
+        }
         setState(() => isSaved = true);
       },
       child: Text("Cập nhật"),

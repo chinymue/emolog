@@ -108,8 +108,8 @@ mixin LogViewFilters on LogViewStateMixin {
       logs = logs
           .where(
             (log) =>
-                log.moodPoint! >= _moodRangeFilter.start &&
-                log.moodPoint! <= _moodRangeFilter.end,
+                log.moodPoint >= _moodRangeFilter.start &&
+                log.moodPoint <= _moodRangeFilter.end,
           )
           .toList();
     }
