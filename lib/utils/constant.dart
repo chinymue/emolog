@@ -60,6 +60,7 @@ const FontWeight kFontWeightBold = FontWeight.w700;
 const double kBorderRadiusSmall = 8.0;
 const double kBorderRadius = 12.0;
 const double kBorderRadiusLarge = 20.0;
+const double kBorderRadiusXL = 32.0;
 const double kSplashRadiusSmall = 10.0;
 const double kSplashRadius = 20.0;
 
