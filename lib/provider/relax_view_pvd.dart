@@ -4,14 +4,38 @@ import '../../isar/model/relax.dart';
 enum SortDateOrder { newestFirst, oldestFirst }
 
 class RelaxViewProvider extends ChangeNotifier {
+  // String? _userUID;
   List<Relax> _allRelaxs = [];
   bool isFetchedRelaxs = false;
 
-  void updateFromSource(List<Relax> newRelaxs) {
+  void updateRelaxesList(List<Relax> relaxes, {bool notify = true}) {
+    _allRelaxs = relaxes;
+    if (notify) notifyListeners();
+  }
+
+  // void syncUser(String? uid) {
+  //   if (_userUID == uid) return;
+
+  //   _userUID = uid;
+
+  //   _allRelaxs = [];
+  //   isFetchedRelaxs = false;
+  // }
+
+  void updateFromSource(List<Relax> newRelaxs, {bool notify = true}) {
     _allRelaxs = newRelaxs;
     isFetchedRelaxs = true;
-    notifyListeners();
+    if (notify) notifyListeners();
   }
+
+  // void clear() {
+  //   _userUID = null;
+  //   _allRelaxs = [];
+  //   isFetchedRelaxs = false;
+  //   notifyListeners();
+  // }
+
+  void justNoti() => notifyListeners();
 
   List<Relax> get allRelaxs => _sortedRelaxs;
 

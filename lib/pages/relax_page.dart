@@ -24,8 +24,8 @@ class RelaxPage extends StatefulWidget {
 class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
   TimerOption preset = TimerOption.timer;
 
-  Future<Object?> showTimer(BuildContext c, TimerOption opt) async {
-    return await showGeneralDialog(
+  Future<void> showTimer(BuildContext c, TimerOption opt) async {
+    final result = await showGeneralDialog(
       context: c,
       barrierDismissible: true,
       barrierLabel: 'Relax detail',
@@ -41,6 +41,9 @@ class _RelaxPageState extends State<RelaxPage> with RelaxPagePickers {
         }
       },
     );
+    if (result == true && context.mounted) {
+      context.read<RelaxViewProvider>().justNoti();
+    }
   }
 
   @override
@@ -143,8 +146,11 @@ class _RelaxTimerSheetState extends State<RelaxTimerSheet> {
       _startTime!.add(_elapsed),
     );
 
+    // if (!mounted) return;
+    // context.read<RelaxViewProvider>().justNoti();
+
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
 
@@ -256,23 +262,64 @@ class _RelaxesListState extends State<RelaxesList> {
   @override
   void initState() {
     super.initState();
+    _fetching();
+  }
 
-    Future.microtask(() {
-      final uid = context.read<UserProvider>().user?.uid;
-      context.read<RelaxProvider>().fetchRelaxs(uid, notify: true);
-    });
+  Future<void> _fetching() async {
+    final userPvd = context.read<UserProvider>();
+    final relaxPvd = context.read<RelaxProvider>();
+    final relaxViewPvd = context.read<RelaxViewProvider>();
+
+    final uid = userPvd.user?.uid;
+    if (uid == null) return;
+
+    await relaxPvd.fetchRelaxs(userUid: uid, notify: true);
+
+    if (!mounted) return;
+
+    relaxViewPvd.updateRelaxesList(relaxPvd.relaxs, notify: true);
   }
 
   @override
   Widget build(BuildContext c) {
+    final colorScheme = Theme.of(c).colorScheme;
+    final textTheme = Theme.of(c).textTheme;
     return Selector<RelaxViewProvider, List<Relax>>(
       selector: (_, pvd) => pvd.allRelaxs,
       builder: (context, relaxs, _) {
         if (relaxs.isEmpty) {
-          return const Center(child: Text('Không có dữ liệu'));
+          return Center(
+            child: Text(
+              'Không có dữ liệu',
+              style: textTheme.displayMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
+          );
         }
 
-        return DefaultList(type: 'relax');
+        return ListView.builder(
+          itemCount: relaxs.length,
+          itemBuilder: (c, i) {
+            final item = relaxs[i];
+
+            void handleDissmis() =>
+                c.read<RelaxProvider>().deleteRelax(id: item.id);
+
+            return Dismissible(
+              key: ValueKey(item.id),
+              direction: DismissDirection.endToStart,
+              onDismissed: (direction) => handleDissmis(),
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: EdgeInsets.symmetric(horizontal: kPaddingLarge),
+                color: colorScheme.errorContainer,
+                child: Icon(Icons.delete, color: colorScheme.onErrorContainer),
+              ),
+              child: DefaultRelaxTile(relaxId: item.id),
+            );
+          },
+        );
       },
     );
   }
