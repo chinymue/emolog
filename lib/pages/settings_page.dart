@@ -21,22 +21,23 @@ class _SettingsPageState extends State<SettingsPage> {
     return MainScaffold(
       currentIndex: 4,
       actions: [
-        IconButton(
-          onPressed: () {
-            userPvd.resetGuest(c);
-            setState(() => _formKeyReset = UniqueKey());
-          },
-          icon: Icon(Icons.disabled_by_default),
-          tooltip: l10n.restoreAcc,
-        ),
-        IconButton(
-          onPressed: () {
-            userPvd.resetSetting(c);
-            setState(() => _formKeyReset = UniqueKey());
-          },
-          icon: Icon(Icons.restore),
-          tooltip: l10n.restoreSettings,
-        ),
+        if (userPvd.user!.isGuest)
+          IconButton(
+            onPressed: () {
+              userPvd.resetGuest(c);
+              setState(() => _formKeyReset = UniqueKey());
+            },
+            icon: Icon(Icons.disabled_by_default),
+            tooltip: l10n.restoreAcc,
+          ),
+        // IconButton(
+        //   onPressed: () {
+        //     userPvd.resetSetting(c);
+        //     setState(() => _formKeyReset = UniqueKey());
+        //   },
+        //   icon: Icon(Icons.restore),
+        //   tooltip: l10n.restoreSettings,
+        // ),
         // IconButton(
         //   onPressed: () {
         //     userPvd.deleteAllUsers();

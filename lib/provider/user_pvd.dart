@@ -325,7 +325,7 @@ class UserProvider extends ChangeNotifier {
   void resetSetting(BuildContext c) {
     _currentUser!.language = LanguageAvailable.en;
     _currentUser!.theme = ThemeStyle.light;
-    notifyListeners();
+    // notifyListeners();
     c.read<LanguageProvider>().resetLang();
     c.read<ThemeProvider>().resetTheme();
   }
