@@ -1,4 +1,5 @@
 import 'package:emolog/provider/user_pvd.dart';
+import 'package:emolog/utils/data_utils.dart';
 import '../utils/constant.dart';
 import 'package:emolog/l10n/app_localizations.dart';
 import 'package:emolog/provider/log_view_pvd.dart';
@@ -43,7 +44,15 @@ mixin HistoryPagePickers {
     );
     if (picked != null) {
       if (!c.mounted) return;
-      c.read<LogViewProvider>().setFilterDateRange(picked.start, picked.end);
+      final realEnd = picked.end.add(Duration(days: 1));
+      final realRange = DateTimeRange(
+        start: normalizeDate(picked.start),
+        end: normalizeDate(realEnd),
+      );
+      c.read<LogViewProvider>().setFilterDateRange(
+        realRange.start,
+        realRange.end,
+      );
       // print("Ngày chọn: ${picked.start} - ${picked.end}");
     }
   }
