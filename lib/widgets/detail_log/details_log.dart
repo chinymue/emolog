@@ -5,10 +5,35 @@ import 'package:provider/provider.dart';
 import '../../provider/log_pvd.dart';
 import '../../widgets/detail_log/mood_picker.dart';
 import '../../widgets/detail_log/quill_utils.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
-class DetailsLog extends StatelessWidget {
+class DetailsLog extends StatefulWidget {
   const DetailsLog({super.key, required this.logId});
   final int logId;
+
+  @override
+  State<DetailsLog> createState() => _DetailsLogState();
+}
+
+class _DetailsLogState extends State<DetailsLog> {
+  late final quill.QuillController _quillCtrl;
+  String _changedDoc = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _quillCtrl = quill.QuillController(
+      document: docFromJson(""),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+  }
+
+  @override
+  void dispose() {
+    _changedDoc = "";
+    _quillCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext c) {
@@ -17,9 +42,10 @@ class DetailsLog extends StatelessWidget {
     final l10n = AppLocalizations.of(c)!;
 
     final logProvider = c.watch<LogProvider>();
-    if (!logProvider.hasEditableLog || logProvider.editableLog.id != logId) {
+    if (!logProvider.hasEditableLog ||
+        logProvider.editableLog.id != widget.logId) {
       logProvider.setEditableLog(
-        log: logProvider.logs.firstWhere((l) => l.id == logId),
+        log: logProvider.logs.firstWhere((l) => l.id == widget.logId),
         notify: false,
       );
     }
@@ -52,7 +78,10 @@ class DetailsLog extends StatelessWidget {
           IconButton(
             tooltip: l10n.saveChanges,
             icon: Icon(Icons.save),
-            onPressed: () => c.read<LogProvider>().saveEditableLog(),
+            onPressed: () {
+              c.read<LogProvider>().updateNote(_changedDoc, target: editable);
+              c.read<LogProvider>().saveEditableLog();
+            },
           ),
         ],
       ),
@@ -72,9 +101,9 @@ class DetailsLog extends StatelessWidget {
             // ),
             Expanded(
               child: DefaultQuillEditor(
+                controller: _quillCtrl,
                 initialContent: editable.note ?? '',
-                onContentChanged: (doc) =>
-                    c.read<LogProvider>().updateNote(doc, target: editable),
+                onContentChanged: (doc) => _changedDoc = doc,
               ),
             ),
           ],

@@ -52,6 +52,7 @@ mixin RelaxCRUDMixin on ServiceAccess, RelaxStateMixin {
       startTime: start,
       endTime: end,
       durationMiliseconds: end.difference(start).inMilliseconds,
+      note: note ?? "",
     );
     final savedRelax = await isarService.saveRelax(relax);
 

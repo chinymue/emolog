@@ -102,10 +102,12 @@ quill.QuillSimpleToolbarConfig buildToolbarConfig({
 // Quill editor widget
 class DefaultQuillEditor extends StatefulWidget {
   final String? initialContent;
+  final quill.QuillController controller;
   final void Function(String doc) onContentChanged;
 
   const DefaultQuillEditor({
     super.key,
+    required this.controller,
     this.initialContent,
     required this.onContentChanged,
   });
@@ -118,27 +120,28 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
   bool _showToolbar = true;
   bool _useFullToolbar = false;
 
-  late final quill.QuillController _controller;
-
   @override
   void initState() {
     super.initState();
-    final doc = docFromJson(widget.initialContent);
-    _controller = quill.QuillController(
-      document: doc,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
+    // final doc = docFromJson(widget.initialContent);
+    // controller = quill.QuillController(
+    //   document: doc,
+    //   selection: const TextSelection.collapsed(offset: 0),
+    // );
+    if (widget.initialContent != null || widget.initialContent != "") {
+      widget.controller.document = docFromJson(widget.initialContent);
+    }
 
-    _controller.addListener(() {
-      widget.onContentChanged(jsonFromDoc(_controller.document));
+    widget.controller.addListener(() {
+      widget.onContentChanged(jsonFromDoc(widget.controller.document));
     });
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _controller.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +170,7 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
                 minHeight: kSingleRowScrollMaxHeight,
               ),
               child: quill.QuillEditor.basic(
-                controller: _controller,
+                controller: widget.controller,
                 config: quill.QuillEditorConfig(
                   placeholder: l10n.logPlaceHolderNeutral,
                 ),
@@ -178,9 +181,9 @@ class _DefaultQuillEditorState extends State<DefaultQuillEditor> {
             Wrap(
               children: [
                 _useFullToolbar
-                    ? quill.QuillSimpleToolbar(controller: _controller)
+                    ? quill.QuillSimpleToolbar(controller: widget.controller)
                     : quill.QuillSimpleToolbar(
-                        controller: _controller,
+                        controller: widget.controller,
                         config: buildToolbarConfig(
                           includeButtons: [...textFormattingButtons],
                         ),

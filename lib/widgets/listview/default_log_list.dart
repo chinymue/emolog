@@ -492,7 +492,7 @@ class _RelaxDetailViewState extends State<RelaxDetailView>
           Navigator.pop(c, true);
         }
       },
-      child: Text("Cập nhật"),
+      child: widget.relax == null ? Text("Lưu") : Text("Cập nhật"),
     );
   }
 
