@@ -11,6 +11,7 @@ import '../../provider/log_pvd.dart';
 import '../utils/constant.dart';
 import '../../widgets/detail_log/mood_picker.dart';
 import '../../widgets/detail_log/quill_utils.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class HomePage extends StatelessWidget {
   @override
@@ -25,9 +26,31 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class EmologForm extends StatelessWidget {
+class EmologForm extends StatefulWidget {
   EmologForm({super.key});
+
+  @override
+  State<EmologForm> createState() => _EmologFormState();
+}
+
+class _EmologFormState extends State<EmologForm> {
   DateTime _currentDate = DateTime.now();
+  late final quill.QuillController _quillCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _quillCtrl = quill.QuillController(
+      document: docFromJson(""),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+  }
+
+  @override
+  void dispose() {
+    _quillCtrl.dispose();
+    super.dispose();
+  }
 
   String buildMessageByMoodLevel(MoodLevel mood) {
     switch (mood) {
@@ -57,6 +80,12 @@ class EmologForm extends StatelessWidget {
         _replyMoodSelected(c, isSaved: false);
       } else {
         _replyMoodSelected(c, mood: savedMood);
+        _quillCtrl.replaceText(
+          0,
+          _quillCtrl.document.length,
+          '',
+          const TextSelection.collapsed(offset: 0),
+        );
       }
     } catch (e) {
       _replyMoodSelected(c, isSaved: false);
@@ -103,6 +132,7 @@ class EmologForm extends StatelessWidget {
                   c.read<LogProvider>().updateLabelMood(mood),
             ),
             DefaultQuillEditor(
+              controller: _quillCtrl,
               onContentChanged: (doc) => c.read<LogProvider>().updateNote(doc),
             ),
             ElevatedButton(
