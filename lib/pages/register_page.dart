@@ -59,15 +59,41 @@ class _RegisterFormState extends State<RegisterForm> {
   }
 
   Future<void> _handleRegister(BuildContext c) async {
+    if (_usernameCtrl.text.length < 6 || _passwordCtrl.text.length < 6) {
+      setState(
+        () => _error =
+            "Username and password must be at least 6 characters long!",
+      );
+      return;
+    }
     final isAccepted = await _showDisclaimerDialog(c);
+    if (!isAccepted) {
+      setState(
+        () => _error = "Can't use this app without accept the disclaimer!",
+      );
+      return;
+    }
     if (!c.mounted) return;
     final userPvd = c.read<UserProvider>();
-    final ok = await userPvd.register(_usernameCtrl.text, _passwordCtrl.text);
-    if (isAccepted & ok) {
+    final result = await userPvd.register(
+      _usernameCtrl.text,
+      _passwordCtrl.text,
+    );
+    if (result == "registered") {
       if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, '/');
+    } else if (result == "username") {
+      setState(() => _error = "This username is used!");
+    } else if (result == "length") {
+      setState(
+        () => _error =
+            "Username and password must be at least 6 characters long!",
+      );
     } else {
-      setState(() => _error = "Can't register with this information!");
+      setState(
+        () => _error =
+            "An unusual error has occured. Please contact developement team!",
+      );
     }
   }
 

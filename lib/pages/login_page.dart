@@ -78,9 +78,15 @@ class _LoginFormState extends State<LoginForm> {
   Future<void> _handleLoginAsGuest(BuildContext c) async {
     final isAccepted = await _showDisclaimerDialog(c);
     if (!c.mounted) return;
+    if (!isAccepted) {
+      setState(
+        () => _error = "Can't use this app without accept the disclaimer!",
+      );
+      return;
+    }
     final userPvd = c.read<UserProvider>();
     final ok = await userPvd.loginAsGuest(c);
-    if (isAccepted & ok) {
+    if (ok) {
       if (!c.mounted) return;
       Navigator.pushReplacementNamed(c, widget.redirect);
     } else {

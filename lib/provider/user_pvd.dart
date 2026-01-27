@@ -20,10 +20,10 @@ class UserProvider extends ChangeNotifier {
   User? get user => _currentUser;
 
   /// LOGIN, LOGOUT AND REGISTATION
-  Future<bool> register(String username, String password) async {
+  Future<String> register(String username, String password) async {
     final user = await isarService.getByUsername(username);
-    if (user != null) return false;
-    if (username == "" || password == "") return false;
+    if (user != null) return "username";
+    if (username == "" || password == "") return "length";
     final salt = generateSalt();
     final hash = hashPassword(password, salt);
     final newUser = User()
@@ -41,7 +41,7 @@ class UserProvider extends ChangeNotifier {
     //   await _syncUserToFirestore(_currentUser!);
     // }
     notifyListeners();
-    return true;
+    return "registered";
   }
 
   Future<bool> login(
