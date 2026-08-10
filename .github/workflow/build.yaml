@@ -1,0 +1,34 @@
+# build application
+# intructions to run the build job
+# name: give the workflow lable
+# on: workflow_dispatch: only run when manually triggered
+
+name: Build Flutter Windows Installer
+
+on:
+  workflow_dispatch:
+
+# jobs: define all the jobs to run in the workflow, eg. jobs: build: define a job called build; jobs: test: define a job called test; jobs: deploy: define a job called deploy
+# runs-on: tell github to run a [windows] machine in cloud to run the build, eg. ubuntu-latest, macos-latest
+# steps: define all the steps to run in the job, each step have to start with "-" inlcude name (label) + uses (action to run) + with (optional, pass parameters to the action)
+# step run by shell command
+# action structure like call a package: [owner]/[repo]@[version], eg. actions/checkout@v6
+# common actions to use in the workflow:
+# actions/checkout@v6: checkout the code from the repo, clone that and run on cloud
+# subosito/flutter-action@v2: setup flutter sdk on the cloud machine and logs the installed version
+# (actions)/setup-node(@v4 (with:node-version:20)) = install nodeJS -> npm install
+# /setup-java (with:distribution:temurin, java-version:17)
+# /cache(@v4): save .pub-cache in cloud for future builds no need to re-download packages
+# /upload-artifact(@v3 (with: name:apk, path: build/app/outputs/flutter-apk/app-release.apk)): upload the file build to github cloud for download, you can get APK from actions pages after workflow run
+# /download-artifact(@v3 (with: name:apk, path: build/app/outputs/flutter-apk/app-release.apk)): download the file from github cloud to local machine
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
